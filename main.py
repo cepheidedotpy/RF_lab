@@ -13,8 +13,7 @@ import time
 # from tkinter import font
 from tkinter import scrolledtext
 from tkinter import ttk
-from tkinter.ttk import Notebook
-from typing import Optional, Literal, Type
+from typing import Optional, Literal
 import pandas as pd
 # Implement the default Matplotlib key bindings.
 # import matplotlib.pyplot as plt
@@ -31,7 +30,7 @@ from matplotlib.ticker import FuncFormatter
 # ==============================================================================
 # Imports
 # ==============================================================================
-import scripts_and_functions
+
 
 # %matplotlib inline
 
@@ -959,7 +958,7 @@ class Window(tk.Tk):
                                                                                 combobox=self.s2p_file_name_combobox,
                                                                                 filetype='.s2p'),
                                                                  update_button(self.update_s2p_button)], col=3, row=1)
-            self.update_s2p_button
+            # self.update_s2p_button
             add_button(frame_s2p_dir, button_name='Exit',
                        command=self._quit, col=5, row=1)
             add_button(frame_s2p_dir, button_name='Plot',
@@ -2231,8 +2230,10 @@ class Window(tk.Tk):
         self.text_gen_controls_pull_in_debug.insert(index="%d.%d" % (0, 0), chars=error_output)
         return error_output
 
-    def calculate_pull_in_out_voltage_measurement(self, v_bias,
-                                                  v_log_amp):  # same function as in display implemented in measurement
+    def calculate_pull_in_out_voltage_measurement(
+            self,
+            v_bias,
+            v_log_amp):  # same function as in display implemented in measurement
         self.text_gen_controls_pull_in_debug.delete('1.0', tk.END)
         list_graph_ax4 = self.ax_pull_in_meas.lines[:]
         if not (list_graph_ax4 == []):

@@ -1,11 +1,17 @@
+from typing import Any
+
 import numpy as np
 import pandas as pd
 import time
+
+from numpy import ndarray, dtype
+
 import dir_and_var_declaration
 import matplotlib.pyplot as plt
 import matplotlib.artist
 import matplotlib.ticker as ticker
 import os
+from pyvisa import *
 import pyvisa
 import RsInstrument
 from RsInstrument import *
@@ -1443,8 +1449,7 @@ def cycling_sequence_with_escape_interrupt(app, new_data_event,
                                            wf_duration: float = 0.205,
                                            events: float = 100,
                                            header: str = "",
-                                           df_path=r"C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement "
-                                                   r"Data\Mechanical cycling"):
+                                           df_path=r"C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Mechanical cycling"):
     """
     Cycling test sequence outputs MEMS characteristics during the tested duration.
 
@@ -2657,6 +2662,119 @@ def load_pattern(
     signal_Generator.write("VOLTage:OFFSET 0")
 
 
+def create_pull_in_voltage_waveform(voltages: list[int], width_pulse: float) -> np.ndarray:
+    """
+    Generates a waveform with ascending and descending square pulses specified by voltage values.
+    In the descending phase, pulses are continuous without zero gaps between them.
+
+    Args:
+        voltages (list of int): List of voltage amplitudes for the pulses in ascending order.
+        width_pulse (float): Duration of each pulse and the zero gap in the ascending phase in microseconds.
+
+    Returns:
+        np.ndarray: The generated waveform array with pulse ascension and continuous descent.
+    """
+    sample_rate = 7272727  # Sample rate in Hz
+    pulse_width = int(width_pulse * 1e-6 * sample_rate)
+
+    # Create the ascending phase of the waveform
+    ascending_wave = [create_pulse(voltage, pulse_width, True) for voltage in sorted(voltages)]
+
+    # Create the descending phase of the waveform without zero values between pulses
+    descending_wave = [np.array([voltage] * pulse_width) for voltage in sorted(voltages, reverse=True)]
+
+    # Concatenate the ascending and descending phases
+    waveform = np.concatenate(ascending_wave + descending_wave)
+
+    return waveform
+
+
+def load_pull_in_voltage_waveform(voltages: list[int], width_pulse_us: float, max_samples: int = 10e6):
+    """
+    Generate a waveform within the maximum sample size constraint.
+
+    Args:
+        voltages (list[int]): The list of voltage amplitudes in volts.
+        width_pulse_us (float): The pulse width in microseconds.
+        max_samples (int): Maximum allowable sample size of the waveform.
+
+    Returns:
+        np.ndarray: The scaled waveform array.
+    """
+    # Find the minimum sample rate that keeps the total sample count within max_samples
+    total_pulse_sections = len(voltages) * 2  # ascent and continuous descent
+    max_pulse_width_samples = max_samples // total_pulse_sections
+    sample_rate = max_pulse_width_samples / width_pulse_us / 1e-6  # calculate the sample rate
+
+    # Calculate the actual pulse width in samples based on the adjusted sample rate
+    pulse_width_samples = int(width_pulse_us * 1e-6 * sample_rate)
+
+    # Generate the waveform with adjusted pulse width
+    waveform = np.concatenate([
+                                  np.array([voltage] * pulse_width_samples + [0] * pulse_width_samples) for voltage in
+                                  voltages] +
+                              [np.array([voltage] * pulse_width_samples) for voltage in reversed(voltages)]
+                              )
+
+    return waveform, sample_rate
+
+
+def create_pulse(amplitude, width, include_zero=True):
+    """
+    Creates a single pulse, with an optional zero-value gap of the same width.
+
+    Args:
+        amplitude (int): The amplitude of the pulse in volts.
+        width (int): The width of the pulse.
+        include_zero (bool): Whether to include a zero-value gap after the pulse.
+
+    Returns:
+        np.ndarray: Array containing the pulse and, optionally, a zero-value gap.
+    """
+    pulse = np.array([amplitude] * width)
+    if include_zero:
+        pulse = np.concatenate([pulse, np.array([0] * width)])
+    return pulse
+
+
+def scale_waveform_to_dac(waveform, min_dac=0, max_dac=32767):
+    """Scale the waveform data to fit within the DAC range of the signal generator."""
+    min_wave = np.min(waveform)
+    max_wave = np.max(waveform)
+    # Scale and offset the waveform to fit the DAC range
+    scaled_waveform = (waveform - min_wave) / (max_wave - min_wave) * (max_dac - min_dac) + min_dac
+    return np.round(scaled_waveform).astype(int)
+
+
+def upload_waveform_to_signal_Generator(arb_name: str, waveform: np.ndarray, amplitude: float = 2) -> None:
+    """Upload a waveform to the signal generator as a comma-separated list of DAC values."""
+    dac_values = ', '.join(map(str, waveform))
+    # signal_Generator.write(r"DATA:VOL:CLE")
+    print("After RESET Error check")
+    signal_Generator.write(r"*RST")
+    signal_Generator.write(r"DATA:VOLatile:CLEar")
+    signal_Generator.query("*OPC?")
+    time.sleep(2)
+    signal_Generator.write(f'SOURCe1:FUNCtion:ARBitrary "EXP_RISE"')
+    print(signal_Generator.query(r'SYSTem:ERRor?'))
+    signal_Generator.write(f"SOURCe1:DATA:ARB:DAC {arb_name}, {dac_values}")
+    print(signal_Generator.query(r"DATA:VOLatile:CAT?"))
+
+    print(signal_Generator.query(r'SYSTem:ERRor?'))
+
+    signal_Generator.write(f"SOURce1:FUNCtion:ARBitrary {arb_name}")
+    print(signal_Generator.query(r'SYSTem:ERRor?'))
+
+    signal_Generator.write(fr'SOURCe1:FUNCtion:ARBitrary:SRATe 7272727')
+    signal_Generator.write(fr'SOURCe1:FUNCtion:ARBitrary:FILTer STEP')
+    signal_Generator.write(r'SOURCe1:FUNC ARB')
+    signal_Generator.write(r'SOURCe1:BURSt:STATe 1')
+    signal_Generator.write("TRIGger1:SOURce BUS")
+    signal_Generator.write("OUTPut1 1")
+    signal_Generator.write("VOLTage:OFFSET 0")
+    signal_Generator.write(f"SOURce1:VOLTage {amplitude}")
+
+
 def test_1() -> None:
     try:
         signal_Generator.write("OUTput 1")
@@ -2673,7 +2791,7 @@ def test_1() -> None:
         signal_Generator.write("OUTput 0")
         # mems_characteristics.clear()
 
-        wf = save_waveform(waveform_ch4=ch4, waveform_ch2=ch2, filename='test')
+        wf = save_waveform(waveform_ch4=ch4, waveform_ch2=ch2, filename='test'.upper())
         ax = plt.subplot(111)
 
         ax.plot(wf[2], wf[0], label='1')
@@ -2684,5 +2802,48 @@ def test_1() -> None:
         signal_Generator.write("OUTput 0")
 
 
+def sweep(amplitude: float = 10, voltage_steps: int = 20) -> list[float]:
+    output_list = []
+    for step in np.arange(start=1, stop=voltage_steps):
+        output_list.append(amplitude / voltage_steps * step)
+    output_list.append(0)
+    print(f"Precision => {amplitude / voltage_steps} V")
+    return sorted(output_list)
+
+
+def test_2() -> None:
+    # Example usage:
+    amplitude = 40
+    voltage_steps = 10
+    voltage_values = sweep(amplitude=amplitude, voltage_steps=voltage_steps)  # Amplitudes of the pulses
+
+    amplitude = max(voltage_values) / 20
+    width_pulse = 300  # Duration of each pulse and zero gap in microseconds
+
+    # Generate the waveform
+    waveform = create_pull_in_voltage_waveform(voltage_values, width_pulse)
+    # waveform = load_pull_in_voltage_waveform(voltages, width_pulse, max_samples=105)
+    scaled_waveform = scale_waveform_to_dac(waveform)
+    print(scaled_waveform, end='\n', sep='\n')
+    print(len(scaled_waveform), end='\n')
+
+    # Time vector for plotting (assuming each sample corresponds to a uniform time interval)
+    sample_rate = 7272727  # Hz
+    time_vector = np.linspace(0, len(waveform) * (1 / sample_rate), num=len(waveform), endpoint=False)
+
+    upload_waveform_to_signal_Generator(arb_name=r"test", waveform=scaled_waveform, amplitude=amplitude)
+
+    # Plotting the waveform
+    plt.figure(figsize=(10, 5))
+    plt.plot(time_vector * 1e6, waveform, label='Waveform')  # Time axis converted to microseconds
+    plt.title('Generated Waveform with Pulses and Zero Gaps')
+    plt.xlabel('Time (μs)')
+    plt.ylabel('Amplitude (Volts)')
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+
+
 if __name__ == "__main__":
-    load_pattern()
+    test_2()
+    signal_Generator.write("*TRG")
