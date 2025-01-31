@@ -1659,6 +1659,18 @@ class Window(tk.Tk):
                        command=lambda: [scripts_and_functions.on_off_signal_generator_switch()], col=2,
                        row=2).grid(
                 ipadx=tab_pad_x, ipady=tab_pad_x)
+            add_button(tab=frame_signal_generator, button_name='1kHz-1000pulses\n100us-5%',
+                       command=lambda: [scripts_and_functions.load_pattern(r"1000pulses_100us_pulse_dc5%_36Vtop_36Vhold_40V_triangle_filtered.arb")], col=0,
+                       row=3).grid(
+                ipadx=tab_pad_x, ipady=tab_pad_x)
+            add_button(tab=frame_signal_generator, button_name='2kHz-1000pulses\n100us-10%',
+                       command=lambda: [scripts_and_functions.load_pattern(r"1000pulses_100us_pulse_dc10%_36Vtop_36Vhold_40V_triangle_filtered.arb")], col=1,
+                       row=3).grid(
+                ipadx=tab_pad_x, ipady=tab_pad_x)
+            add_button(tab=frame_signal_generator, button_name='4kHz-1000pulses\n100us-20%',
+                       command=lambda: [scripts_and_functions.load_pattern(r"1000pulses_100us_pulse_dc20%_36Vtop_36Vhold_40V_triangle_filtered.arb")], col=2,
+                       row=3).grid(
+                ipadx=tab_pad_x, ipady=tab_pad_x)
 
             add_label(frame_oscilloscope,
                       label_name='Set cursor 1 position', col=0, row=0).grid(sticky='e', ipadx=tab_pad_x,

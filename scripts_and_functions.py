@@ -1,10 +1,10 @@
-from typing import Any
+from typing import Any, Tuple
 
 import numpy as np
 import pandas as pd
 import time
 
-from numpy import ndarray, dtype
+# from numpy import ndarray, dtype, signedinteger, long
 
 import dir_and_var_declaration
 import matplotlib.pyplot as plt
@@ -654,7 +654,7 @@ def get_channel_info(channel: int = 4) -> dict:
     return channel_info
 
 
-def get_curve(channel=4):
+def get_curve(channel: int = 4) -> np.ndarray[np.ndarray, np.ndarray]:
     print(f"Acquiring curver {channel}")
     curve_data = np.empty(shape=1)
     try:
@@ -678,20 +678,20 @@ def get_curve(channel=4):
         # data_truncated is the truncated data. This data  is cropped from ref index to 1500 samples after the end of
         # the triangle
         data_truncated = np.zeros((acquisition_length, 2))[int(ref_index):int(ref_index) + int(
-            number_of_samples) + 1500]  # 1500 samples added to make sure the triangle is complete
+            number_of_samples)]  # 1500 samples added to make sure the triangle is complete
         curve_data = data_truncated
         # data = np.zeros((acquisition_length,2))
         info = get_channel_info(channel=channel)
         osc.write("DATa:STOP {}".format(acquisition_length))
         # curve = np.array(osc.query('CURV?').split(','), dtype=float)
         curve = np.array(osc.query('CURV?').split(','), dtype=float)[
-                int(ref_index):int(ref_index) + int(number_of_samples) + 1500]
+                int(ref_index):int(ref_index) + int(number_of_samples)]
         y_offset = info['y_offset'][0]
         y_scale = info['y_scale'][0]
         time_base = info['sweep_duration'] / acquisition_length
         # print(time_base)
         time = np.arange(0, info['sweep_duration'], time_base)[
-               int(ref_index):int(ref_index) + int(number_of_samples) + 1500]
+               int(ref_index):int(ref_index) + int(number_of_samples)]
         # print("duration of sweep = {} s\n".format(info['sweep_duration']))
         curve_data[:, 0] = (curve - y_offset) * y_scale
         curve_data[:, 1] = time[:]
@@ -2649,39 +2649,70 @@ def toggle_signal_generator() -> None:
 
 def load_pattern(
         filename: str = r'filtered_1000pulses_100us_pulse_dc20%_30Vtop_24Vhold_40V_triangle_filtered.arb') -> None:
-    signal_Generator.write('*RST')
-    signal_Generator.write(r'MMEMory:CDIRectory "USB:\PATTERNS\"')
-    print(signal_Generator.query('SYSTem:ERRor?'))
-    print("Directory switched")
-    signal_Generator.write(fr'MMEMory:LOAD:DATA "USB:\PATTERNS\{filename}"')
-    signal_Generator.write(fr'FUNC:ARB "USB:\PATTERNS\{filename}"')
-    signal_Generator.write(r'FUNC ARB')
-
-    # print(signal_Generator.query('SYSTem:ERRor?'))
-    signal_Generator.write("OUTPut1 1")
-    signal_Generator.write("VOLTage:OFFSET 0")
-
-
-def create_pull_in_voltage_waveform(voltages: list[int], width_pulse: float) -> np.ndarray:
     """
-    Generates a waveform with ascending and descending square pulses specified by voltage values.
-    In the descending phase, pulses are continuous without zero gaps between them.
+    Loads an arbitrary waveform pattern from a USB device into a signal generator.
+
+    This function resets the signal generator, changes the directory to the one specified on the USB device under PATTERNS,
+    loads the waveform file specified by `filename`, sets the function of the generator to use this arbitrary waveform, and
+    finally enables the output with default settings.
+
+    Args:
+    filename (str): The name of the file containing the waveform pattern. Defaults to a specific waveform file name.
+
+    """
+    signal_Generator.write('*RST')  # Reset the signal generator to its default settings.
+    signal_Generator.write(r'MMEMory:CDIRectory "USB:\PATTERNS\"')  # Set the memory directory to PATTERNS on the USB.
+    print(signal_Generator.query('SYSTem:ERRor?'))  # Query the system for any errors and print them.
+    print("Directory switched")  # Inform the user that the directory has been switched.
+    signal_Generator.write(
+        fr'MMEMory:LOAD:DATA "USB:\PATTERNS\{filename}"')  # Load the waveform data from the specified file.
+    signal_Generator.write(
+        fr'FUNC:ARB "USB:\PATTERNS\{filename}"')  # Set the function to arbitrary waveform using the loaded file.
+    signal_Generator.write(r'FUNC ARB')  # Confirm that the function mode is set to arbitrary waveform.
+
+    # Enable output on channel 1 and set voltage offset to zero.
+    signal_Generator.write("OUTPut1 1")  # Turn on output channel 1.
+    signal_Generator.write("VOLTage:OFFSET 0")  # Set the voltage offset to zero.
+
+
+def create_smooth_pull_in_voltage_waveform(voltages: list[int] | list[float], width_pulse: float) -> np.ndarray:
+    """
+    Generates a waveform with ascending and descending square pulses specified by voltage values,
+    modified to include increased rise time and fall time to avoid overshoots and undershoots using a Gaussian filter.
 
     Args:
         voltages (list of int): List of voltage amplitudes for the pulses in ascending order.
         width_pulse (float): Duration of each pulse and the zero gap in the ascending phase in microseconds.
 
     Returns:
-        np.ndarray: The generated waveform array with pulse ascension and continuous descent.
+        np.ndarray: The generated waveform array with smooth and rounded transitions in pulse ascension and continuous descent.
     """
     sample_rate = 7272727  # Sample rate in Hz
     pulse_width = int(width_pulse * 1e-6 * sample_rate)
 
+    # Define the Gaussian filter
+    def gaussian_filter(length, std_dev):
+        return np.exp(-np.power(np.arange(length) - length / 2, 2.) / (2 * np.power(std_dev, 2.)))
+
+    # Length of the Gaussian filter
+    filter_length = 50  # This length can be adjusted based on your specific needs
+    std_dev = 5  # Standard deviation controls the width of the Gaussian curve
+
+    # Generate the Gaussian window
+    gaussian_window = gaussian_filter(filter_length, std_dev)
+    gaussian_window /= np.sum(gaussian_window)  # Normalize the window to maintain pulse amplitude
+
+    # Function to apply smoothing to a pulse
+    def smooth_pulse(pulse):
+        return np.convolve(pulse, gaussian_window, mode='same')
+
     # Create the ascending phase of the waveform
-    ascending_wave = [create_pulse(voltage, pulse_width, True) for voltage in sorted(voltages)]
+    ascending_wave = [smooth_pulse(create_pulse_ascent(voltage, pulse_width, True)) for voltage in sorted(voltages)]
 
     # Create the descending phase of the waveform without zero values between pulses
-    descending_wave = [np.array([voltage] * pulse_width) for voltage in sorted(voltages, reverse=True)]
+    descending_wave = [
+        smooth_pulse(create_descending_waveform(sorted(voltages, reverse=True), pulse_width))]  # for voltage in
+    # sorted(voltages, reverse=True)]
 
     # Concatenate the ascending and descending phases
     waveform = np.concatenate(ascending_wave + descending_wave)
@@ -2719,7 +2750,7 @@ def load_pull_in_voltage_waveform(voltages: list[int], width_pulse_us: float, ma
     return waveform, sample_rate
 
 
-def create_pulse(amplitude, width, include_zero=True):
+def create_pulse_ascent(amplitude, width, include_zero=True):
     """
     Creates a single pulse, with an optional zero-value gap of the same width.
 
@@ -2735,6 +2766,62 @@ def create_pulse(amplitude, width, include_zero=True):
     if include_zero:
         pulse = np.concatenate([pulse, np.array([0] * width)])
     return pulse
+
+
+def create_pulse_descent(amplitude, next_amplitude, width, include_zero=True, taper_length=5):
+    """
+    Creates a single pulse, with an optional zero-value gap and a tapering at the end to the next amplitude value
+    to reduce undershoots and create a smoother transition between consecutive pulses.
+
+    Args:
+        amplitude (int): The amplitude of the pulse in volts.
+        next_amplitude (int): The amplitude of the next pulse, to which this pulse will taper.
+        width (int): The width of the pulse.
+        include_zero (bool): Whether to include a zero-value gap after the pulse.
+        taper_length (int): Number of samples at the end of the pulse to taper off to the next amplitude.
+
+    Returns:
+        np.ndarray: Array containing the pulse with a tapering end to the next amplitude, optionally including a zero-value gap.
+    """
+    pulse = np.array([amplitude] * width)
+    if 0 < taper_length < width:
+        # Create a linear taper to smoothly decrease the pulse to the next amplitude
+        taper = np.linspace(amplitude, next_amplitude, taper_length)
+        pulse[-taper_length:] = taper  # Apply the taper at the end of the pulse
+
+    if include_zero:
+        zero_gap = np.array([0] * width)
+        pulse = np.concatenate([pulse, zero_gap])
+
+    return pulse
+
+
+def create_descending_waveform(voltages: list[int], width_pulse: int):
+    """
+    Generates the descending phase of the waveform with each pulse smoothly tapering to the next.
+
+    Args:
+        voltages (list[int] or list[float]): List of voltage amplitudes for the pulses in descending order.
+        width_pulse (int): Width of each pulse.
+
+    Returns:
+        np.ndarray: Concatenated waveform array of the descending phase with smooth transitions.
+    """
+    # Ensure 'voltages' is a list; if not, it could cause the type error mentioned.
+    if not isinstance(voltages, list):
+        raise ValueError("voltages must be a list of numbers")
+
+    pulses = []
+    for i in range(len(voltages) - 1):
+        # Pass the next voltage in the list as 'next_amplitude'
+        pulse = create_pulse_descent(voltages[i], voltages[i + 1], width_pulse, include_zero=False, taper_length=5)
+        pulses.append(pulse)
+
+    # Handle the last pulse (no taper needed if it's the final one in the sequence)
+    last_pulse = create_pulse_descent(voltages[-1], voltages[-1], width_pulse, include_zero=False, taper_length=0)
+    pulses.append(last_pulse)
+
+    return np.concatenate(pulses)
 
 
 def scale_waveform_to_dac(waveform, min_dac=0, max_dac=32767):
@@ -2775,6 +2862,73 @@ def upload_waveform_to_signal_Generator(arb_name: str, waveform: np.ndarray, amp
     signal_Generator.write(f"SOURce1:VOLTage {amplitude}")
 
 
+def sweep(amplitude: int = 10, voltage_steps: int = 20) -> list[int]:
+    output_list = []
+    for step in np.arange(start=1, stop=voltage_steps + 1):
+        output_list.append(amplitude / voltage_steps * step)
+    output_list.append(0)
+    print(f"Precision => {amplitude / voltage_steps} V")
+    return sorted(output_list)
+
+
+def get_curve_using_cursors(channel: int = 4):
+    try:
+        cursor_1_postion = float(osc.query("CURSor:VBArs:POSITION1?"))
+        print(cursor_1_postion)
+        cursor_2_postion = float(osc.query("CURSor:VBArs:POSITION2?"))
+        print(cursor_2_postion)
+
+        acquisition_length = int(osc.query("HORizontal:ACQLENGTH?"))  # get number of samples
+        # print("acquisition_length in get curve function = {} samples\n".format(acquisition_length))
+        trigger_ref = float(osc.query(
+            'HORizontal:MAIn:DELay:POSition?')) / 100  # get trigger position in percentage of samples (default is 10%)
+        ref_index = trigger_ref * acquisition_length  # get the 1st index of the ramp using trigger ref position and
+
+        sample_rate = float(osc.query('HORizontal:MODE:SAMPLERate?'))
+        number_of_samples = sample_rate * (cursor_2_postion - cursor_1_postion)
+
+        data_truncated = np.zeros((acquisition_length, 2))[int(ref_index):int(ref_index) + int(
+            number_of_samples)]  # 1500 samples added to make sure the triangle is complete
+        curve_data = data_truncated
+        # data = np.zeros((acquisition_length,2))
+        info = get_channel_info(channel=channel)
+        osc.write("DATa:STOP {}".format(acquisition_length))
+
+        curve = np.array(osc.query('CURV?').split(','), dtype=float)[
+                int(ref_index):int(ref_index) + int(number_of_samples)]
+
+        y_offset = info['y_offset'][0]
+        y_scale = info['y_scale'][0]
+        time_base = info['sweep_duration'] / acquisition_length
+        # print(time_base)
+        time = np.arange(0, info['sweep_duration'], time_base)[
+               int(ref_index):int(ref_index) + int(number_of_samples)]
+        # print("duration of sweep = {} s\n".format(info['sweep_duration']))
+        curve_data[:, 0] = (curve - y_offset) * y_scale
+        curve_data[:, 1] = time[:]
+        # print("get_curve function ended")
+
+    except:
+        print("Unable to acquire Data")
+    return curve_data
+
+    # v_bias = get_curve(channel=2)
+    # v_detector = get_curve(channel=4)
+    # print(v_bias[:, 1])
+    # print(v_detector[:, 1])
+    # duration = get_channel_info(channel=4)['sweep_duration']
+    # print(duration)
+    # index_1_cut_v_bias = np.where(cursor_1_postion > v_bias[:, 1])[0]
+    # index_2_cut_v_bias = np.where(cursor_2_postion > v_detector[:, 1])[0]
+    # print(index_1_cut_v_bias)
+    # print(index_2_cut_v_bias)
+    # # v_bias = np.where(cursor_1_postion < v_bias[:, 1].all() < cursor_2_postion, v_bias[:, 0], 0)
+    # # print(v_bias)
+    # # cut_v_detector = np.where(cursor_1_postion < v_detector[:, 1].all() < cursor_2_postion, v_detector[:, 0], 0)
+    # #
+    # return v_bias, v_detector
+
+
 def test_1() -> None:
     try:
         signal_Generator.write("OUTput 1")
@@ -2802,26 +2956,17 @@ def test_1() -> None:
         signal_Generator.write("OUTput 0")
 
 
-def sweep(amplitude: float = 10, voltage_steps: int = 20) -> list[float]:
-    output_list = []
-    for step in np.arange(start=1, stop=voltage_steps):
-        output_list.append(amplitude / voltage_steps * step)
-    output_list.append(0)
-    print(f"Precision => {amplitude / voltage_steps} V")
-    return sorted(output_list)
-
-
-def test_2() -> None:
+def test_2(amplitude: int = 26, pulse_width: int = 20) -> None:
     # Example usage:
-    amplitude = 40
-    voltage_steps = 10
+    amplitude: int = amplitude
+    voltage_steps = 5
     voltage_values = sweep(amplitude=amplitude, voltage_steps=voltage_steps)  # Amplitudes of the pulses
-
     amplitude = max(voltage_values) / 20
-    width_pulse = 300  # Duration of each pulse and zero gap in microseconds
+    width_pulse = pulse_width  # Duration of each pulse and zero gap in microseconds
 
     # Generate the waveform
-    waveform = create_pull_in_voltage_waveform(voltage_values, width_pulse)
+    # waveform = create_pull_in_voltage_waveform(voltage_values, width_pulse)
+    waveform = create_smooth_pull_in_voltage_waveform(voltages=voltage_values, width_pulse=width_pulse)
     # waveform = load_pull_in_voltage_waveform(voltages, width_pulse, max_samples=105)
     scaled_waveform = scale_waveform_to_dac(waveform)
     print(scaled_waveform, end='\n', sep='\n')
@@ -2834,16 +2979,58 @@ def test_2() -> None:
     upload_waveform_to_signal_Generator(arb_name=r"test", waveform=scaled_waveform, amplitude=amplitude)
 
     # Plotting the waveform
-    plt.figure(figsize=(10, 5))
-    plt.plot(time_vector * 1e6, waveform, label='Waveform')  # Time axis converted to microseconds
-    plt.title('Generated Waveform with Pulses and Zero Gaps')
-    plt.xlabel('Time (μs)')
-    plt.ylabel('Amplitude (Volts)')
-    plt.grid(True)
-    plt.legend()
-    plt.show()
+    # plt.figure(figsize=(10, 5))
+    # plt.plot(time_vector * 1e6, waveform, label='Waveform')  # Time axis converted to microseconds
+    # plt.title('Generated Waveform with Pulses and Zero Gaps')
+    # plt.xlabel('Time (μs)')
+    # plt.ylabel('Amplitude (Volts)')
+    # plt.grid(True)
+    # plt.legend()
+    # plt.show()
 
 
 if __name__ == "__main__":
-    test_2()
+
+    # test_2(26, 20)
+    # time.sleep(2)
     signal_Generator.write("*TRG")
+    time.sleep(2)
+    fig, ax = plt.subplots(3, 1, squeeze=True)
+    bias, detector = get_curve_using_cursors(2), get_curve_using_cursors(4)
+    # ramp_length = np.arange(start=1200, step=-100, stop=0)
+    # # descending = sorted(ramp_length, reverse=True)
+    # with np.nditer(ramp_length, op_flags=['readwrite']) as it:
+    #     for length in it:
+    #         length[...] = 2 * length
+    #
+    # # for length in x:
+    # #     print(length)
+    #     # configuration_sig_gen_pull_in(ramp_length=length, amplitude=27/20)
+    #         ramp_width(width=length)
+    #         time.sleep(2)
+    #         signal_Generator.write("*TRG")
+    #         time.sleep(2)
+    #         # get_curve(channel=4)
+    #         # get_curve(channel=2)
+    #         # # print(osc.query("CURSor:VBArs:POSITION2?"))
+    #         move_oscilloscope_cursor(cursor_number=2, cursor_type='X', position=str(length * 2e-6))
+    #         bias, detector = get_curve_using_cursors(2), get_curve_using_cursors(4)
+    #         # # get_waveform_using_cursors()
+    #         # plt.figure(figsize=(10, 5))
+    #         # plt.title('Generated Waveform with Pulses and Zero Gaps')
+    #         ax[0].plot(bias[:, 1], bias[:, 0], label=f'{length}')  # Time axis converted to microseconds
+    #         ax[1].plot(bias[:, 1], detector[:, 0], label=f'{length}')  # Time axis converted to microseconds
+    #         ax[2].plot(bias[:, 0], detector[:, 0], label=f'{length}')  # Time axis converted to microseconds
+    ax[0].plot(bias[:, 1], bias[:, 0])#, label=f'{length}')  # Time axis converted to microseconds
+    ax[1].plot(bias[:, 1], detector[:, 0])#, label=f'{length}')  # Time axis converted to microseconds
+    ax[2].plot(bias[:, 0], detector[:, 0])#, label=f'{length}')  # Time axis converted to microseconds
+    ax[0].set(ylabel='Bias Voltage (V)', xlabel='Time (μs)')
+    ax[1].set(ylabel='Detector Voltage (V)', xlabel='Time (μs)')
+    ax[2].set(ylabel='Detector Voltage (V)', xlabel='Amplitude (Volts)')
+    # plt.xlabel('Time (μs)')
+    # plt.ylabel('Amplitude (Volts)')
+    for axes in ax.flatten():
+        axes.grid(True)
+        # axes.legend()
+    plt.show()
+    # load_pattern()
