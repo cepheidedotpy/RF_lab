@@ -712,8 +712,8 @@ class Window(tk.Tk):
         self.canvas_cycling: FigureCanvasTkAgg
 
         self.file_df: pd.DataFrame = pd.DataFrame(
-            columns=["vpullin_plus", "vpullin_minus", "vpullout_plus", "vpullout_minus", "switching_time",
-                     "amplitude_variation", "release_time", "absolute_isolation", "cycles", "sticking events"],
+            columns=["vpullin_plus", "vpullin_minus", "vpullout_plus", "vpullout_minus", "t_on_time",
+                     "insertion_loss", "t_off_time", "isolation", "cycles", "sticking events"],
             dtype=np.float64, data=None)
 
         self.file_power_sweep = pd.DataFrame(columns=['Power Input DUT Avg (dBm)', 'Power Output DUT Avg (dBm)'])
@@ -1119,6 +1119,12 @@ class Window(tk.Tk):
                                                                       self.entered_ramp_volt.get()],
                                                            text=self.text_file_name_pull_in_test, end_characters='V')],
                        col=2, row=0)
+            add_button(tab=frame_test_pull_in_comp_info,
+                       button_name='Send trigger',
+                       command=lambda: [scripts_and_functions.send_trig()], col=2, row=1)
+            add_button(tab=frame_test_pull_in_comp_info,
+                       button_name='Osc trigger',
+                       command=lambda: [scripts_and_functions.force_trigger_osc()], col=2, row=2)
 
             self.entered_ramp_width = add_entry(frame_signal_gen_measurement, text_var=self.ramp_width, width=10, col=1,
                                                 row=1)
@@ -1154,7 +1160,7 @@ class Window(tk.Tk):
             self.text_gen_controls_pull_in_debug.grid(column=0, row=3, sticky='n', columnspan=4)
 
             add_button(tab=frame_test_pull_in_gen_controls, button_name='Reset Signal Generator',
-                       command=self.reset_signal_Generator, col=0, row=1).grid(ipadx=tab_pad_x, ipady=tab_pad_x)
+                       command=lambda: [self.reset_signal_Generator()], col=0, row=1).grid(ipadx=tab_pad_x, ipady=tab_pad_x)
             add_button(tab=frame_test_pull_in_gen_controls, button_name='Exit', command=lambda: [self._quit(),
                                                                                                  close_resources()],
                        col=1,
@@ -1289,6 +1295,13 @@ class Window(tk.Tk):
                                       self.chosen_bias_voltage.get()], text=self.text_file_name_s3p_test,
                            end_characters='V')], col=2,
                        row=0)
+            add_button(tab=frame_snp_compo_info,
+                       button_name='Send trigger',
+                       command=lambda: [scripts_and_functions.send_trig()], col=2, row=1)
+
+            add_button(tab=frame_snp_compo_info,
+                       button_name='Osc trigger',
+                       command=lambda: [scripts_and_functions.force_trigger_osc()], col=2, row=2)
 
             add_label(frame_snp_signal_Generator, label_name='Bias Voltage', col=0, row=0).grid(sticky='e',
                                                                                                 ipadx=tab_pad_x,
@@ -1388,7 +1401,7 @@ class Window(tk.Tk):
                        col=1,
                        row=1).grid(ipadx=tab_pad_x, ipady=tab_pad_x)
             add_button(tab=frame_snp_gene_controls, button_name='Reset Signal Gen',
-                       command=self.set_pulse_gen_pulse_mode,
+                       command=lambda: [self.set_pulse_gen_pulse_mode()],
                        col=1,
                        row=2).grid(ipadx=tab_pad_x, ipady=tab_pad_x)
             add_button(tab=frame_snp_gene_controls, button_name='S1P config', command=call_s1p_config, col=0,
@@ -1482,6 +1495,10 @@ class Window(tk.Tk):
                        col=2, row=0)
             add_button(tab=frame_power_compo_info, button_name='Send trigger', command=scripts_and_functions.send_trig,
                        col=2, row=1)
+            add_button(tab=frame_power_compo_info, button_name='Osc trigger',
+                       command=lambda: [scripts_and_functions.force_trigger_osc()],
+                       col=2, row=2)
+
             # General controls---------------------------------------------------------------
 
             rf_gen_min_power = tk.DoubleVar(value=-20)
@@ -1953,16 +1970,23 @@ class Window(tk.Tk):
 
     # signal_Generator Functions -----------------------------------------------------------
     def reset_signal_Generator(self):  # Reset signal_Generator using the IP address at Ressource Page (used in TAB4)
-        ip = self.signal_Generator_instance.get()
-        scripts_and_functions.setup_signal_Generator_ramp_with_rst(ip)
+        scripts_and_functions.setup_signal_Generator_ramp_with_rst(self.signal_Generator_instance.get())
 
     def acquire_pull_down_data(
             self):  # Calls scripts_and_functions module measure_pull_down_voltage() to acquire pull down voltage (
         # used in TAB5)
         # try:
         os.chdir(self.test_pull_in_dir.get())
+
         scripts_and_functions.measure_pull_down_voltage(
-            filename=self.text_file_name_pull_in_test.get(index1="1.0", index2="end-1c"))
+            filename = file_name_creation([
+                self.test_pull_in_project.get(),
+                self.test_pull_in_cell.get(),
+                self.test_pull_in_reticule.get(),
+                self.test_pull_in_device.get(),
+                str(int(self.pull_in_v_bias.get()))], end_characters='V', text=self.text_file_name_pull_in_test))
+        # scripts_and_functions.measure_pull_down_voltage(
+        #     filename=self.text_file_name_pull_in_test.get(index1="1.0", index2="end-1c"))
         # scripts_and_functions.print_error_log()
         self.set_txt()
         # except:
@@ -2032,9 +2056,8 @@ class Window(tk.Tk):
 
     # Plots functions -------------------------------------------------------------
     def trace_pull_down(self, conversion_coeff=0.040):
-        # Measurement function that calls scripts_and_functions Module to trigger signal_Generator to figure pull in trace and
-        # display the measurement values in the text_file_name_s3p_test boxes(used in TAB6)
-        # try:
+        # Measurement function that calls scripts_and_functions Module to trigger signal_Generator to figure pull in
+        # trace and display the measurement values in the text_file_name_s3p_test boxes(used in TAB6) try:
         scripts_and_functions.signal_Generator.write('TRIG')
         curve_det = scripts_and_functions.get_curve(channel=4)
         curve_bias = scripts_and_functions.get_curve(channel=2)

@@ -44,6 +44,16 @@ rf_Generator: RsInstrument = rf_gen_init(rf_gen_type='smb')
 # VNA parameter definition
 # dir_and_var_declaration.zva_directories(zva)
 
+
+def initialize_hardware():
+    rm = pyvisa.ResourceManager()
+    signal_Generator: pyvisa.Resource = sig_gen_init()
+    osc: pyvisa.Resource = osc_init()
+    zva: RsInstrument = zva_init(zva="ZVA50")
+    powermeter: pyvisa.Resource = powermeter_init()
+    rf_Generator: RsInstrument = rf_gen_init(rf_gen_type='smb')
+
+
 def timing_wrapper(func):
     """
     A decorator that times the execution of the given function and
@@ -450,11 +460,12 @@ def setup_zva_with_rst(ip: str) -> None:
     print('ZVA Reset complete!', end='\n')
 
 
-def setup_signal_Generator_ramp_with_rst(ip: str) -> None:
-    sig_gen = rm.open_resource('{}'.format(ip))
-    sig_gen.write('MMEM:LOAD:STAT "{}"'.format(dir_and_var_declaration.pullin_setup_sig_gen))  # Load STATE_4
-    error_log = sig_gen.query('SYSTem:ERRor?')
+def setup_signal_Generator_ramp_with_rst(ip: str) -> pyvisa.Resource:
+    signal_Generator = rm.open_resource(r'{}'.format(ip))
+    signal_Generator.write('MMEM:LOAD:STAT "{}"'.format(dir_and_var_declaration.pullin_setup_sig_gen))  # Load STATE_4
+    error_log = signal_Generator.query('SYSTem:ERRor?')
     print('Signal generator Reset complete!', end='\n')
+    return signal_Generator
 
 
 def configuration_sig_gen(frequency_gen: float = 150, amplitude: float = 1, pulse_width: float = 0.001333) -> None:
@@ -620,6 +631,10 @@ def setup_osc_cycling():
          ('acquisition_length', acquisition_length)])
     # ('acquisition_length', acquisition_length), ('trig_ref', trig_ref)])
     return (setup_info)
+
+
+def force_trigger_osc():
+    osc.write('TRIGGER FORCE')
 
 
 def setup_rf_synth(frequency: float = 10, power: float = -10,
@@ -1560,8 +1575,9 @@ def cycling_sequence_with_escape_interrupt(app, new_data_event,
     return app.file_df
 
 
-def save_waveform(waveform_ch4: np.array(np.array(float)), waveform_ch2: np.array(float), filename: str) -> np.array(
-    float):
+def save_waveform(waveform_ch4: np.array(np.array(float)),
+                  waveform_ch2: np.array(float),
+                  filename: str) -> np.array(float):
     data = np.zeros(shape=2)
     info = get_channel_info(channel=4)
     data = np.vstack((waveform_ch4[:, 0], waveform_ch2[:, 0], waveform_ch4[:, 1]))
@@ -2250,7 +2266,7 @@ def extract_data_v3(rf_detector_channel, v_bias_channel, ramp_start=0.20559, ram
     data = {
         'vpullin_plus': [vpullin], 'vpullin_minus': [vpullin_neg], 'vpullout_plus': [vpullout],
         'vpullout_minus': [vpullout_neg], 't_on_time': [t_on_time],
-        'amplitude_variation': [relative_amplitude], 't_off_time': [t_off_time], 'absolute_isolation': [isolation]
+        'insertion_loss': [relative_amplitude], 't_off_time': [t_off_time], 'isolation': [isolation]
     }
     # Creating the DataFrame
     mems_characteristics = pd.DataFrame(data)
@@ -2260,8 +2276,10 @@ def extract_data_v3(rf_detector_channel, v_bias_channel, ramp_start=0.20559, ram
 
 def signal_Generator_cycling_config():
     signal_Generator.write("*RST")
+    signal_Generator.write('OUTput 0')
     time.sleep(1)
     signal_Generator.write('MMEM:LOAD:STAT "{}"'.format(dir_and_var_declaration.cycling_setup_sig_gen))
+    signal_Generator.write('OUTput 0')
     time.sleep(1)
     signal_Generator.write("*OPC?")
     print("Signal Generator cycling config")
@@ -2671,7 +2689,7 @@ def load_pattern(
     signal_Generator.write(r'FUNC ARB')  # Confirm that the function mode is set to arbitrary waveform.
 
     # Enable output on channel 1 and set voltage offset to zero.
-    signal_Generator.write("OUTPut1 1")  # Turn on output channel 1.
+    signal_Generator.write("OUTPut1 0")  # Turn on output channel 1.
     signal_Generator.write("VOLTage:OFFSET 0")  # Set the voltage offset to zero.
 
 
@@ -2993,10 +3011,10 @@ if __name__ == "__main__":
 
     # test_2(26, 20)
     # time.sleep(2)
-    signal_Generator.write("*TRG")
-    time.sleep(2)
-    fig, ax = plt.subplots(3, 1, squeeze=True)
-    bias, detector = get_curve_using_cursors(2), get_curve_using_cursors(4)
+    # signal_Generator.write("*TRG")
+    # time.sleep(2)
+    # fig, ax = plt.subplots(3, 1, squeeze=True)
+    # bias, detector = get_curve_using_cursors(2), get_curve_using_cursors(4)
     # ramp_length = np.arange(start=1200, step=-100, stop=0)
     # # descending = sorted(ramp_length, reverse=True)
     # with np.nditer(ramp_length, op_flags=['readwrite']) as it:
@@ -3021,16 +3039,17 @@ if __name__ == "__main__":
     #         ax[0].plot(bias[:, 1], bias[:, 0], label=f'{length}')  # Time axis converted to microseconds
     #         ax[1].plot(bias[:, 1], detector[:, 0], label=f'{length}')  # Time axis converted to microseconds
     #         ax[2].plot(bias[:, 0], detector[:, 0], label=f'{length}')  # Time axis converted to microseconds
-    ax[0].plot(bias[:, 1], bias[:, 0])#, label=f'{length}')  # Time axis converted to microseconds
-    ax[1].plot(bias[:, 1], detector[:, 0])#, label=f'{length}')  # Time axis converted to microseconds
-    ax[2].plot(bias[:, 0], detector[:, 0])#, label=f'{length}')  # Time axis converted to microseconds
-    ax[0].set(ylabel='Bias Voltage (V)', xlabel='Time (μs)')
-    ax[1].set(ylabel='Detector Voltage (V)', xlabel='Time (μs)')
-    ax[2].set(ylabel='Detector Voltage (V)', xlabel='Amplitude (Volts)')
+    # ax[0].plot(bias[:, 1], bias[:, 0])  # , label=f'{length}')  # Time axis converted to microseconds
+    # ax[1].plot(bias[:, 1], detector[:, 0])  # , label=f'{length}')  # Time axis converted to microseconds
+    # ax[2].plot(bias[:, 0], detector[:, 0])  # , label=f'{length}')  # Time axis converted to microseconds
+    # ax[0].set(ylabel='Bias Voltage (V)', xlabel='Time (μs)')
+    # ax[1].set(ylabel='Detector Voltage (V)', xlabel='Time (μs)')
+    # ax[2].set(ylabel='Detector Voltage (V)', xlabel='Amplitude (Volts)')
     # plt.xlabel('Time (μs)')
     # plt.ylabel('Amplitude (Volts)')
-    for axes in ax.flatten():
-        axes.grid(True)
+    # for axes in ax.flatten():
+    #     axes.grid(True)
         # axes.legend()
-    plt.show()
+    # plt.show()
     # load_pattern()
+    force_trigger_osc()
