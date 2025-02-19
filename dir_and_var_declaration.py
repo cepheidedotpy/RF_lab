@@ -60,7 +60,7 @@ rf_generator_ip: str = r'TCPIP0::rssmb100a179766::inst0::INSTR'
 powermeter_ip: str = r'TCPIP0::169.254.64.175::inst0::I=STR'
 oscilloscope_ip: str = r'TCPIP0::DPO5054-C011738::inst0::INSTR'
 
-ip_zva: str = zva_ip_ZVA67  # ZVA IP variable
+ip_zva: str = zva_ip_ZVA50  # ZVA IP variable
 
 zva_parameters: dict[str: str] = {
     'setup_s1p': pc_file_s1p, 'setup_s2p': pc_file_s2p, 'setup_s3p': pc_file_s3p, 'instrument_file': instrument_file,
@@ -119,6 +119,7 @@ def zva_init(tcpip_address: str = r'TCPIP0::ZNA67-101810::inst0::INSTR', zva="ZV
         tcpip_address = zva_ip_ZVA67
     try:
         zva = RsInstrument(tcpip_address, id_query=False, reset=False)
+        print(type(zva))
         zva.write_str_with_opc("SYSTem:DISPlay:UPDate ON")
     except TimeoutException as e:
         error = True
@@ -149,6 +150,7 @@ def sig_gen_init(tcpip_address: str = r'TCPIP0::A-33521B-00526::inst0::INSTR') -
     sig_gen = None
     try:
         sig_gen = rm.open_resource(tcpip_address)
+        print(type(sig_gen))
     except pyvisa.VisaIOError as e:
         error = True
         print(e.args[0])
@@ -177,6 +179,7 @@ def osc_init(tcpip_address: str = r'TCPIP0::DPO5054-C011738::inst0::INSTR') -> p
     osc = None
     try:
         osc = rm.open_resource(tcpip_address)
+        print(type(osc))
     except pyvisa.VisaIOError as e:
         error = True
         print(f'Error {e} occurred in oscilloscope')
@@ -202,6 +205,7 @@ def rf_gen_init(tcpip_address: str = r'TCPIP0::rssmb100a179766::inst0::INSTR',
         tcpip_address = r'TCPIP0::rssmf100a105220::inst0::INSTR'
         try:
             rf_gen = RsInstrument(tcpip_address, id_query=False, reset=False)
+            print(type(rf_gen))
         except TimeoutException as e:
             error = True
             print(e.args[0])
@@ -255,6 +259,7 @@ def powermeter_init(tcpip_address: str = r'TCPIP0::A-N1912A-00589::inst0::INSTR'
     powermeter = None
     try:
         powermeter = rm.open_resource(tcpip_address)
+        print(type(powermeter))
     except pyvisa.VisaIOError as e:
         error = True
         print(f'Error {e} occurred')

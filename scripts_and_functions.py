@@ -1,24 +1,20 @@
-from typing import Any, Tuple
-
+import os
+import time
+from functools import wraps
+import RsInstrument
+import matplotlib.artist
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import numpy as np
 import pandas as pd
-import time
-
-# from numpy import ndarray, dtype, signedinteger, long
+import pyvisa
+from RsInstrument import RsInstrument, RsInstrException, TimeoutException, StatusException
+from matplotlib.ticker import FuncFormatter
+from pyvisa import *
+from scipy.signal import savgol_filter, get_window, convolve
 
 import dir_and_var_declaration
-import matplotlib.pyplot as plt
-import matplotlib.artist
-import matplotlib.ticker as ticker
-import os
-from pyvisa import *
-import pyvisa
-import RsInstrument
-from RsInstrument import *
 from dir_and_var_declaration import zva_init, sig_gen_init, osc_init, rf_gen_init, powermeter_init
-from functools import wraps
-from scipy.signal import savgol_filter, get_window, convolve
-from matplotlib.ticker import FuncFormatter
 
 matplotlib.ticker.ScalarFormatter(useOffset=True, useMathText=True)
 
@@ -28,30 +24,46 @@ Developer : T0188303 - A.N.
 """
 os.system('cls')
 
+rm: ResourceManager
+signal_Generator: pyvisa.resources.tcpip.TCPIPInstrument
+osc: pyvisa.resources.tcpip.TCPIPInstrument
+zva: RsInstrument
+rf_Generator: RsInstrument
+powermeter: pyvisa.resources.tcpip.TCPIPInstrument
+
+
+def initialize_hardware():
+    global rm, osc, signal_Generator, zva, powermeter, signal_Generator, rf_Generator
+    rm = pyvisa.ResourceManager()
+    signal_Generator = sig_gen_init()
+    osc = osc_init()
+    zva = zva_init(zva="ZVA50")
+    powermeter = powermeter_init()
+    rf_Generator = rf_gen_init(rf_gen_type='smb')
+    signal_Generator = sig_gen_init()
+
+    return signal_Generator, osc, zva, powermeter, rf_Generator, rm
+
+
+initialize_hardware()
+
 path = r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data'
 
 # global zva, signal_Generator, osc, rf_Generator
 os.chdir('{}'.format(path))
-# Opening resource manager
-rm = pyvisa.ResourceManager()
-signal_Generator: pyvisa.Resource = sig_gen_init()
-osc: pyvisa.Resource = osc_init()
-zva: RsInstrument = zva_init(zva="ZVA50")
-powermeter: pyvisa.Resource = powermeter_init()
-rf_Generator: RsInstrument = rf_gen_init(rf_gen_type='smb')
 
+
+# Opening resource manager
+# rm = pyvisa.ResourceManager()
+# signal_Generator: pyvisa.Resource = sig_gen_init()
+# osc: pyvisa.Resource = osc_init()
+# zva: RsInstrument = zva_init(zva="ZVA50")
+# powermeter: pyvisa.Resource = powermeter_init()
+# rf_Generator: RsInstrument = rf_gen_init(rf_gen_type='smb')
+#
 
 # VNA parameter definition
 # dir_and_var_declaration.zva_directories(zva)
-
-
-def initialize_hardware():
-    rm = pyvisa.ResourceManager()
-    signal_Generator: pyvisa.Resource = sig_gen_init()
-    osc: pyvisa.Resource = osc_init()
-    zva: RsInstrument = zva_init(zva="ZVA50")
-    powermeter: pyvisa.Resource = powermeter_init()
-    rf_Generator: RsInstrument = rf_gen_init(rf_gen_type='smb')
 
 
 def timing_wrapper(func):
@@ -1429,8 +1441,7 @@ def cycling_sequence_no_processing(app, new_data_event, number_of_cycles: float 
                 count = new_value
                 ch_4_detector = get_curve_cycling(channel=4)
                 ch_2_bias = get_curve_cycling(channel=2)
-                data = extract_data_v3(rf_detector_channel=ch_4_detector, v_bias_channel=ch_2_bias,
-                                       conversion_coeff=conversion_coeff)
+                data = extract_data_v3(rf_detector_channel=ch_4_detector, v_bias_channel=ch_2_bias)
                 data["cycles"] = (count - starting_number_of_acq) * number_of_pulses_in_wf * events
                 app.file_df = pd.concat([app.file_df, data], ignore_index=True)
                 new_data_event.set()  # Signal that new data is available
@@ -2875,7 +2886,7 @@ def upload_waveform_to_signal_Generator(arb_name: str, waveform: np.ndarray, amp
     signal_Generator.write(r'SOURCe1:FUNC ARB')
     signal_Generator.write(r'SOURCe1:BURSt:STATe 1')
     signal_Generator.write("TRIGger1:SOURce BUS")
-    signal_Generator.write("OUTPut1 1")
+    # signal_Generator.write("OUTPut1 1")
     signal_Generator.write("VOLTage:OFFSET 0")
     signal_Generator.write(f"SOURce1:VOLTage {amplitude}")
 
@@ -2977,7 +2988,7 @@ def test_1() -> None:
 def test_2(amplitude: int = 26, pulse_width: int = 20) -> None:
     # Example usage:
     amplitude: int = amplitude
-    voltage_steps = 5
+    voltage_steps = 10
     voltage_values = sweep(amplitude=amplitude, voltage_steps=voltage_steps)  # Amplitudes of the pulses
     amplitude = max(voltage_values) / 20
     width_pulse = pulse_width  # Duration of each pulse and zero gap in microseconds
@@ -3007,12 +3018,46 @@ def test_2(amplitude: int = 26, pulse_width: int = 20) -> None:
     # plt.show()
 
 
-if __name__ == "__main__":
+def plot_file(filename='default.txt',
+              directory=r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Pullin voltage'):
+    os.chdir('{}'.format(directory))
+    with open(filename, newline=''):
+        data_np = np.loadtxt(filename, delimiter=',', unpack=True, skiprows=1)
+        v_bias = data_np[:, 0].copy()
+        v_log_amp = data_np[:, 1].copy()
+        t = data_np[:, 2].copy()
+        fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(15, 9))
 
-    # test_2(26, 20)
+        ax[0].plot(t, v_bias)  # , label=f'{length}')  # Time axis converted to microseconds
+        ax[0].grid()
+        ax[1].plot(t, v_log_amp)  # , label=f'{length}')  # Time axis converted to microseconds
+        ax[1].grid()
+        ax[2].plot(v_bias, v_log_amp)  # , label=f'{length}')  # Time axis converted to microseconds
+        ax[2].grid()
+        ax[0].set(ylabel='Bias Voltage (V)', xlabel='Time (s)')
+        ax[1].set(ylabel='Detector Voltage (V)', xlabel='Time (s)')
+        ax[2].set(ylabel='Detector Voltage (V)', xlabel='Amplitude (V)')
+        plt.show()
+
+
+if __name__ == "__main__":
+    # wf = create_smooth_pull_in_voltage_waveform(voltages=list(np.arange(0, 40, 5)), width_pulse=20)
+    # fig, ax = plt.subplots(1, 1, squeeze=True)
+    # ax.plot(wf)
+    # filename = r'POWERFLEX-shunt-XY-m20-4lines-4MEMS-x16-y02-40V'
+    # directory = (r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Pullin '
+    #              r'voltage\POWERFLEX-MiniMEMS-1A\Mesures AN 17-02-25\Mesures X16')
+    # os.chdir(directory)
+    # plt.show()
+    # upload_waveform_to_signal_Generator(arb_name='Pullin_test', waveform=wf, amplitude=2)
+    # test_2(40, 20)
+    # signal_Generator.write('OUTput 1')
     # time.sleep(2)
-    # signal_Generator.write("*TRG")
-    # time.sleep(2)
+    signal_Generator.write("*TRG")
+    time.sleep(1)
+    # measure_pull_down_voltage(filename=filename)
+
+    # plot_file(filename + '.txt', directory)
     # fig, ax = plt.subplots(3, 1, squeeze=True)
     # bias, detector = get_curve_using_cursors(2), get_curve_using_cursors(4)
     # ramp_length = np.arange(start=1200, step=-100, stop=0)
@@ -3049,7 +3094,7 @@ if __name__ == "__main__":
     # plt.ylabel('Amplitude (Volts)')
     # for axes in ax.flatten():
     #     axes.grid(True)
-        # axes.legend()
+    # axes.legend()
     # plt.show()
     # load_pattern()
-    force_trigger_osc()
+    # force_trigger_osc()
