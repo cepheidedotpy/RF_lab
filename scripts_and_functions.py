@@ -25,7 +25,7 @@ Developer : T0188303 - A.N.
 os.system('cls')
 
 rm: ResourceManager
-signal_Generator: pyvisa.resources.tcpip.TCPIPInstrument
+signal_generator: pyvisa.resources.tcpip.TCPIPInstrument
 osc: pyvisa.resources.tcpip.TCPIPInstrument
 zva: RsInstrument
 rf_Generator: RsInstrument
@@ -33,29 +33,27 @@ powermeter: pyvisa.resources.tcpip.TCPIPInstrument
 
 
 def initialize_hardware():
-    global rm, osc, signal_Generator, zva, powermeter, signal_Generator, rf_Generator
+    global rm, osc, signal_generator, zva, powermeter, signal_generator, rf_Generator
     rm = pyvisa.ResourceManager()
-    signal_Generator = sig_gen_init()
+    signal_generator = sig_gen_init()
     osc = osc_init()
-    zva = zva_init(zva="ZVA50")
+    zva = zva_init(zva="ZVA67")
     powermeter = powermeter_init()
     rf_Generator = rf_gen_init(rf_gen_type='smb')
-    signal_Generator = sig_gen_init()
+    signal_generator = sig_gen_init()
 
-    return signal_Generator, osc, zva, powermeter, rf_Generator, rm
+    return signal_generator, osc, zva, powermeter, rf_Generator, rm
 
-
-initialize_hardware()
 
 path = r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data'
 
-# global zva, signal_Generator, osc, rf_Generator
+# global zva, signal_generator, osc, rf_Generator
 os.chdir('{}'.format(path))
 
 
 # Opening resource manager
 # rm = pyvisa.ResourceManager()
-# signal_Generator: pyvisa.Resource = sig_gen_init()
+# signal_generator: pyvisa.Resource = sig_gen_init()
 # osc: pyvisa.Resource = osc_init()
 # zva: RsInstrument = zva_init(zva="ZVA50")
 # powermeter: pyvisa.Resource = powermeter_init()
@@ -101,7 +99,7 @@ def sig_gen_opc_control(function):
         opc_test = '0'
         while opc_test == '0':
             time.sleep(0.1)
-            opc_test = signal_Generator.query("*OPC?").removesuffix('\n')
+            opc_test = signal_generator.query("*OPC?").removesuffix('\n')
             if opc_test == 0:
                 print(f'Operation still in progress OPC_value={opc_test}')
             else:
@@ -140,12 +138,12 @@ def bias_voltage(voltage: str = '10') -> float:
     # user_input/20] because of the amplifier
     voltage_at_sig_gen = float(voltage) / 20
     print(voltage_at_sig_gen)
-    signal_Generator.write("SOURce:VOLTage:OFFSET 0")
-    signal_Generator.write("SOURce:VOLTage:LOW 0")
-    signal_Generator.write("SOURce:VOLTage:HIGH {}".format(voltage_at_sig_gen))
-    probe_voltage = signal_Generator.query("SOURce:VOLTage?")
+    signal_generator.write("SOURce:VOLTage:OFFSET 0")
+    signal_generator.write("SOURce:VOLTage:LOW 0")
+    signal_generator.write("SOURce:VOLTage:HIGH {}".format(voltage_at_sig_gen))
+    probe_voltage = signal_generator.query("SOURce:VOLTage?")
     print("probe_voltage is {}:".format(float(probe_voltage)))
-    set_voltage = float(signal_Generator.query("SOURce:VOLTage?")) * 20
+    set_voltage = float(signal_generator.query("SOURce:VOLTage?")) * 20
     print(set_voltage)
     return set_voltage
 
@@ -156,12 +154,12 @@ def bias_pull_in_voltage(voltage: str = 1) -> float:
     # because of the amplifier
     voltage_at_sig_gen = float(voltage) / 20
     print(voltage_at_sig_gen)
-    signal_Generator.write("SOURce:VOLTage:OFFSET 0")
-    signal_Generator.write("SOURce:VOLTage:LOW -{}".format(voltage_at_sig_gen))
-    signal_Generator.write("SOURce:VOLTage:HIGH {}".format(voltage_at_sig_gen))
-    probe_voltage = signal_Generator.query("SOURce:VOLTage?")
+    signal_generator.write("SOURce:VOLTage:OFFSET 0")
+    signal_generator.write("SOURce:VOLTage:LOW -{}".format(voltage_at_sig_gen))
+    signal_generator.write("SOURce:VOLTage:HIGH {}".format(voltage_at_sig_gen))
+    probe_voltage = signal_generator.query("SOURce:VOLTage?")
     print("probe_voltage is {}:".format(float(probe_voltage)))
-    set_voltage = float(signal_Generator.query("SOURce:VOLTage?")) * 20
+    set_voltage = float(signal_generator.query("SOURce:VOLTage?")) * 20
     print(set_voltage)
     return set_voltage
 
@@ -171,14 +169,14 @@ def ramp_width(width: float = 100) -> None:  # Set ramp length (µs) in pull dow
     frequency_gen = 1 / (4 * float(width * 10 ** (-6)))
     print(f"Ramp frequency = {frequency_gen / 1e3} kHz")
     try:
-        signal_Generator.write('SOURce1:FUNCtion:RAMP:SYMMetry 50')  # selecting pulse function
-        signal_Generator.write('FREQuency {}'.format(frequency_gen))
-        signal_Generator.write('OUTPut 1')  # Turn on output
-        error_log = signal_Generator.query('SYSTem:ERRor?')
+        signal_generator.write('SOURce1:FUNCtion:RAMP:SYMMetry 50')  # selecting pulse function
+        signal_generator.write('FREQuency {}'.format(frequency_gen))
+        signal_generator.write('OUTPut 1')  # Turn on output
+        error_log = signal_generator.query('SYSTem:ERRor?')
         error = error_log.split(sep=',')[0]
         print(error, error_log, sep='\n', end='\n')
         if int(error) != 0:
-            signal_Generator.write('FREQuency {}'.format(frequency_gen))
+            signal_generator.write('FREQuency {}'.format(frequency_gen))
         time.sleep(1)
     except pyvisa.VisaIOError:
         print('Signal Generator VisaIOError')
@@ -209,8 +207,8 @@ def set_pulse_width(
     try:
         width_converted = width  # float
         print("Pulse width: {} s".format(width_converted, type='E', precision=2), end='\n')
-        signal_Generator.write("SOURce1:FUNCtion:PULSe:WIDTh {}".format(width_converted, type='E'))
-        pri = signal_Generator.query("SOURce1:FUNCtion:PULSe:PERiod?").split('\n')[0]
+        signal_generator.write("SOURce1:FUNCtion:PULSe:WIDTh {}".format(width_converted, type='E'))
+        pri = signal_generator.query("SOURce1:FUNCtion:PULSe:PERiod?").split('\n')[0]
         # print(f"pri={pri} s")
         prf = 1 / float(pri)
         print(f"prf={prf} Hz\npri={pri} s")
@@ -225,22 +223,22 @@ def set_pulse_width(
 
 
 def sig_gen_set_output_log() -> str:  # Get error log of the signal generator
-    a = r"Bias voltage set to {} V".format(float(signal_Generator.query("SOURce:VOLTage?")) * 20)
-    b = r"Pulse width is set to {} s".format(float(signal_Generator.query("SOURce1:FUNCtion:PULSe:WIDTh?")))
-    c = r"prf set to {} Hz".format(1 / float(signal_Generator.query("SOURce1:FUNCtion:PULSe:PERiod?")))
+    a = r"Bias voltage set to {} V".format(float(signal_generator.query("SOURce:VOLTage?")) * 20)
+    b = r"Pulse width is set to {} s".format(float(signal_generator.query("SOURce1:FUNCtion:PULSe:WIDTh?")))
+    c = r"prf set to {} Hz".format(1 / float(signal_generator.query("SOURce1:FUNCtion:PULSe:PERiod?")))
     return a + '\n' + b + '\n' + c
 
 
 @sig_gen_opc_control
 def set_prf(prf: float = 1e3) -> str:  # Set pulse repetition frequency
     pri = 1 / prf
-    width = signal_Generator.query("SOURce1:FUNCtion:PULSe:WIDTh?").split('\n')[0]
+    width = signal_generator.query("SOURce1:FUNCtion:PULSe:WIDTh?").split('\n')[0]
     print(f"Pulse width = {width} s")
     if float(width) > pri:
         print("Pulse width is too large, settings conflict\nMax Pulse width must be < {}".format(pri))
         error_log = "Pulse width is too large, settings conflict\nMax Pulse width must be < {}".format(pri)
     else:
-        signal_Generator.write("SOURce1:FUNCtion:PULSe:PERiod {}".format(pri))
+        signal_generator.write("SOURce1:FUNCtion:PULSe:PERiod {}".format(pri))
         error_log = f"Pulse width set to {width}"
     return error_log
 
@@ -257,8 +255,8 @@ def set_zva(start: float = 1, stop: float = 10, points: float = 501) -> None:
 
 def sig_gen_set_output_ramp_log() -> str:  # Set the ramp parameters in pull down voltage test
     a = r"Ramp voltage is set to {} V".format(
-        float(signal_Generator.query("SOURce:VOLTage?")) * (20 / 2))  # Gain amplifier = 20, Vcc/2
-    b = r"Ramp duration is set to {} µs".format(10 ** 6 * 1 / (4 * float(signal_Generator.query("FREQuency?"))))
+        float(signal_generator.query("SOURce:VOLTage?")) * (20 / 2))  # Gain amplifier = 20, Vcc/2
+    b = r"Ramp duration is set to {} µs".format(10 ** 6 * 1 / (4 * float(signal_generator.query("FREQuency?"))))
     return f"{a}'\n'{b}"
 
 
@@ -270,9 +268,9 @@ def zva_set_output_log() -> str:  # Get error log of the ZVA
 
 
 def trigger_measurement_zva():  # Trigger the ZVA using the signal generator
-    zva.write_str_with_opc('TRIGger:SOURce EXTernal')
-    signal_Generator.write('TRIG')
-    signal_Generator.query('*OPC?')
+    # zva.write_str_with_opc('TRIGger:SOURce EXTernal')  # >>>>>>>>> UNCOMMENT THIS LINE <<<<<<<<<<<<<<<<<<<<<<
+    signal_generator.write('TRIG')
+    signal_generator.query('*OPC?')
     # time.sleep(2)
     print("Signal generator sent Trigger pulse \n")
 
@@ -307,7 +305,7 @@ def close_zva() -> None:
 
 def close_sig_gen() -> None:
     # Close signal generator VISA Session
-    signal_Generator.close()
+    signal_generator.close()
     print("Signal generator session closed \n")
 
 
@@ -328,7 +326,7 @@ def close_powermeter() -> None:  # Close powermeter VISA Session
 
 
 def close_all_resources() -> None:  # Close all resources VISA Session
-    instrument_list: list[RsInstrument | pyvisa.Resource | None] = [signal_Generator, zva, osc, rf_Generator,
+    instrument_list: list[RsInstrument | pyvisa.Resource | None] = [signal_generator, zva, osc, rf_Generator,
                                                                     powermeter]
     for instrument in instrument_list:
         if instrument is not None:
@@ -472,66 +470,88 @@ def setup_zva_with_rst(ip: str) -> None:
     print('ZVA Reset complete!', end='\n')
 
 
-def setup_signal_Generator_ramp_with_rst(ip: str) -> pyvisa.Resource:
-    signal_Generator = rm.open_resource(r'{}'.format(ip))
-    signal_Generator.write('MMEM:LOAD:STAT "{}"'.format(dir_and_var_declaration.pullin_setup_sig_gen))  # Load STATE_4
-    error_log = signal_Generator.query('SYSTem:ERRor?')
+def setup_zva_no_rst(ip: str) -> None:
+    zva = RsInstrument('{}'.format(ip), id_query=True, reset=False)
+    zva.opc_query_after_write = True
+    zva.write_str_with_opc("SYSTem:DISPlay:UPDate ON")
+    print('ZVA Reset complete!', end='\n')
+
+
+def setup_signal_generator_pulsed_with_rst(ip: str) -> pyvisa.resources.tcpip.TCPIPInstrument:
+    global signal_generator
+    print(dir_and_var_declaration.snp_meas_setup_sig_gen)
+    signal_generator = rm.open_resource(r'{}'.format(ip))
+    signal_generator.write('*RST')
+    time.sleep(0.5)
+    signal_generator.write('OUTput OFF')
+    time.sleep(0.5)
+    signal_generator.write(
+        'MMEM:LOAD:STAT "{}"'.format(dir_and_var_declaration.snp_meas_setup_sig_gen))  # Load STATE_4
+    time.sleep(0.5)
+    signal_generator.write('TRIGger:SOURce EXTernal')
+    signal_generator.write('BURSt:STATe 1')
+    signal_generator.write('BURS:NCYC 1')
+    signal_generator.write('OUTput ON')
+
+    error_log = signal_generator.query('SYSTem:ERRor?')
     print('Signal generator Reset complete!', end='\n')
-    return signal_Generator
+    return signal_generator
 
 
 def configuration_sig_gen(frequency_gen: float = 150, amplitude: float = 1, pulse_width: float = 0.001333) -> None:
     try:
-        signal_Generator.write('*RST')
-        signal_Generator.write(
+        signal_generator.write('*RST')
+        signal_generator.write(
             'MMEM:LOAD:STAT "{}"'.format(dir_and_var_declaration.pullin_setup_sig_gen))  # Load STATE_4
-        signal_Generator.write('FREQuency {}'.format(1))  # set a default frequency before programming to avoid errors
-        signal_Generator.write('SOURce1:FUNCtion PULSe')  # selecting pulse function
-        signal_Generator.write("SOURce:VOLTage:OFFSET 0")
-        signal_Generator.write("SOURce:VOLTage:LOW 0")
-        signal_Generator.write("SOURce:VOLTage:HIGH 2.5")
-        signal_Generator.write('SOURce:BURSt:NCYCles MINimum')  # set burst cycles to 0
-        signal_Generator.write('OUTPut 1')  # turn on output
-        signal_Generator.write('OUTPut:SYNC:MODE NORMal')
-        signal_Generator.write('SOURce1:FUNCtion:PULSe:WIDTh {}'.format(pulse_width))
-        error_log = signal_Generator.query('SYSTem:ERRor?')
+        signal_generator.write('FREQuency {}'.format(1))  # set a default frequency before programming to avoid errors
+        signal_generator.write('SOURce1:FUNCtion PULSe')  # selecting pulse function
+        signal_generator.write("SOURce:VOLTage:OFFSET 0")
+        signal_generator.write("SOURce:VOLTage:LOW 0")
+        signal_generator.write("SOURce:VOLTage:HIGH 2.5")
+        signal_generator.write('SOURce:BURSt:NCYCles MINimum')  # set burst cycles to 0
+        signal_generator.write('OUTPut 1')  # turn on output
+        signal_generator.write('OUTPut:SYNC:MODE NORMal')
+        signal_generator.write('SOURce1:FUNCtion:PULSe:WIDTh {}'.format(pulse_width))
+        error_log = signal_generator.query('SYSTem:ERRor?')
         error = error_log.split(sep=',')[0]
         print(error, error_log, sep='\n', end='\n')
         if int(error) != 0:
             frequency_gen = 1 / (10 * pulse_width)
             print(error, error_log, sep='\n', end='\n')
-            signal_Generator.write('FREQuency {}'.format(frequency_gen))
+            signal_generator.write('FREQuency {}'.format(frequency_gen))
         time.sleep(1)
     except:
         print('Signal Generator Configuration error')
 
 
 def configuration_sig_gen_power() -> None:
-    signal_Generator.write('*RST')
-    signal_Generator.write('MMEM:LOAD:STAT "{}"'.format(dir_and_var_declaration.power_test_setup_sig_gen))
+    signal_generator.write('*RST')
+    signal_generator.write('MMEM:LOAD:STAT "{}"'.format(dir_and_var_declaration.power_test_setup_sig_gen))
 
 
 def configuration_sig_gen_snp(frequency_gen: float = 150, amplitude: float = 1, pulse_width: float = 0.001333) -> None:
     try:
-        signal_Generator.write('*RST')
-        signal_Generator.write(
+        signal_generator.write('*RST')
+        print(dir_and_var_declaration.snp_meas_setup_sig_gen)
+
+        signal_generator.write(
             'MMEM:LOAD:STAT "{}"'.format(dir_and_var_declaration.snp_meas_setup_sig_gen))  # Load STATE_4
-        signal_Generator.write('FREQuency {}'.format(1))  # set a default frequency before programming to avoid errors
-        signal_Generator.write('SOURce1:FUNCtion PULSe')  # selecting pulse function
-        signal_Generator.write("SOURce:VOLTage:OFFSET 0")
-        signal_Generator.write("SOURce:VOLTage:LOW 0")
-        signal_Generator.write("SOURce:VOLTage:HIGH 2.5")
-        signal_Generator.write('SOURce:BURSt:NCYCles MINimum')  # set burst cycles to 0
-        signal_Generator.write('OUTPut 1')  # turn on output
-        signal_Generator.write('OUTPut:SYNC:MODE NORMal')
-        signal_Generator.write('SOURce1:FUNCtion:PULSe:WIDTh {}'.format(pulse_width))
-        error_log = signal_Generator.query('SYSTem:ERRor?')
+        signal_generator.write('FREQuency {}'.format(1))  # set a default frequency before programming to avoid errors
+        signal_generator.write('SOURce1:FUNCtion PULSe')  # selecting pulse function
+        signal_generator.write("SOURce:VOLTage:OFFSET 0")
+        signal_generator.write("SOURce:VOLTage:LOW 0")
+        signal_generator.write("SOURce:VOLTage:HIGH 2.5")
+        signal_generator.write('SOURce:BURSt:NCYCles MINimum')  # set burst cycles to 0
+        signal_generator.write('OUTPut 1')  # turn on output
+        signal_generator.write('OUTPut:SYNC:MODE NORMal')
+        signal_generator.write('SOURce1:FUNCtion:PULSe:WIDTh {}'.format(pulse_width))
+        error_log = signal_generator.query('SYSTem:ERRor?')
         error = error_log.split(sep=',')[0]
         print(error, error_log, sep='\n', end='\n')
         if int(error) != 0:
             frequency_gen = 1 / (10 * pulse_width)
             print(error, error_log, sep='\n', end='\n')
-            signal_Generator.write('FREQuency {}'.format(frequency_gen))
+            signal_generator.write('FREQuency {}'.format(frequency_gen))
         time.sleep(1)
     except:
         print('Signal Generator Configuration error')
@@ -541,25 +561,25 @@ def configuration_sig_gen_pull_in(ramp_length: float = 50, amplitude: float = 1)
     ramp_frequency = 1 / (4 * ramp_length * 10 ** (-6))
     ramp_period = (4 * ramp_length * 10 ** (-6))
     try:
-        signal_Generator.write(
+        signal_generator.write(
             'MMEM:LOAD:STAT "{}"'.format(dir_and_var_declaration.pullin_setup_sig_gen))  # Load STATE_4
-        signal_Generator.write('FREQuency {}'.format(1))
-        signal_Generator.write('SOURce1:FUNCtion RAMP')  # selecting pulse function
-        signal_Generator.write('FUNCtion:RAMP:SYMMetry 50')
-        signal_Generator.write("SOURce:VOLTage:OFFSET 0")
-        signal_Generator.write("SOURce:VOLTage:LOW -{}".format(amplitude))
-        signal_Generator.write("SOURce:VOLTage:HIGH {}".format(amplitude))
-        signal_Generator.write('SOURce:BURSt:NCYCles MINimum')  # set burst cycles to 0
-        signal_Generator.write('OUTPut 1')  # turn on output
-        signal_Generator.write('OUTPut:SYNC:MODE NORMal')
-        signal_Generator.write('FREQuency {}'.format(ramp_frequency))
-        error_log = signal_Generator.query('SYSTem:ERRor?')
+        signal_generator.write('FREQuency {}'.format(1))
+        signal_generator.write('SOURce1:FUNCtion RAMP')  # selecting pulse function
+        signal_generator.write('FUNCtion:RAMP:SYMMetry 50')
+        signal_generator.write("SOURce:VOLTage:OFFSET 0")
+        signal_generator.write("SOURce:VOLTage:LOW -{}".format(amplitude))
+        signal_generator.write("SOURce:VOLTage:HIGH {}".format(amplitude))
+        signal_generator.write('SOURce:BURSt:NCYCles MINimum')  # set burst cycles to 0
+        signal_generator.write('OUTPut 1')  # turn on output
+        signal_generator.write('OUTPut:SYNC:MODE NORMal')
+        signal_generator.write('FREQuency {}'.format(ramp_frequency))
+        error_log = signal_generator.query('SYSTem:ERRor?')
         error = error_log.split(sep=',')[0]
         print(error, error_log, sep='\n', end='\n')
         osc.write('HORizontal:MODE:SCAle {}'.format(ramp_period / 5))
         if int(error) != 0:
             print(error, error_log, sep='\n', end='\n')
-            signal_Generator.write('FREQuency {}'.format(ramp_frequency))
+            signal_generator.write('FREQuency {}'.format(ramp_frequency))
         time.sleep(1)
     except:
         print('Signal Generator Configuration error')
@@ -568,7 +588,7 @@ def configuration_sig_gen_pull_in(ramp_length: float = 50, amplitude: float = 1)
 
 def configuration_pull_in(ramp_length: float = 50, amplitude: float = 1, rf_frequency: float = 10):
     configuration_sig_gen_pull_in(ramp_length=50, amplitude=1)
-    setup_rf_synth(frequency=rf_frequency, power=-10, power_lim=-6)
+    setup_rf_synth(frequency=rf_frequency, power=-10, power_lim=0)
 
 
 def triggered_data_acquisition(filename: str = r'default',
@@ -592,7 +612,7 @@ def triggered_data_acquisition(filename: str = r'default',
         print_error_log()
     except:
         sweep_time = zva.query_str_with_opc('SENSe1:SWEep:TIME?')
-        signal_Generator.write('SOURce1:FREQuency {}'.format(1 / (10 * float(sweep_time))))
+        signal_generator.write('SOURce1:FREQuency {}'.format(1 / (10 * float(sweep_time))))
         print('An error occured in triggered_data_acquisition PROCESS \n')
         print('prf may be incompatible \n')
         print_error_log()
@@ -604,10 +624,10 @@ def print_error_log():
     error_string_sig_gen = ""
     error_string_zva = ""
 
-    # Check if 'signal_Generator' is defined
-    if 'signal_Generator' in globals():
+    # Check if 'signal_generator' is defined
+    if 'signal_generator' in globals():
         try:
-            error_log_sig_gen = signal_Generator.query('SYSTem:ERRor?')
+            error_log_sig_gen = signal_generator.query('SYSTem:ERRor?')
             error_string_sig_gen = error_log_sig_gen.split(",")[1]
             print('SIGNAL GENERATOR ERROR LOG:\n' + error_string_sig_gen, end='\n')
         except Exception as e:
@@ -659,6 +679,7 @@ def setup_rf_synth(frequency: float = 10, power: float = -10,
 
 
 def get_channel_info(channel: int = 4) -> dict:
+    channel_info: dict = {}
     try:
         osc.write('Data:Source CH{}'.format(channel))
         osc.write('Data:ENCdg ASCII')
@@ -683,7 +704,7 @@ def get_channel_info(channel: int = 4) -> dict:
 
 def get_curve(channel: int = 4) -> np.ndarray[np.ndarray, np.ndarray]:
     print(f"Acquiring curver {channel}")
-    curve_data = np.empty(shape=1)
+    curve_data: np.ndarray[np.ndarray, np.ndarray] = np.ndarray[np.empty(shape=1)]
     try:
         acquisition_length = int(osc.query("HORizontal:ACQLENGTH?"))  # get number of samples
         # print("acquisition_length in get curve function = {} samples\n".format(acquisition_length))
@@ -691,7 +712,7 @@ def get_curve(channel: int = 4) -> np.ndarray[np.ndarray, np.ndarray]:
             'HORizontal:MAIn:DELay:POSition?')) / 100  # get trigger position in percentage of samples (default is 10%)
         ref_index = trigger_ref * acquisition_length  # get the 1st index of the ramp using trigger ref position and
         # acquisition length because ramp starts at trigger
-        ramp_frequency = float(signal_Generator.query('FREQuency?'))  # adapt the length of the ramp with frequency
+        ramp_frequency = float(signal_generator.query('FREQuency?'))  # adapt the length of the ramp with frequency
 
         # Determine the length of the triangle and the number of samples in the triangle
         ramp_length = 1 / (4 * ramp_frequency)
@@ -771,6 +792,18 @@ def measure_pull_down_voltage(filename=r'default'):
     #     print("Unable to acquire Data")
 
 
+def measure_pull_down_voltage_pulsed(filename=r'default'):
+    curve_det = get_curve_using_cursors(channel=4)
+    curve_bias = get_curve_using_cursors(channel=2)
+    t = curve_det[:, 1]
+    rf_detector = curve_det[:, 0]
+    v_bias = curve_bias[:, 0]
+    file_array = np.vstack((v_bias, rf_detector, t))
+    # print(file_array[:, 0], end='\n')
+    np.savetxt('{}.txt'.format(filename), file_array, delimiter=',', newline='\n',
+               header='#V_bias(V),rf_detector (V), time (s)')
+
+
 def power_test_sequence_v2(
         app,
         new_data_event,
@@ -806,7 +839,7 @@ def power_test_sequence_v2(
 
     # Set the power limit on the RF generator
     rf_Generator.write_str_with_opc(f'SOURce:POWer:LIMit:AMPLitude {stop + 2}')
-    signal_Generator.write('OUTP ON')
+    signal_generator.write('OUTP ON')
 
     # Initialize the RF generator output and set the starting power level
     rf_Generator.write_str_with_opc('OUTP OFF')
@@ -826,7 +859,7 @@ def power_test_sequence_v2(
         if not app.is_power_sweeping:
             break
         rf_Generator.write(f'SOUR:POW:LEVEL:IMM:AMPL {power_level}')
-        signal_Generator.write('TRIG')
+        signal_generator.write('TRIG')
         time.sleep(sleep_duration)
         # power_input_dut_avg.append(round(float(powermeter.query('FETC2?')) + offset_b1, ndigits=2))
         power_input_dut_avg.append(round(float(powermeter.query('FETC2?')), ndigits=2))
@@ -841,7 +874,7 @@ def power_test_sequence_v2(
         # new_data_event.set()  # Signal that new data is available
 
     # Turn off the signal generator and RF generator outputs
-    signal_Generator.write('OUTP OFF')
+    signal_generator.write('OUTP OFF')
     rf_Generator.write('OUTP OFF')
     print("Sweep ended")
     # Save the DataFrame to a CSV file
@@ -882,7 +915,7 @@ def power_test_sequence(
     # Set the power limit on the RF generator
     rf_Generator.write_str_with_opc(f'SOURce:POWer:LEVel:IMMediate:AMPLitude -29')
     rf_Generator.write_str_with_opc(f'SOURce:POWer:LIMit:AMPLitude {stop + 2}')
-    signal_Generator.write('OUTP ON')
+    signal_generator.write('OUTP ON')
 
     # Initialize the RF generator output and set the starting power level
     rf_Generator.write_str_with_opc('OUTP OFF')
@@ -900,7 +933,7 @@ def power_test_sequence(
     # Sweep through the power levels and record measurements
     for power_level in power_input_amp:
         rf_Generator.write(f'SOUR:POW:LEVEL:IMM:AMPL {power_level}')
-        signal_Generator.write('TRIG')
+        signal_generator.write('TRIG')
         time.sleep(sleep_duration)
         power_input_dut_avg.append(round(float(powermeter.query('FETC2?')) + offset_b1, ndigits=2))
         power_output_dut_avg.append(round(float(powermeter.query('FETC1?')) + offset_a1, ndigits=2))
@@ -908,7 +941,7 @@ def power_test_sequence(
     # Turn off the signal generator and RF generator outputs
     power_input_dut_avg.pop(0)
     power_output_dut_avg.pop(0)
-    signal_Generator.write('OUTP OFF')
+    signal_generator.write('OUTP OFF')
     rf_Generator.write('OUTP OFF')
     print("Sweep ended")
 
@@ -952,7 +985,7 @@ def power_test_smf(
     # Set the power limit on the RF generator
     rf_Generator.write_str_with_opc(f'SOURce:POWer:LIMit:AMPLitude {stop + 2}')
 
-    signal_Generator.write('OUTP ON')
+    signal_generator.write('OUTP ON')
 
     # Initialize the RF generator output and set the starting power level
     rf_Generator.write_str_with_opc('OUTP OFF')
@@ -968,7 +1001,7 @@ def power_test_smf(
     # Sweep through the power levels and record measurements
     for power_level in power_input_amp:
         rf_Generator.write(f'SOUR:POW:LEVEL:IMM:AMPL {power_level}')
-        signal_Generator.write('TRIG')
+        signal_generator.write('TRIG')
         time.sleep(sleep_duration)
         power_input_dut_avg.append(round(float(powermeter.query('FETC2?')) + offset_b1, ndigits=2))
         power_output_dut_avg.append(round(float(powermeter.query('FETC1?')) + offset_a1, ndigits=2))
@@ -976,7 +1009,7 @@ def power_test_smf(
     # Turn off the signal generator and RF generator outputs
     power_input_dut_avg.pop(0)
     power_output_dut_avg.pop(0)
-    signal_Generator.write('OUTP OFF')
+    signal_generator.write('OUTP OFF')
     rf_Generator.write('OUTP OFF')
     print("Sweep ended")
 
@@ -990,9 +1023,9 @@ def power_test_smf(
 
 
 def setup_power_test_sequence(pulse_width=100, delay=30):  # in us
-    # Configuration signal_Generator
-    signal_Generator.write('*RST')
-    signal_Generator.write(
+    # Configuration signal_generator
+    signal_generator.write('*RST')
+    signal_generator.write(
         "MMEM:LOAD:STATe '{}'".format(dir_and_var_declaration.power_test_setup_sig_gen))  # 100_us_PULSE.sta
     # Configuration rf_Generator
     rf_Generator.write('*RST')
@@ -1063,7 +1096,7 @@ def set_channel_attenuation(atts: dict[str, float]) -> None:
 
 def connect():
     machines = ['ZNA67-101810', 'A-33521B-00526', 'DPO5054-C011738', 'rssmb100a179766', '192.168.0.30']
-    machine_names = ['zva', 'signal_Generator', 'osc', 'rf_Generator', 'powermeter']
+    machine_names = ['zva', 'signal_generator', 'osc', 'rf_Generator', 'powermeter']
     # machine_dict = {zip(machine_names, machines)} for machine, machine_name in zip(machines, machine_names): try:
     # if machine_name == 'zva': machine_dict[machine_name]=RsInstrument(f'TCPIP0::{machine}::inst0::INSTR',
     # id_query=True, reset=False) else: machine_dict[machine_name]=rm.open_resource(f'TCPIP0::{
@@ -1079,8 +1112,8 @@ def connect():
 
 
 def send_trig():
-    signal_Generator.write('TRIG')
-    signal_Generator.query('*OPC?')
+    signal_generator.write('TRIG')
+    signal_generator.query('*OPC?')
     return print('trigger sent')
 
 
@@ -1334,7 +1367,7 @@ def cycling_sequence(app, new_data_event, number_of_cycles: float = 1e9, number_
     print(f"Estimated test duration: {format_duration(test_duration)}")
 
     count = starting_number_of_acq
-    signal_Generator.write("OUTput 1")
+    signal_generator.write("OUTput 1")
     remaining_count = number_of_cycles
     app.is_cycling = True
     while count < number_of_triggered_acquisitions + starting_number_of_acq:
@@ -1371,7 +1404,7 @@ def cycling_sequence(app, new_data_event, number_of_cycles: float = 1e9, number_
         "release_time": 50e-6  # Example threshold, adjust as needed
     }
     app.file_df = detect_sticking_events(app.file_df, thresholds)
-    signal_Generator.write("OUTput 0")
+    signal_generator.write("OUTput 0")
 
     # Write header and DataFrame to CSV
     with open(f"{df_path}\\{filename}.csv", 'w') as f:
@@ -1420,7 +1453,7 @@ def cycling_sequence_no_processing(app, new_data_event, number_of_cycles: float 
     print(f"Estimated test duration: {format_duration(test_duration)}")
 
     count = starting_number_of_acq
-    signal_Generator.write("OUTput 1")
+    signal_generator.write("OUTput 1")
     # remaining_count = number_of_cycles
     app.is_cycling = True
     while count < number_of_triggered_acquisitions + starting_number_of_acq:
@@ -1455,7 +1488,7 @@ def cycling_sequence_no_processing(app, new_data_event, number_of_cycles: float 
         "release_time": 50e-6  # Example threshold, adjust as needed
     }
     app.file_df = detect_sticking_events(app.file_df, thresholds)
-    signal_Generator.write("OUTput 0")
+    signal_generator.write("OUTput 0")
 
     # Write header and DataFrame to CSV
     with open(f"{df_path}\\{filename}.csv", 'w') as f:
@@ -1506,7 +1539,7 @@ def cycling_sequence_with_escape_interrupt(app, new_data_event,
     print(f"Estimated test duration: {format_duration(test_duration)}")
 
     count = starting_number_of_acq
-    signal_Generator.write("OUTput 1")
+    signal_generator.write("OUTput 1")
     remaining_count = number_of_cycles
     app.is_cycling = True
 
@@ -1571,7 +1604,7 @@ def cycling_sequence_with_escape_interrupt(app, new_data_event,
     app.file_df = detect_sticking_events(app.file_df, thresholds)
 
     # Disable signal generator output
-    signal_Generator.write("OUTput 0")
+    signal_generator.write("OUTput 0")
 
     # Final save of the data to CSV
     with open(f"{df_path}\\{filename}.csv", 'w') as f:
@@ -2286,13 +2319,13 @@ def extract_data_v3(rf_detector_channel, v_bias_channel, ramp_start=0.20559, ram
 
 
 def signal_Generator_cycling_config():
-    signal_Generator.write("*RST")
-    signal_Generator.write('OUTput 0')
+    signal_generator.write("*RST")
+    signal_generator.write('OUTput 0')
     time.sleep(1)
-    signal_Generator.write('MMEM:LOAD:STAT "{}"'.format(dir_and_var_declaration.cycling_setup_sig_gen))
-    signal_Generator.write('OUTput 0')
+    signal_generator.write('MMEM:LOAD:STAT "{}"'.format(dir_and_var_declaration.cycling_setup_sig_gen))
+    signal_generator.write('OUTput 0')
     time.sleep(1)
-    signal_Generator.write("*OPC?")
+    signal_generator.write("*OPC?")
     print("Signal Generator cycling config")
 
 
@@ -2641,7 +2674,7 @@ def on_off_signal_generator_switch() -> int:
         ValueError: If the signal generator returns an unknown status.
     """
     # Query the signal generator to get the current ON/OFF status.
-    signal_generator_on_off_status = signal_Generator.query(r'OUTput1?')
+    signal_generator_on_off_status = signal_generator.query(r'OUTput1?')
 
     # Print the current status of the signal generator to the console.
     print(f"Current Signal Generator status: {signal_generator_on_off_status}")
@@ -2649,11 +2682,11 @@ def on_off_signal_generator_switch() -> int:
     # Check the first character of the status returned by the query.
     if signal_generator_on_off_status[0] == '1':
         # The generator is currently ON, send a command to turn it OFF.
-        signal_Generator.write("OUTput1 0")
+        signal_generator.write("OUTput1 0")
         print("Turning OFF Signal Generator")
     elif signal_generator_on_off_status[0] == '0':
         # The generator is currently OFF, send a command to turn it ON.
-        signal_Generator.write("OUTput1 1")
+        signal_generator.write("OUTput1 1")
         print("Turning ON Signal Generator")
     else:
         # If the status is neither '1' nor '0', it's unknown and an error is raised.
@@ -2665,14 +2698,14 @@ def on_off_signal_generator_switch() -> int:
 
 def query_signal_generator() -> str:
     """Queries the current status of the signal generator."""
-    return signal_Generator.query(r'OUTput1?')[0]
+    return signal_generator.query(r'OUTput1?')[0]
 
 
 def toggle_signal_generator() -> None:
     """Toggles the signal generator's state based on the current status."""
     current_status = query_signal_generator()
     new_status = '0' if current_status[0] == '1' else '1'
-    signal_Generator.write(f"OUTput1 {new_status}")
+    signal_generator.write(f"OUTput1 {new_status}")
     print(f"Signal Generator turned {'ON' if new_status == '1' else 'OFF'}")
 
 
@@ -2689,19 +2722,19 @@ def load_pattern(
     filename (str): The name of the file containing the waveform pattern. Defaults to a specific waveform file name.
 
     """
-    signal_Generator.write('*RST')  # Reset the signal generator to its default settings.
-    signal_Generator.write(r'MMEMory:CDIRectory "USB:\PATTERNS\"')  # Set the memory directory to PATTERNS on the USB.
-    print(signal_Generator.query('SYSTem:ERRor?'))  # Query the system for any errors and print them.
+    signal_generator.write('*RST')  # Reset the signal generator to its default settings.
+    signal_generator.write(r'MMEMory:CDIRectory "USB:\PATTERNS\"')  # Set the memory directory to PATTERNS on the USB.
+    print(signal_generator.query('SYSTem:ERRor?'))  # Query the system for any errors and print them.
     print("Directory switched")  # Inform the user that the directory has been switched.
-    signal_Generator.write(
+    signal_generator.write(
         fr'MMEMory:LOAD:DATA "USB:\PATTERNS\{filename}"')  # Load the waveform data from the specified file.
-    signal_Generator.write(
+    signal_generator.write(
         fr'FUNC:ARB "USB:\PATTERNS\{filename}"')  # Set the function to arbitrary waveform using the loaded file.
-    signal_Generator.write(r'FUNC ARB')  # Confirm that the function mode is set to arbitrary waveform.
+    signal_generator.write(r'FUNC ARB')  # Confirm that the function mode is set to arbitrary waveform.
 
     # Enable output on channel 1 and set voltage offset to zero.
-    signal_Generator.write("OUTPut1 0")  # Turn on output channel 1.
-    signal_Generator.write("VOLTage:OFFSET 0")  # Set the voltage offset to zero.
+    signal_generator.write("OUTPut1 0")  # Turn on output channel 1.
+    signal_generator.write("VOLTage:OFFSET 0")  # Set the voltage offset to zero.
 
 
 def create_smooth_pull_in_voltage_waveform(voltages: list[int] | list[float], width_pulse: float) -> np.ndarray:
@@ -2745,11 +2778,11 @@ def create_smooth_pull_in_voltage_waveform(voltages: list[int] | list[float], wi
 
     # Concatenate the ascending and descending phases
     waveform = np.concatenate(ascending_wave + descending_wave)
+    scaled_waveform_data = scale_waveform_to_dac(waveform)
+    return scaled_waveform_data
 
-    return waveform
 
-
-def load_pull_in_voltage_waveform(voltages: list[int], width_pulse_us: float, max_samples: int = 10e6):
+def load_pull_in_voltage_waveform(voltages: list[int], width_pulse_us: float, max_samples: int = 10e6) -> np.ndarray:
     """
     Generate a waveform within the maximum sample size constraint.
 
@@ -2776,7 +2809,7 @@ def load_pull_in_voltage_waveform(voltages: list[int], width_pulse_us: float, ma
                               [np.array([voltage] * pulse_width_samples) for voltage in reversed(voltages)]
                               )
 
-    return waveform, sample_rate
+    return waveform.astype(int)  # , sample_rate
 
 
 def create_pulse_ascent(amplitude, width, include_zero=True):
@@ -2853,42 +2886,50 @@ def create_descending_waveform(voltages: list[int], width_pulse: int):
     return np.concatenate(pulses)
 
 
-def scale_waveform_to_dac(waveform, min_dac=0, max_dac=32767):
+def scale_waveform_to_dac(waveform, min_dac=0, max_dac=32767) -> np.ndarray:
     """Scale the waveform data to fit within the DAC range of the signal generator."""
     min_wave = np.min(waveform)
     max_wave = np.max(waveform)
     # Scale and offset the waveform to fit the DAC range
     scaled_waveform = (waveform - min_wave) / (max_wave - min_wave) * (max_dac - min_dac) + min_dac
+    print(scaled_waveform, end='\n')
     return np.round(scaled_waveform).astype(int)
 
 
 def upload_waveform_to_signal_Generator(arb_name: str, waveform: np.ndarray, amplitude: float = 2) -> None:
     """Upload a waveform to the signal generator as a comma-separated list of DAC values."""
     dac_values = ', '.join(map(str, waveform))
-    # signal_Generator.write(r"DATA:VOL:CLE")
-    print("After RESET Error check")
-    signal_Generator.write(r"*RST")
-    signal_Generator.write(r"DATA:VOLatile:CLEar")
-    signal_Generator.query("*OPC?")
+    # signal_generator.write(r"DATA:VOL:CLE")
+    # print("After RESET Error check")
+    signal_generator.write(r"*RST")
+    signal_generator.write(r"DATA:VOLatile:CLEar")
+    signal_generator.write(fr'SOURce1:VOLTage:LIMit:HIGH 3')
+
+    print(f"Operation status: {signal_generator.query("*OPC?")}")
     time.sleep(2)
-    signal_Generator.write(f'SOURCe1:FUNCtion:ARBitrary "EXP_RISE"')
-    print(signal_Generator.query(r'SYSTem:ERRor?'))
-    signal_Generator.write(f"SOURCe1:DATA:ARB:DAC {arb_name}, {dac_values}")
-    print(signal_Generator.query(r"DATA:VOLatile:CAT?"))
+    signal_generator.write(f'SOURCe1:FUNCtion:ARBitrary "EXP_RISE"')
+    time.sleep(2)
+    print(signal_generator.query(r'SYSTem:ERRor?'))
+    try:
+        signal_generator.write(f"SOURCe1:DATA:ARB:DAC {arb_name}, {dac_values}")
+        print(f"Operation status: {signal_generator.query("*OPC?")}")
+    except:
+        print("LOADING PHASE FAILED")
+    print(signal_generator.query(r"DATA:VOLatile:CAT?"))
 
-    print(signal_Generator.query(r'SYSTem:ERRor?'))
+    print(signal_generator.query(r'SYSTem:ERRor?'))
 
-    signal_Generator.write(f"SOURce1:FUNCtion:ARBitrary {arb_name}")
-    print(signal_Generator.query(r'SYSTem:ERRor?'))
+    signal_generator.write(f"SOURce1:FUNCtion:ARBitrary {arb_name}")
+    print(signal_generator.query(r'SYSTem:ERRor?'))
 
-    signal_Generator.write(fr'SOURCe1:FUNCtion:ARBitrary:SRATe 7272727')
-    signal_Generator.write(fr'SOURCe1:FUNCtion:ARBitrary:FILTer STEP')
-    signal_Generator.write(r'SOURCe1:FUNC ARB')
-    signal_Generator.write(r'SOURCe1:BURSt:STATe 1')
-    signal_Generator.write("TRIGger1:SOURce BUS")
-    # signal_Generator.write("OUTPut1 1")
-    signal_Generator.write("VOLTage:OFFSET 0")
-    signal_Generator.write(f"SOURce1:VOLTage {amplitude}")
+    signal_generator.write(fr'SOURCe1:FUNCtion:ARBitrary:SRATe 7272727')
+    signal_generator.write(fr'SOURCe1:FUNCtion:ARBitrary:FILTer STEP')
+    signal_generator.write(r'SOURCe1:FUNC ARB')
+    signal_generator.write(r'SOURCe1:BURSt:STATe 1')
+    signal_generator.write("TRIGger1:SOURce BUS")
+    signal_generator.write(f"SOURce1:VOLTage {str(amplitude)}")
+    signal_generator.write("OUTPut1 1")
+    signal_generator.write("VOLTage:OFFSET 0")
 
 
 def sweep(amplitude: int = 10, voltage_steps: int = 20) -> list[int]:
@@ -2960,18 +3001,18 @@ def get_curve_using_cursors(channel: int = 4):
 
 def test_1() -> None:
     try:
-        signal_Generator.write("OUTput 1")
+        signal_generator.write("OUTput 1")
         os.chdir(path=r"C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Mechanical cycling")
         time.sleep(5)
         ch4 = get_curve_cycling(channel=4)
         ch2 = get_curve_cycling(channel=2)
         # print(ch4[:, 1])
         # mems_characteristics = extract_data_v3(rf_detector_channel=ch4, v_bias_channel=ch2)
-        # signal_Generator.write("OUTput 1")
+        # signal_generator.write("OUTput 1")
         # print(mems_characteristics)
         # for keys, values in mems_characteristics.items():
         #     print(f'{keys} = {values} \n')
-        signal_Generator.write("OUTput 0")
+        signal_generator.write("OUTput 0")
         # mems_characteristics.clear()
 
         wf = save_waveform(waveform_ch4=ch4, waveform_ch2=ch2, filename='test'.upper())
@@ -2982,30 +3023,29 @@ def test_1() -> None:
         plt.show()
     except:
         print("error")
-        signal_Generator.write("OUTput 0")
+        signal_generator.write("OUTput 0")
 
 
-def test_2(amplitude: int = 26, pulse_width: int = 20) -> None:
+def create_pulsed_pull_in_test_waveform(amplitude: int | float = 26, pulse_width: int = 20, filename='test') -> None:
     # Example usage:
-    amplitude: int = amplitude
     voltage_steps = 10
     voltage_values = sweep(amplitude=amplitude, voltage_steps=voltage_steps)  # Amplitudes of the pulses
-    amplitude = max(voltage_values) / 20
+    _amplitude = np.max(voltage_values) / 20
     width_pulse = pulse_width  # Duration of each pulse and zero gap in microseconds
 
     # Generate the waveform
-    # waveform = create_pull_in_voltage_waveform(voltage_values, width_pulse)
     waveform = create_smooth_pull_in_voltage_waveform(voltages=voltage_values, width_pulse=width_pulse)
-    # waveform = load_pull_in_voltage_waveform(voltages, width_pulse, max_samples=105)
-    scaled_waveform = scale_waveform_to_dac(waveform)
-    print(scaled_waveform, end='\n', sep='\n')
+    # waveform = load_pull_in_voltage_waveform(voltages=voltage_values, width_pulse_us=width_pulse, max_samples=105)
+    # scaled_waveform = scale_waveform_to_dac(waveform=waveform, min_dac=0, max_dac=32767)
+    scaled_waveform = waveform
+    # print(scaled_waveform, end='\n', sep='\n')
     print(len(scaled_waveform), end='\n')
 
     # Time vector for plotting (assuming each sample corresponds to a uniform time interval)
-    sample_rate = 7272727  # Hz
-    time_vector = np.linspace(0, len(waveform) * (1 / sample_rate), num=len(waveform), endpoint=False)
+    # sample_rate = 7272727  # Hz
+    # time_vector = np.linspace(0, len(waveform) * (1 / sample_rate), num=len(waveform), endpoint=False)
 
-    upload_waveform_to_signal_Generator(arb_name=r"test", waveform=scaled_waveform, amplitude=amplitude)
+    upload_waveform_to_signal_Generator(arb_name=filename, waveform=scaled_waveform, amplitude=_amplitude)
 
     # Plotting the waveform
     # plt.figure(figsize=(10, 5))
@@ -3026,7 +3066,7 @@ def plot_file(filename='default.txt',
         v_bias = data_np[:, 0].copy()
         v_log_amp = data_np[:, 1].copy()
         t = data_np[:, 2].copy()
-        fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(15, 9))
+        fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(15, 9), num=1)
 
         ax[0].plot(t, v_bias)  # , label=f'{length}')  # Time axis converted to microseconds
         ax[0].grid()
@@ -3040,28 +3080,34 @@ def plot_file(filename='default.txt',
         plt.show()
 
 
+initialize_hardware()
+
 if __name__ == "__main__":
     # wf = create_smooth_pull_in_voltage_waveform(voltages=list(np.arange(0, 40, 5)), width_pulse=20)
     # fig, ax = plt.subplots(1, 1, squeeze=True)
     # ax.plot(wf)
-    # filename = r'POWERFLEX-shunt-XY-m20-4lines-4MEMS-x16-y02-40V'
-    # directory = (r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Pullin '
-    #              r'voltage\POWERFLEX-MiniMEMS-1A\Mesures AN 17-02-25\Mesures X16')
+    # filename = r'POWERPACK-MiniMEMS2-Shunt-B3-m30-1line-2MEMS-60V'
+    # filename = r'test'
+    # directory = (
+    #     r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Pullin voltage\POWERPACK-MiniMEMS-2\AN - Mesures 03-03-25')
     # os.chdir(directory)
     # plt.show()
-    # upload_waveform_to_signal_Generator(arb_name='Pullin_test', waveform=wf, amplitude=2)
-    # test_2(40, 20)
-    # signal_Generator.write('OUTput 1')
-    # time.sleep(2)
-    signal_Generator.write("*TRG")
-    time.sleep(1)
-    # measure_pull_down_voltage(filename=filename)
-
+    # upload_waveform_to_signal_Generator(arb_name='pullin_test', waveform=wf, amplitude=2)
+    # create_pulsed_pull_in_test_waveform(amplitude=45, pulse_width=20, filename='pullin_test')
+    # signal_generator.write('OUTput 1')
+    # time.sleep(1)
+    # signal_generator.write("*TRG")
+    # time.sleep(1)
+    # measure_pull_down_voltage_pulsed(filename=filename)
+    # signal_generator.write('OUTput 0')
+    setup_signal_generator_pulsed_with_rst(r'TCPIP0::A-33521B-00526::inst0::INSTR')
     # plot_file(filename + '.txt', directory)
+    # time.sleep(2)
+    # plt.close(2)
     # fig, ax = plt.subplots(3, 1, squeeze=True)
     # bias, detector = get_curve_using_cursors(2), get_curve_using_cursors(4)
     # ramp_length = np.arange(start=1200, step=-100, stop=0)
-    # # descending = sorted(ramp_length, reverse=True)
+    # descending = sorted(ramp_length, reverse=True)
     # with np.nditer(ramp_length, op_flags=['readwrite']) as it:
     #     for length in it:
     #         length[...] = 2 * length
@@ -3071,7 +3117,7 @@ if __name__ == "__main__":
     #     # configuration_sig_gen_pull_in(ramp_length=length, amplitude=27/20)
     #         ramp_width(width=length)
     #         time.sleep(2)
-    #         signal_Generator.write("*TRG")
+    #         signal_generator.write("*TRG")
     #         time.sleep(2)
     #         # get_curve(channel=4)
     #         # get_curve(channel=2)

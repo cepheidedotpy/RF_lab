@@ -46,6 +46,8 @@ idn3 = osc.query('*IDN?')
 print(idn, end='\n')
 print(idn2, end='\n')
 print(idn3, end='\n')
+
+
 # print(idn4, end='\n')
 
 
@@ -73,7 +75,8 @@ def get_channel_info(channel=4):
     return (channel_info)
 
 
-def get_curve_cycling(channel=4):  # Acquire waveform data of set channel, functions returns an array  with the time base and values at the specified channel
+def get_curve_cycling(
+        channel=4):  # Acquire waveform data of set channel, functions returns an array  with the time base and values at the specified channel
     try:
         acquisition_length = int(osc.query("HORizontal:ACQLENGTH?"))  # get number of samples
         print("acquisition_length in get curve function = {} samples\n".format(acquisition_length))
@@ -98,9 +101,11 @@ def get_curve_cycling(channel=4):  # Acquire waveform data of set channel, funct
         print("Unable to acquire Data")
     return (data)
 
+
 def switching_time():
     sw_time = float(osc.query('MEASUrement:MEAS1:VALue?'))
     return sw_time
+
 
 def extract_data(rf_detector_channel, v_bias_channel, ramp_start=0.0253, ramp_stop=0.0261):
     # Insert the get curve data with ramp position to calculate pull_in, pull_out and insertion loss + isolation
@@ -134,27 +139,29 @@ def extract_data(rf_detector_channel, v_bias_channel, ramp_start=0.0253, ramp_st
     iso_min_descent = np.min(iso_descent)
     # print('isolation on descent = {} dB'.format(iso_min_descent))
 
-    #==============================================================================
+    # ==============================================================================
     # Calculation Vpull in as isolation passing below 90% max isolation in dB mark
     # Calculation Vpull out as isolation passing above 90% max isolation in dB mark
-    pullin_index_pos = int(np.where(iso_ascent <= 0.9*iso_max_ascent)[0][0])
+    pullin_index_pos = int(np.where(iso_ascent <= 0.9 * iso_max_ascent)[0][0])
     Vpullin = round(ramp_voltage_ascent[pullin_index_pos], ndigits=2)
 
-    tenpercent_iso = round(0.1*iso_min_descent, ndigits=2)
-    ninetypercent_iso = round(0.9*iso_max_ascent, ndigits=2)
+    tenpercent_iso = round(0.1 * iso_min_descent, ndigits=2)
+    ninetypercent_iso = round(0.9 * iso_max_ascent, ndigits=2)
 
-    pullout_index_pos = int(np.where(iso_descent >= 0.1*iso_min_descent)[0][0])
+    pullout_index_pos = int(np.where(iso_descent >= 0.1 * iso_min_descent)[0][0])
     # print(pullout_index_pos)
     Vpullout = round(ramp_voltage_descent[pullout_index_pos], ndigits=2)
 
     # return (iso_max_ascent, iso_min_descent, t0_ramp, t0_plus_rampwidth, ramp_voltage_ascent, ramp_voltage_descent, iso_ascent, iso_descent, Vpullin, Vpullout)
-    mems_characteristics = dict([('iso_ascent',iso_ascent),('iso_descent',iso_descent),('Vpullin',Vpullin), ('Vpullout',Vpullout),
-                                 ('ninetypercent_iso',ninetypercent_iso), ('tenpercent_iso', tenpercent_iso), ('_100percent_iso', _100percent_iso)])
+    mems_characteristics = dict(
+        [('iso_ascent', iso_ascent), ('iso_descent', iso_descent), ('Vpullin', Vpullin), ('Vpullout', Vpullout),
+         ('ninetypercent_iso', ninetypercent_iso), ('tenpercent_iso', tenpercent_iso),
+         ('_100percent_iso', _100percent_iso)])
     return mems_characteristics
     # pass
 
 #
-# signal_Generator.write('TRIG')
+# signal_generator.write('TRIG')
 # curve_det = get_curve_cycling(channel=4)
 # curve_bias = get_curve_cycling(channel=2)
 #

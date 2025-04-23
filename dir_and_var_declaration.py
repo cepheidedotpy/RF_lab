@@ -53,14 +53,20 @@ zva_traces: str = ZVA_File_Dir_ZVA50
 
 rm = pyvisa.ResourceManager()
 
+# global ip_zva, signal_generator_ip, ip_zva, rf_generator_ip, powermeter_ip, oscilloscope_ip
+# def define_ip_addresses():
+
 signal_generator_ip: str = r'TCPIP0::A-33521B-00526::inst0::INSTR'
-zva_ip_ZVA67: str = r'TCPIP0::ZNA67-101810::inst0::INSTR'
-zva_ip_ZVA50: str = r'TCPIP0::ZVx-000000::inst0::INSTR'
 rf_generator_ip: str = r'TCPIP0::rssmb100a179766::inst0::INSTR'
 powermeter_ip: str = r'TCPIP0::169.254.64.175::inst0::I=STR'
 oscilloscope_ip: str = r'TCPIP0::DPO5054-C011738::inst0::INSTR'
 
-ip_zva: str = zva_ip_ZVA50  # ZVA IP variable
+# define_ip_addresses()
+
+zva_ip_ZNA67: str = r'TCPIP0::ZNA67-101810::inst0::INSTR'
+zva_ip_ZVA50: str = r'TCPIP0::ZVx-000000::inst0::INSTR'
+
+ip_zva: str = zva_ip_ZNA67  # ZVA IP variable
 
 zva_parameters: dict[str: str] = {
     'setup_s1p': pc_file_s1p, 'setup_s2p': pc_file_s2p, 'setup_s3p': pc_file_s3p, 'instrument_file': instrument_file,
@@ -97,7 +103,7 @@ def zva_directories(zva: RsInstrument) -> tuple[str, str, str, str, str]:
             zva_s3p_config_ZVA67)
         zva_parameters['instrument_file'] = instrument_file_ZVA67
         zva_parameters['zva_traces'] = ZVA_File_Dir_ZVA67
-        zva_parameters['ip_zva'] = zva_ip_ZVA67
+        zva_parameters['ip_zva'] = zva_ip_ZNA67
 
         pc_file_s1p = r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\ZVA config\{}'.format(zva_s1p_config_ZVA67)
         pc_file_s2p = r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\ZVA config\{}'.format(zva_s2p_config_ZVA67)
@@ -108,15 +114,15 @@ def zva_directories(zva: RsInstrument) -> tuple[str, str, str, str, str]:
     return pc_file_s1p, pc_file_s2p, pc_file_s3p, instrument_file, zva_traces
 
 
-def zva_init(tcpip_address: str = r'TCPIP0::ZNA67-101810::inst0::INSTR', zva="ZVA67") -> RsInstrument | None:
+def zva_init(tcpip_address: str = r'TCPIP0::ZNA67-101810::inst0::INSTR', zva="ZNA67") -> RsInstrument | None:
     _id = r'Vector Network Analyser'
     error = False
     zva_name = zva
     if zva_name == "ZVA50":
         tcpip_address = zva_ip_ZVA50
 
-    elif zva_name == "ZVA67":
-        tcpip_address = zva_ip_ZVA67
+    elif zva_name == "ZNA67":
+        tcpip_address = zva_ip_ZNA67
     try:
         zva = RsInstrument(tcpip_address, id_query=False, reset=False)
         print(type(zva))
@@ -144,7 +150,8 @@ def zva_init(tcpip_address: str = r'TCPIP0::ZNA67-101810::inst0::INSTR', zva="ZV
         return zva
 
 
-def sig_gen_init(tcpip_address: str = r'TCPIP0::A-33521B-00526::inst0::INSTR') -> pyvisa.Resource | None:
+def sig_gen_init(
+        tcpip_address: str = r'TCPIP0::A-33521B-00526::inst0::INSTR') -> pyvisa.resources.tcpip.TCPIPInstrument | None:
     _id = "Signal Generator"
     error = False
     sig_gen = None
@@ -173,7 +180,8 @@ def sig_gen_init(tcpip_address: str = r'TCPIP0::A-33521B-00526::inst0::INSTR') -
         return sig_gen
 
 
-def osc_init(tcpip_address: str = r'TCPIP0::DPO5054-C011738::inst0::INSTR') -> pyvisa.Resource | None:
+def osc_init(
+        tcpip_address: str = r'TCPIP0::DPO5054-C011738::inst0::INSTR') -> pyvisa.resources.tcpip.TCPIPInstrument | None:
     _id = "Oscilloscope"
     error = False
     osc = None
@@ -253,7 +261,8 @@ def rf_gen_init(tcpip_address: str = r'TCPIP0::rssmb100a179766::inst0::INSTR',
         return rf_gen
 
 
-def powermeter_init(tcpip_address: str = r'TCPIP0::A-N1912A-00589::inst0::INSTR') -> pyvisa.Resource | None:
+def powermeter_init(
+        tcpip_address: str = r'TCPIP0::A-N1912A-00589::inst0::INSTR') -> pyvisa.resources.tcpip.TCPIPInstrument | None:
     _id = "Powermeter"
     error = False
     powermeter = None
@@ -285,7 +294,7 @@ cycling_setup_sig_gen = "CYCLE4kHz.sta"
 cycling_setup_rf_gen = "setup-cycling.savrcltxt"
 pullin_setup_sig_gen = "ramp.sta"
 pullin_setup_rf_gen = "/var/user/pull-in.savrcltxt"
-snp_meas_setup_sig_gen = "STATE_pulse.sta"
+snp_meas_setup_sig_gen = "PULSE.sta"
 power_test_setup_sig_gen = "power.sta"
 power_test_setup_rf_gen = "/var/user/power.savrcltxt"
 power_test_setup_powermeter = "*RCL 3"

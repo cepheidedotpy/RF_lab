@@ -5,6 +5,7 @@ Main GUI for MEMS Characterization
 @author: T0188303
 _version :10.5
 """
+# import ttkbootstrap as ttk
 import os
 import tkinter as tk
 import tkinter.ttk
@@ -23,6 +24,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg)
 import scripts_and_functions
+from dir_and_var_declaration import zva_parameters
 import dir_and_var_declaration
 import threading  # Import threading module
 from matplotlib.ticker import FuncFormatter
@@ -65,7 +67,7 @@ def add_tab(tab_name: str, notebook: ttk.Notebook, col: int, row: int) -> ttk.La
     ttk.Frame: The created tab (frame) instance.
     """
     # Create a new frame (tab) with 'ridge' relief and a border width of 10.
-    tab_inst = ttk.LabelFrame(notebook, relief='ridge', borderwidth=10)
+    tab_inst = ttk.LabelFrame(notebook, relief='ridge', borderwidth=10, name='{}'.format(tab_name.upper()))
 
     # Add the newly created tab to the notebook with the given tab name.
     notebook.add(tab_inst, text='{}'.format(tab_name))
@@ -631,10 +633,6 @@ def add_small_scale(frame: ttk.Frame, name: str, col: int, row: int) -> ttk.Scal
     return scale
 
 
-def reset_zva():  # Reset zva using the IP address at Resource Page (used in TAB5)
-    scripts_and_functions.setup_zva_with_rst(dir_and_var_declaration.zva_parameters['ip_zva'])
-
-
 class Window(tk.Tk):
     """
     Main application class for handling SNP file display and acquisition.
@@ -648,7 +646,7 @@ class Window(tk.Tk):
         super().__init__()
         self.master = master
         # Declare figures and axes
-        self.signal_Generator_instance: tk.StringVar
+        self.signal_generator_instance: tk.StringVar
         self.text_snp_debug: tk.Text
         self.text_file_name_s3p_test: tk.Text
         self.canvas_v_pull_in_meas: tk.Canvas
@@ -720,6 +718,7 @@ class Window(tk.Tk):
 
         self.update_interval = 5000  # Update interval in milliseconds
 
+        # Cycling status
         self.is_cycling = False
         self.is_power_sweeping = False
         # Configure styles
@@ -782,14 +781,31 @@ class Window(tk.Tk):
         self.fig_s2p, self.ax_s2p = create_figure_with_axes(num=2, figsize=(13, 4.1))
         self.ax_s2p.set_title("|Sij| vs frequency")
         self.fig_pull_in, self.ax_pull_in = create_figure_with_axes(num=3, figsize=(13, 3.5))
-        self.ax_pull_in.set(xlabel="V_bias (V)", ylabel="Detector voltage (V)", title="Isolation vs Bias voltage")
+        self.ax_pull_in.set(xlabel="V bias (V)", ylabel="Detector voltage (V)", title="Isolation vs Bias voltage")
         self.ax_s2p.set(xlabel="Frequency (Hz)", ylabel="S Parameter (dB)", title="S Parameter vs Frequency")
         self.ax_s3p.set(xlabel="Frequency (Hz)", ylabel="S Parameter (dB)", title="S Parameter vs Frequency")
 
-        self.fig_pull_in_meas, self.ax_pull_in_meas = create_figure_with_axes(num=4, figsize=(6.5, 6))
-        self.fig_snp_meas, self.ax_snp_meas = create_figure_with_axes(num=5, figsize=(6.5, 6))
+        self.fig_pull_in_meas, self.ax_pull_in_meas = create_figure_with_axes(num=4, figsize=(8.5, 6))
+        self.ax_pull_in_meas.set(xlabel="V bias (V)", ylabel="Detector voltage (V)", title="Isolation vs Bias voltage")
+
+        self.fig_snp_meas, self.ax_snp_meas = create_figure_with_axes(num=5, figsize=(8.5, 6))
+        self.ax_snp_meas.set(xlabel="Frequency (Hz)", ylabel="S Parameter (dB)", title="|S| Parameter vs Frequency")
+
         self.fig_cycling = create_figure(num=6, figsize=(10, 6))
-        self.fig_power_meas = create_figure(num=7, figsize=(6.5, 6))
+        self.fig_power_meas = create_figure(num=7, figsize=(8.5, 6))
+
+        # self.fig_pulsed_pull_in_meas, self.ax_pulsed_pull_in_meas = create_figure_with_axes(num=8, figsize=(6.5, 6))
+        self.fig_pulsed_pull_in_meas = create_figure(num=8, figsize=(8.5, 6))
+        self.ax_pulsed_pull_in_meas = self.fig_pulsed_pull_in_meas.add_subplot(2, 1, 1)
+        self.ax_pulsed_pull_in_meas.grid('both')
+        self.ax_pulsed_pull_in_meas.set(xlabel="V bias (V)", ylabel="Detector voltage (V)",
+                                        title="Isolation vs Bias voltage")
+        self.ax_pulsed_pull_in_wf = self.fig_pulsed_pull_in_meas.add_subplot(2, 1, 2)
+        self.ax_pulsed_pull_in_wf.grid('both')
+        self.ax_pulsed_pull_in_wf.set(xlabel="time (s)", ylabel="Detector voltage / V bias (V)",
+                                      title="Detector voltage & V bias")
+
+        self.ax_pulsed_pull_in_wf_det = self.ax_pulsed_pull_in_wf.twinx()
 
         self.create_cycling_axes()
         self.create_power_sweeping_axes()
@@ -858,10 +874,12 @@ class Window(tk.Tk):
         tab_s2p = add_tab(tab_name=' S2P Files ', notebook=self.tabControl, col=0, row=1)  # s2p Tab display
         tab_pull_in = add_tab(tab_name=' Pull-in Files ', notebook=self.tabControl, col=0, row=1)  # Pull-in Tab display
         tab_pull_in_meas = add_tab(tab_name=' Pull-in Test ', notebook=self.tabControl, col=0, row=1)  # Pull-in Tab
-        tab_snp_meas = add_tab(tab_name=' SNP Test ', notebook=self.tabControl, col=0, row=1)  # s3p test Tab
+        tab_snp_meas = add_tab(tab_name=' SNP Test ', notebook=self.tabControl, col=0, row=1)  # sNp test Tab
         tab_power_meas = add_tab(tab_name=' Power Test ', notebook=self.tabControl, col=0, row=1)  # Power test Tab
         tab_cycling = add_tab(tab_name=' Cycling tab ', notebook=self.tabControl, col=0, row=1)  # Cycling test Tab
-        tab_resources = add_tab(tab_name=' Resource Page ', notebook=self.tabControl, col=0, row=1)  # s3p test Tab
+        tab_resources = add_tab(tab_name=' Resource Page ', notebook=self.tabControl, col=0, row=1)  # Resources tab
+        tab_pulsed_pull_in_meas = add_tab(tab_name=' Pulsed pull-in ', notebook=self.tabControl, col=0,
+                                          row=1)  # Pulsed pull-in test Tab
 
         def setup_s3p_display_tab():
             """
@@ -1018,7 +1036,7 @@ class Window(tk.Tk):
                                                         update_button(self.update_pull_in_button)],
                                                     col=3, row=1)
             add_button(frame_v_pull_in_dir, button_name='Exit', command=self.quit, col=5, row=1).grid_anchor('e')
-            add_button(frame_v_pull_in_dir, button_name='Plot', command=lambda: [self.plot_vpull_in(),
+            add_button(frame_v_pull_in_dir, button_name='Plot', command=lambda: [self.plot_v_pull_in(),
                                                                                  self.calculate_pull_in_out_voltage()],
                        col=3, row=3)
             add_button(frame_v_pull_in_dir, button_name='Delete Graphs', command=self.delete_axs_vpullin, col=3,
@@ -1031,12 +1049,12 @@ class Window(tk.Tk):
                                                           toolbar_frame=frame_v_pull_in_sliders)
 
             # Sliders creation
-            self.slider_isolation = add_slider(frame=frame_v_pull_in_graph, _from=0, to=-2,
+            self.slider_isolation = add_slider(frame=frame_v_pull_in_graph, _from=0, to=-20,
                                                name="Detector voltage (dB)", variable=self.scale_isolation_value,
-                                               step=0.1,
+                                               step=1,
                                                orientation=tk.VERTICAL)
-            self.slider_voltage = add_slider(frame=frame_v_pull_in_sliders, _from=0, to=50,
-                                             name="Voltage upper limit (V)", variable=self.scale_voltage_value, step=5)
+            self.slider_voltage = add_slider(frame=frame_v_pull_in_sliders, _from=0, to=100,
+                                             name="Voltage upper limit (V)", variable=self.scale_voltage_value, step=10)
 
             self.slider_isolation.pack(side='left')
             self.slider_voltage.pack(side='left')
@@ -1045,19 +1063,19 @@ class Window(tk.Tk):
             # This TAB is for Pull down voltage vs isolation measurement
             frame_test_pull_in_comp_info = add_label_frame(tab_pull_in_meas, frame_name='Component information', col=0,
                                                            row=0)
-            frame_test_pull_in_signal_Generator = add_label_frame(tab=tab_pull_in_meas, frame_name='Signal Generator',
+            frame_test_pull_in_signal_generator = add_label_frame(tab=tab_pull_in_meas, frame_name='Signal Generator',
                                                                   col=0,
                                                                   row=1)
             frame_test_pull_in_gen_controls = add_label_frame(tab=tab_pull_in_meas, frame_name='General controls',
                                                               col=2,
                                                               row=0)
-            frame_osc_tecktro_pull_in_test = add_label_frame(tab=tab_pull_in_meas, frame_name='Oscilloscope Tecktronix',
-                                                             col=1, row=0, row_span=3)
+            frame_osc_pull_in_test = add_label_frame(tab=tab_pull_in_meas, frame_name='Oscilloscope Tecktronix',
+                                                     col=1, row=0, row_span=3)
             frame_test_pull_in_measurement = add_label_frame(tab=tab_pull_in_meas, frame_name='Measurement', col=2,
                                                              row=1,
                                                              row_span=2)
             frame_test_measurement = ttk.Frame(frame_test_pull_in_measurement)
-            frame_oscilloscope = add_label_frame(tab_pull_in_meas, frame_name='Ocilloscope & RF Gen', col=0, row=2,
+            frame_oscilloscope = add_label_frame(tab_pull_in_meas, frame_name='Oscilloscope & RF Gen', col=0, row=2,
                                                  row_span=1)
 
             # Adding labels to component info labelframe
@@ -1094,7 +1112,7 @@ class Window(tk.Tk):
             add_entry(tab=frame_test_pull_in_comp_info, text_var=self.test_pull_in_bias_voltage, width=20, col=1, row=5)
 
             # Signal Generator labelframe
-            frame_signal_gen_measurement = ttk.Frame(frame_test_pull_in_signal_Generator)
+            frame_signal_gen_measurement = ttk.Frame(frame_test_pull_in_signal_generator)
             frame_signal_gen_measurement.pack()
             self.pull_in_v_bias = tk.DoubleVar(value=10)  # Peak bias voltage for ramp function
             self.ramp_width = tk.DoubleVar(value=100)  # Ramp length for ramp function
@@ -1160,19 +1178,20 @@ class Window(tk.Tk):
             self.text_gen_controls_pull_in_debug.grid(column=0, row=3, sticky='n', columnspan=4)
 
             add_button(tab=frame_test_pull_in_gen_controls, button_name='Reset Signal Generator',
-                       command=lambda: [self.reset_signal_Generator()], col=0, row=1).grid(ipadx=tab_pad_x, ipady=tab_pad_x)
+                       command=lambda: [scripts_and_functions.configuration_pull_in()], col=0, row=1).grid(
+                ipadx=tab_pad_x,
+                ipady=tab_pad_x)
             add_button(tab=frame_test_pull_in_gen_controls, button_name='Exit', command=lambda: [self._quit(),
                                                                                                  close_resources()],
                        col=1,
                        row=1).grid(ipadx=tab_pad_x, ipady=tab_pad_x)
             add_button(tab=frame_test_pull_in_gen_controls, button_name='Iso vs V',
-                       command=lambda: [self.acquire_pull_down_data()
-                           , self.trace_pull_down(1)], col=1, row=5).grid(
+                       command=lambda: [self.trace_pull_down(1),
+                                        self.acquire_pull_down_data()], col=1, row=5).grid(
                 ipadx=tab_pad_x, ipady=tab_pad_x)
             # -------------------------------------------------------------------------------------------------------------
-
             self.canvas_v_pull_in_meas = create_canvas(figure=self.fig_pull_in_meas,
-                                                       frame=frame_osc_tecktro_pull_in_test,
+                                                       frame=frame_osc_pull_in_test,
                                                        toolbar_frame=frame_test_pull_in_measurement, toolbar=True)
 
             add_label(frame_test_measurement,
@@ -1230,7 +1249,7 @@ class Window(tk.Tk):
         def setup_snp_measurement():
             frame_snp_compo_info = add_label_frame(tab_snp_meas, frame_name='Component information', col=0,
                                                    row=0)  # s3p frame
-            frame_snp_signal_Generator = add_label_frame(tab=tab_snp_meas, frame_name='Signal Generator', col=0, row=1)
+            frame_snp_signal_generator = add_label_frame(tab=tab_snp_meas, frame_name='Signal Generator', col=0, row=1)
             frame_snp_zva = add_label_frame(tab=tab_snp_meas, frame_name='ZVA', col=3, row=1)
             frame_snp_gene_controls = add_label_frame(tab=tab_snp_meas, frame_name='General controls', col=3, row=0)
             frame_snp_measurement = add_label_frame(tab=tab_snp_meas, frame_name='SNP measurement', col=1, row=0,
@@ -1268,6 +1287,14 @@ class Window(tk.Tk):
             self.chosen_component_state['values'] = ('Active', 'Frozen')
             self.chosen_component_state.current(0)
 
+            self.vna_connected = tk.StringVar(value=r'ZNA67')
+
+            self.chosen_vna = add_combobox(frame_snp_zva, text=self.vna_connected, col=0, row=5,
+                                           width=20)
+            self.chosen_vna['values'] = ('ZNA67', 'ZVA50')
+
+            self.chosen_vna.current(0)
+
             add_entry(tab=frame_snp_compo_info, text_var=self.test_s3p_dir, width=20, col=1, row=0)
             add_entry(tab=frame_snp_compo_info, text_var=self.test_s3p_project, width=20, col=1, row=1)
             add_entry(tab=frame_snp_compo_info, text_var=self.test_s3p_cell, width=20, col=1, row=2)
@@ -1303,41 +1330,41 @@ class Window(tk.Tk):
                        button_name='Osc trigger',
                        command=lambda: [scripts_and_functions.force_trigger_osc()], col=2, row=2)
 
-            add_label(frame_snp_signal_Generator, label_name='Bias Voltage', col=0, row=0).grid(sticky='e',
+            add_label(frame_snp_signal_generator, label_name='Bias Voltage', col=0, row=0).grid(sticky='e',
                                                                                                 ipadx=tab_pad_x,
                                                                                                 ipady=tab_pad_x)
-            add_label(frame_snp_signal_Generator, label_name='Pulse Width', col=0, row=1).grid(sticky='e',
+            add_label(frame_snp_signal_generator, label_name='Pulse Width', col=0, row=1).grid(sticky='e',
                                                                                                ipadx=tab_pad_x,
                                                                                                ipady=tab_pad_x)
-            self.entered_pull_in_volt = add_entry(frame_snp_signal_Generator, text_var=self.pull_in_v, width=10, col=1,
+            self.entered_pull_in_volt = add_entry(frame_snp_signal_generator, text_var=self.pull_in_v, width=10, col=1,
                                                   row=0)
-            self.entered_pulse_width = add_entry(frame_snp_signal_Generator, text_var=self.pulse_width, width=10, col=1,
+            self.entered_pulse_width = add_entry(frame_snp_signal_generator, text_var=self.pulse_width, width=10, col=1,
                                                  row=1)
-            add_label(frame_snp_signal_Generator, label_name='(V)', col=2, row=0).grid(sticky='w', ipadx=tab_pad_x,
+            add_label(frame_snp_signal_generator, label_name='(V)', col=2, row=0).grid(sticky='w', ipadx=tab_pad_x,
                                                                                        ipady=tab_pad_x)
-            add_label(frame_snp_signal_Generator, label_name='(s)', col=2, row=1).grid(sticky='w', ipadx=tab_pad_x,
+            add_label(frame_snp_signal_generator, label_name='(s)', col=2, row=1).grid(sticky='w', ipadx=tab_pad_x,
                                                                                        ipady=tab_pad_x)
 
-            add_label(frame_snp_signal_Generator, label_name='Pulse Frequency', col=0, row=2).grid(sticky='e',
+            add_label(frame_snp_signal_generator, label_name='Pulse Frequency', col=0, row=2).grid(sticky='e',
                                                                                                    ipadx=tab_pad_x,
                                                                                                    ipady=tab_pad_x)
-            self.entered_pulse_freq = add_entry(frame_snp_signal_Generator, text_var=self.pulse_freq, width=10, col=1,
+            self.entered_pulse_freq = add_entry(frame_snp_signal_generator, text_var=self.pulse_freq, width=10, col=1,
                                                 row=2)
-            add_label(frame_snp_signal_Generator, label_name='(Hz)', col=2, row=2).grid(sticky='w', ipadx=tab_pad_x,
+            add_label(frame_snp_signal_generator, label_name='(Hz)', col=2, row=2).grid(sticky='w', ipadx=tab_pad_x,
                                                                                         ipady=tab_pad_x)
 
-            add_button(tab=frame_snp_signal_Generator, button_name='Set Bias Voltage', command=self.set_bias_voltage,
+            add_button(tab=frame_snp_signal_generator, button_name='Set Bias Voltage', command=self.set_bias_voltage,
                        col=3,
                        row=0).grid(
                 sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
-            add_button(tab=frame_snp_signal_Generator, button_name='Set Pulse Width', command=self.set_ramp_width,
+            add_button(tab=frame_snp_signal_generator, button_name='Set Pulse Width', command=self.set_ramp_width,
                        col=3,
                        row=1).grid(
                 sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
-            add_button(tab=frame_snp_signal_Generator,
+            add_button(tab=frame_snp_signal_generator,
                        button_name='Set prf', command=self.set_prf, col=3, row=2).grid(sticky='e', ipadx=tab_pad_x,
                                                                                        ipady=tab_pad_x)
-            add_button(tab=frame_snp_signal_Generator, button_name='Set Pulse Gen', command=self.set_pulse_gen, col=3,
+            add_button(tab=frame_snp_signal_generator, button_name='Set Pulse Gen', command=self.set_pulse_gen, col=3,
                        row=3).grid(
                 sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
             # ------------------------------------------------------------------------------
@@ -1393,15 +1420,23 @@ class Window(tk.Tk):
             add_button(tab=frame_snp_gene_controls, button_name='Comms prep', command=scripts_and_functions.comprep_zva,
                        col=0, row=1).grid(
                 ipadx=tab_pad_x, ipady=tab_pad_x)
-            add_button(tab=frame_snp_gene_controls, button_name='Reset ZVA', command=reset_zva, col=0, row=2).grid(
+            add_button(tab=frame_snp_gene_controls, button_name='Reset ZVA', command=lambda: [self.reset_zva()], col=0,
+                       row=2).grid(
                 ipadx=tab_pad_x,
                 ipady=tab_pad_x)
+            add_button(tab=frame_snp_gene_controls, button_name='Reconnect ZVA',
+                       command=lambda: [self.reset_zva_no_setup()],
+                       col=2,
+                       row=2).grid(
+                ipadx=tab_pad_x,
+                ipady=tab_pad_x)
+
             add_button(tab=frame_snp_gene_controls, button_name='Exit',
                        command=lambda: [self._quit(), close_resources()],
                        col=1,
                        row=1).grid(ipadx=tab_pad_x, ipady=tab_pad_x)
             add_button(tab=frame_snp_gene_controls, button_name='Reset Signal Gen',
-                       command=lambda: [self.set_pulse_gen_pulse_mode()],
+                       command=lambda: [self.reset_signal_generator()],
                        col=1,
                        row=2).grid(ipadx=tab_pad_x, ipady=tab_pad_x)
             add_button(tab=frame_snp_gene_controls, button_name='S1P config', command=call_s1p_config, col=0,
@@ -1420,7 +1455,7 @@ class Window(tk.Tk):
             frame_power_meas = add_label_frame(tab=tab_power_meas, frame_name='General controls', col=2, row=0)
             frame_power_meas_graph = add_label_frame(tab=tab_power_meas, frame_name='Power test Graph', col=1, row=0,
                                                      row_span=3)
-            frame_power_measurement_signal_Generator = add_label_frame(tab=tab_power_meas,
+            frame_power_measurement_signal_generator = add_label_frame(tab=tab_power_meas,
                                                                        frame_name='Signal Generator', col=0, row=1,
                                                                        row_span=1)
             frame_power_meas_rf_gen = add_label_frame(tab=tab_power_meas, frame_name='RF Generator', col=2, row=1,
@@ -1528,7 +1563,7 @@ class Window(tk.Tk):
                                             font=('Bahnschrift Light', 10))  # Debug text_file_name_s3p_test display
             self.text_power_debug.grid(column=0, row=3, sticky='n', columnspan=4)
 
-            add_button(tab=frame_power_measurement_signal_Generator, button_name='Reset\nSignal Generator',
+            add_button(tab=frame_power_measurement_signal_generator, button_name='Reset\nSignal Generator',
                        command=self.set_pulse_gen_pulse_mode, col=0,
                        row=0)
             add_button(tab=frame_power_meas, button_name='Exit', command=lambda: [self._quit(), close_resources()],
@@ -1550,7 +1585,7 @@ class Window(tk.Tk):
                            offset_a1=self.test_pow_input_atten.get(),
                        )], col=1, row=5).grid(ipadx=tab_pad_x, ipady=tab_pad_x)
 
-            add_button(tab=frame_power_measurement_signal_Generator,
+            add_button(tab=frame_power_measurement_signal_generator,
                        button_name='Power Handling\nTest setup'.format(align="=", fill=' '),
                        command=lambda: [scripts_and_functions.setup_power_test_sequence()], col=0, row=1).grid()
 
@@ -1677,15 +1712,18 @@ class Window(tk.Tk):
                        row=2).grid(
                 ipadx=tab_pad_x, ipady=tab_pad_x)
             add_button(tab=frame_signal_generator, button_name='1kHz-1000pulses\n100us-5%',
-                       command=lambda: [scripts_and_functions.load_pattern(r"1000pulses_100us_pulse_dc5%_36Vtop_36Vhold_40V_triangle_filtered.arb")], col=0,
+                       command=lambda: [scripts_and_functions.load_pattern(
+                           r"1000pulses_100us_pulse_dc5%_36Vtop_36Vhold_40V_triangle_filtered.arb")], col=0,
                        row=3).grid(
                 ipadx=tab_pad_x, ipady=tab_pad_x)
             add_button(tab=frame_signal_generator, button_name='2kHz-1000pulses\n100us-10%',
-                       command=lambda: [scripts_and_functions.load_pattern(r"1000pulses_100us_pulse_dc10%_36Vtop_36Vhold_40V_triangle_filtered.arb")], col=1,
+                       command=lambda: [scripts_and_functions.load_pattern(
+                           r"1000pulses_100us_pulse_dc10%_36Vtop_36Vhold_40V_triangle_filtered.arb")], col=1,
                        row=3).grid(
                 ipadx=tab_pad_x, ipady=tab_pad_x)
             add_button(tab=frame_signal_generator, button_name='4kHz-1000pulses\n100us-20%',
-                       command=lambda: [scripts_and_functions.load_pattern(r"1000pulses_100us_pulse_dc20%_36Vtop_36Vhold_40V_triangle_filtered.arb")], col=2,
+                       command=lambda: [scripts_and_functions.load_pattern(
+                           r"1000pulses_100us_pulse_dc20%_36Vtop_36Vhold_40V_triangle_filtered.arb")], col=2,
                        row=3).grid(
                 ipadx=tab_pad_x, ipady=tab_pad_x)
 
@@ -1757,7 +1795,7 @@ class Window(tk.Tk):
             # Resource frame
 
             self.zva_inst = tk.StringVar(value=r'TCPIP0::ZNA67-101810::inst0::INSTR')
-            self.signal_Generator_instance = tk.StringVar(value=r'TCPIP0::A-33521B-00526::inst0::INSTR')
+            self.signal_generator_instance = tk.StringVar(value=r'TCPIP0::A-33521B-00526::inst0::INSTR')
             self.osc_inst = tk.StringVar(value=r'TCPIP0::DPO5054-C011738::inst0::INSTR')
             self.powermeter_inst = tk.StringVar(value=u'TCPIP0::A-N1912A-00589::inst0::INSTR')
             self.rf_gen_inst = tk.StringVar(value=u'TCPIP0::rssmb100a179766::inst0::INSTR')
@@ -1774,8 +1812,9 @@ class Window(tk.Tk):
                       label_name='RF Generator', col=1, row=5).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
 
             self.entered_var_zva_address = add_entry(frame_resources, text_var=self.zva_inst, width=70, col=2, row=1)
-            self.entered_variable_signal_Generator_address = add_entry(frame_resources,
-                                                                       text_var=self.signal_Generator_instance, width=70,
+            self.entered_variable_signal_generator_address = add_entry(frame_resources,
+                                                                       text_var=self.signal_generator_instance,
+                                                                       width=70,
                                                                        col=2,
                                                                        row=2)
             self.entered_var_osc_address = add_entry(frame_resources, text_var=self.osc_inst, width=70, col=2, row=3)
@@ -1785,6 +1824,180 @@ class Window(tk.Tk):
             self.entered_var_rf_gen_address = add_entry(frame_resources, text_var=self.rf_gen_inst, width=70, col=2,
                                                         row=5)
 
+        def setup_pull_in_measurement_pulsed():
+            # This TAB is for Pull down voltage vs isolation measurement
+            frame_test_pulsed_pull_in_comp_info = add_label_frame(tab_pulsed_pull_in_meas,
+                                                                  frame_name='Component information', col=0,
+                                                                  row=0)
+            frame_test_pulsed_pull_in_signal_generator = add_label_frame(tab=tab_pulsed_pull_in_meas,
+                                                                         frame_name='Signal Generator',
+                                                                         col=0,
+                                                                         row=1)
+            frame_test_pulsed_pull_in_gen_controls = add_label_frame(tab=tab_pulsed_pull_in_meas,
+                                                                     frame_name='General controls',
+                                                                     col=2,
+                                                                     row=0)
+            frame_test_pulsed_osc_pull_in = add_label_frame(tab=tab_pulsed_pull_in_meas,
+                                                            frame_name='Oscilloscope Tecktronix',
+                                                            col=1, row=0, row_span=3)
+            frame_test_pulsed_pull_in_measurement = add_label_frame(tab=tab_pulsed_pull_in_meas,
+                                                                    frame_name='Measurement', col=2,
+                                                                    row=1,
+                                                                    row_span=2)
+            frame_pulsed_test_measurement = ttk.Frame(frame_test_pulsed_pull_in_measurement)
+            frame_test_pulsed_pull_in_oscilloscope = add_label_frame(tab_pulsed_pull_in_meas,
+                                                                     frame_name='Oscilloscope & RF Gen', col=0,
+                                                                     row=2,
+                                                                     row_span=1)
+            # Adding labels to component info labelframe
+            add_label(frame_test_pulsed_pull_in_comp_info, label_name='DIR', col=0, row=0).grid(sticky='e',
+
+                                                                                                ipadx=tab_pad_x,
+                                                                                                ipady=tab_pad_x)
+            add_label(frame_test_pulsed_pull_in_comp_info, label_name='Project', col=0, row=1).grid(sticky='e',
+                                                                                                    ipadx=tab_pad_x,
+                                                                                                    ipady=tab_pad_x)
+            add_label(frame_test_pulsed_pull_in_comp_info, label_name='Cell', col=0, row=2).grid(sticky='e',
+                                                                                                 ipadx=tab_pad_x,
+                                                                                                 ipady=tab_pad_x)
+            add_label(frame_test_pulsed_pull_in_comp_info, label_name='Reticule', col=0, row=3).grid(sticky='e',
+                                                                                                     ipadx=tab_pad_x,
+                                                                                                     ipady=tab_pad_x)
+            add_label(frame_test_pulsed_pull_in_comp_info, label_name='Device', col=0, row=4).grid(sticky='e',
+                                                                                                   ipadx=tab_pad_x,
+                                                                                                   ipady=tab_pad_x)
+            add_label(frame_test_pulsed_pull_in_comp_info, label_name='Bias Voltage', col=0, row=5).grid(sticky='e',
+                                                                                                         ipadx=tab_pad_x,
+                                                                                                         ipady=tab_pad_x)
+            self.test_pulsed_pull_in_dir = tk.StringVar(
+                value=r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Pullin '
+                      r'voltage')
+            self.test_pulsed_pull_in_project = tk.StringVar(value=r'Project_Name')
+            self.test_pulsed_pull_in_cell = tk.StringVar(value=r'Cell_Name')
+            self.test_pulsed_pull_in_reticule = tk.StringVar(value=r'Reticule')
+            self.test_pulsed_pull_in_device = tk.StringVar(value=r'Device_name')
+            self.test_pulsed_pull_in_file_created = tk.StringVar(value=r'EMPTY')
+            self.test_pulsed_pull_in_bias_voltage = tk.StringVar(value=r'Bias_Voltage')
+
+            add_entry(tab=frame_test_pulsed_pull_in_comp_info, text_var=self.test_pulsed_pull_in_dir, width=20, col=1,
+                      row=0)
+            add_entry(tab=frame_test_pulsed_pull_in_comp_info, text_var=self.test_pulsed_pull_in_project, width=20,
+                      col=1,
+                      row=1)
+            add_entry(tab=frame_test_pulsed_pull_in_comp_info, text_var=self.test_pulsed_pull_in_cell, width=20, col=1,
+                      row=2)
+            add_entry(tab=frame_test_pulsed_pull_in_comp_info, text_var=self.test_pulsed_pull_in_reticule, width=20,
+                      col=1,
+                      row=3)
+            add_entry(tab=frame_test_pulsed_pull_in_comp_info, text_var=self.test_pulsed_pull_in_device, width=20,
+                      col=1,
+                      row=4)
+            add_entry(tab=frame_test_pulsed_pull_in_comp_info, text_var=self.test_pulsed_pull_in_bias_voltage, width=20,
+                      col=1,
+                      row=5)
+
+            # Signal Generator labelframe
+            frame_pulsed_signal_gen_measurement = ttk.Frame(frame_test_pulsed_pull_in_signal_generator)
+            frame_pulsed_signal_gen_measurement.pack()
+            self.pulsed_pulse_width = tk.DoubleVar(value=100)  # Ramp length for ramp function
+
+            self.entered_pulsed_pulse_width = add_entry(frame_pulsed_signal_gen_measurement,
+                                                        text_var=self.pulsed_pulse_width, width=10, col=1,
+                                                        row=1)
+            self.pulsed_pull_in_v_bias = tk.DoubleVar(value=10)  # Peak bias voltage for ramp function
+            self.pulsed_chosen_bias_voltage_pull_in = add_entry(tab=frame_test_pulsed_pull_in_comp_info,
+                                                                text_var=self.pulsed_pull_in_v_bias,
+                                                                width=20, col=1, row=5)
+            add_label(frame_pulsed_signal_gen_measurement, label_name='Bias Voltage', col=0, row=0).grid(sticky='e',
+                                                                                                         ipadx=tab_pad_x,
+                                                                                                         ipady=tab_pad_x)
+            add_label(frame_pulsed_signal_gen_measurement, label_name='Ramp length', col=0, row=1).grid(sticky='e',
+                                                                                                        ipadx=tab_pad_x,
+                                                                                                        ipady=tab_pad_x)
+            self.entered_pulsed_pull_in_v_bias = add_entry(frame_pulsed_signal_gen_measurement,
+                                                           text_var=self.pulsed_pull_in_v_bias,
+                                                           width=10,
+                                                           col=1,
+                                                           row=0)
+            # self.text_pulsed_file_name_pull_in_test = tk.StringVar(value=r'test')
+
+            add_button(tab=frame_test_pulsed_pull_in_comp_info, button_name='Create-file',
+                       command=lambda: [file_name_creation(data_list=[self.test_pulsed_pull_in_project.get(),
+                                                                      self.test_pulsed_pull_in_cell.get(),
+                                                                      self.test_pulsed_pull_in_reticule.get(),
+                                                                      self.test_pulsed_pull_in_device.get(),
+                                                                      self.entered_pulsed_pull_in_v_bias.get()],
+                                                           text=self.text_pulsed_file_name_pull_in_test,
+                                                           end_characters='V')],
+                       col=2, row=0)
+            add_button(tab=frame_test_pulsed_pull_in_comp_info,
+                       button_name='Send trigger',
+                       command=lambda: [scripts_and_functions.send_trig()], col=2, row=1)
+            add_button(tab=frame_test_pulsed_pull_in_comp_info,
+                       button_name='Osc trigger',
+                       command=lambda: [scripts_and_functions.force_trigger_osc()], col=2, row=2)
+
+            add_label(frame_pulsed_signal_gen_measurement, label_name='(V)', col=2, row=0).grid(sticky='w',
+                                                                                                ipadx=tab_pad_x,
+                                                                                                ipady=tab_pad_x)
+            add_label(frame_pulsed_signal_gen_measurement, label_name='(µs)', col=2, row=1).grid(sticky='w',
+                                                                                                 ipadx=tab_pad_x,
+                                                                                                 ipady=tab_pad_x)
+            add_button(tab=frame_pulsed_signal_gen_measurement, button_name='Set Bias Voltage',
+                       command=lambda: [scripts_and_functions.create_pulsed_pull_in_test_waveform(
+                           amplitude=int(self.entered_pulsed_pull_in_v_bias.get()),
+                           pulse_width=int(self.pulsed_pulse_width.get()))],
+                       col=3, row=0).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+            add_button(tab=frame_pulsed_signal_gen_measurement, button_name='Set Ramp Width',
+                       command=lambda: [scripts_and_functions.create_pulsed_pull_in_test_waveform(
+                           amplitude=int(self.entered_pulsed_pull_in_v_bias.get()),
+                           pulse_width=int(self.pulsed_pulse_width.get()))],
+                       col=3,
+                       row=1).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+            add_button(tab=frame_pulsed_signal_gen_measurement, button_name='Set Pulse Gen',
+                       command=None,
+                       col=3, row=3).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+            # Oscilloscope
+            add_button(tab=frame_test_pulsed_pull_in_oscilloscope, button_name='Setup Oscilloscope',
+                       command=lambda: scripts_and_functions.osc_pullin_config(),
+                       col=0, row=0).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+            add_button(tab=frame_test_pulsed_pull_in_oscilloscope, button_name='Setup RF Gen',
+                       command=lambda: scripts_and_functions.rf_gen_pull_in_setup(),
+                       col=0, row=1).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+            # General controls labelframe
+            self.text_pulsed_file_name_pull_in_test = tk.Text(frame_test_pulsed_pull_in_gen_controls, width=40,
+                                                              height=1,
+                                                              wrap=tk.WORD,
+                                                              border=4, borderwidth=2,
+                                                              relief=tk.SUNKEN,
+                                                              font=('Bahnschrift Light', 10))  # Filename
+            self.text_pulsed_file_name_pull_in_test.grid(column=0, row=0, sticky='n', columnspan=5)
+            self.text_gen_controls_pull_in_debug = tk.Text(frame_test_pulsed_pull_in_gen_controls, width=40, height=10,
+                                                           wrap=tk.WORD, border=4,
+                                                           borderwidth=2, relief=tk.SUNKEN,
+                                                           font=('Bahnschrift Light', 10))
+            # Debug text_file_name_s3p_test display
+            self.text_gen_controls_pull_in_debug.grid(column=0, row=3, sticky='n', columnspan=4)
+
+            add_button(tab=frame_test_pulsed_pull_in_gen_controls, button_name='Reset Signal Generator',
+                       command=lambda: [scripts_and_functions.create_pulsed_pull_in_test_waveform(
+                           amplitude=int(self.entered_pulsed_pull_in_v_bias.get()),
+                           pulse_width=int(self.pulsed_pulse_width.get()))], col=0, row=1).grid(ipadx=tab_pad_x,
+                                                                                                ipady=tab_pad_x)
+            add_button(tab=frame_test_pulsed_pull_in_gen_controls, button_name='Exit', command=lambda: [self._quit(),
+                                                                                                        close_resources()],
+                       col=1,
+                       row=1).grid(ipadx=tab_pad_x, ipady=tab_pad_x)
+            add_button(tab=frame_test_pulsed_pull_in_gen_controls, button_name='Iso vs V',
+                       command=lambda: [self.acquire_pull_down_data_pulsed(), self.trace_pull_in_pulsed()], col=1,
+                       row=5).grid(
+                ipadx=tab_pad_x, ipady=tab_pad_x)
+            # -------------------------------------------------------------------------------------------------------------
+            self.canvas_v_pull_in_meas_pulsed = create_canvas(figure=self.fig_pulsed_pull_in_meas,
+                                                              frame=frame_test_pulsed_osc_pull_in,
+                                                              toolbar_frame=frame_test_pulsed_pull_in_measurement,
+                                                              toolbar=True)
+
         setup_s3p_display_tab()
         setup_s2p_display_tab()
         setup_pull_in_measurement()
@@ -1793,6 +2006,7 @@ class Window(tk.Tk):
         setup_power_measurement()
         setup_cycling_measurement()
         setup_scpi_configuration()
+        setup_pull_in_measurement_pulsed()
 
         # Schedule the next update
 
@@ -1907,6 +2121,25 @@ class Window(tk.Tk):
         self.destroy()
 
     # ZVA Functions ---------------------------------------------------------------
+    def reset_zva(self):  # Reset zva using the IP address at Resource Page (used in TAB5)
+        zva_connected = self.vna_connected.get()
+        if zva_connected == "ZNA67":
+            dir_and_var_declaration.zva_init(tcpip_address=r'TCPIP0::ZNA67-101810::inst0::INSTR')
+        elif zva_connected == "ZVA50":
+            dir_and_var_declaration.zva_init(tcpip_address=r'TCPIP0::ZVx-000000::inst0::INSTR')
+
+        dir_and_var_declaration.zva_directories(zva=scripts_and_functions.zva)
+        scripts_and_functions.setup_zva_with_rst(dir_and_var_declaration.zva_parameters['ip_zva'])
+
+    def reset_zva_no_setup(self):
+        zva_connected = self.vna_connected.get()
+        if zva_connected == "ZNA67":
+            dir_and_var_declaration.zva_init(tcpip_address=r'TCPIP0::ZNA67-101810::inst0::INSTR')
+        elif zva_connected == "ZVA50":
+            dir_and_var_declaration.zva_init(tcpip_address=r'TCPIP0::ZVx-000000::inst0::INSTR')
+
+        dir_and_var_declaration.zva_directories(zva=scripts_and_functions.zva)
+        scripts_and_functions.setup_zva_no_rst(dir_and_var_declaration.zva_parameters['ip_zva'])
 
     def set_f_start(self):  # Configure ZVA f_start (used in TAB5)
         fstart = self.f_start.get()
@@ -1933,22 +2166,35 @@ class Window(tk.Tk):
     def data_acquire(
             self):  # Calls scripts_and_functions module function triggered_data_acquisition() to acquire data and
         # create a S3P file
-        scripts_and_functions.signal_Generator.write("TRIG")
+        # scripts_and_functions.signal_generator.write("TRIG")
         scripts_and_functions.time.sleep(2 + float(scripts_and_functions.zva.query_str_with_opc('SENSe1:SWEep:TIME?')))
         scripts_and_functions.triggered_data_acquisition(
-            filename=self.text_file_name_s3p_test.get(index1="1.0", index2="end-1c"),
+            filename=file_name_creation(
+                data_list=[self.test_s3p_project.get(), self.test_s3p_cell.get(),
+                           self.test_s3p_reticule.get(),
+                           self.test_s3p_device.get(), self.chosen_component_state.get(),
+                           self.chosen_bias_voltage.get()],
+                text=self.text_file_name_s3p_test,
+                end_characters='V'),
             zva_file_dir=dir_and_var_declaration.zva_parameters["zva_traces"],
             pc_file_dir=self.test_s3p_dir.get(),
             file_format='s3p')
+
         self.plot_snp_test(filetype='.s3p')
         scripts_and_functions.print_error_log()
         self.set_txt()
 
     def data_acquire_s2p(self):
-        scripts_and_functions.signal_Generator.write("TRIG")
+        # scripts_and_functions.signal_generator.write("TRIG")
         scripts_and_functions.time.sleep(2 + float(scripts_and_functions.zva.query_str_with_opc('SENSe1:SWEep:TIME?')))
         scripts_and_functions.triggered_data_acquisition(
-            filename=self.text_file_name_s3p_test.get(index1="1.0", index2="end-1c"),
+            filename=file_name_creation(
+                data_list=[self.test_s3p_project.get(), self.test_s3p_cell.get(),
+                           self.test_s3p_reticule.get(),
+                           self.test_s3p_device.get(), self.chosen_component_state.get(),
+                           self.chosen_bias_voltage.get()],
+                text=self.text_file_name_s3p_test,
+                end_characters='V'),
             zva_file_dir=dir_and_var_declaration.zva_parameters["zva_traces"],
             pc_file_dir=self.test_s3p_dir.get(),
             file_format='s2p')
@@ -1957,10 +2203,16 @@ class Window(tk.Tk):
         self.set_txt()
 
     def data_acquire_s1p(self):
-        scripts_and_functions.signal_Generator.write("TRIG")
+        # scripts_and_functions.signal_generator.write("TRIG")
         scripts_and_functions.time.sleep(2 + float(scripts_and_functions.zva.query_str_with_opc('SENSe1:SWEep:TIME?')))
         scripts_and_functions.triggered_data_acquisition(
-            filename=self.text_file_name_s3p_test.get(index1="1.0", index2="end-1c"),
+            filename=file_name_creation(
+                data_list=[self.test_s3p_project.get(), self.test_s3p_cell.get(),
+                           self.test_s3p_reticule.get(),
+                           self.test_s3p_device.get(), self.chosen_component_state.get(),
+                           self.chosen_bias_voltage.get()],
+                text=self.text_file_name_s3p_test,
+                end_characters='V'),
             zva_file_dir=dir_and_var_declaration.zva_parameters["zva_traces"],
             pc_file_dir=self.test_s3p_dir.get(),
             file_format='s1p')
@@ -1968,9 +2220,12 @@ class Window(tk.Tk):
         scripts_and_functions.print_error_log()
         self.set_txt()
 
-    # signal_Generator Functions -----------------------------------------------------------
-    def reset_signal_Generator(self):  # Reset signal_Generator using the IP address at Ressource Page (used in TAB4)
-        scripts_and_functions.setup_signal_Generator_ramp_with_rst(self.signal_Generator_instance.get())
+    # signal_generator Functions -----------------------------------------------------------
+    def reset_signal_generator(self):  # Reset signal_generator using the IP address at Ressource Page (used in TAB4)
+        address = self.entered_variable_signal_generator_address.get()
+        print(address, end='\n-----------------------------------------------')
+        scripts_and_functions.setup_signal_generator_pulsed_with_rst(
+            ip=address)
 
     def acquire_pull_down_data(
             self):  # Calls scripts_and_functions module measure_pull_down_voltage() to acquire pull down voltage (
@@ -1979,7 +2234,7 @@ class Window(tk.Tk):
         os.chdir(self.test_pull_in_dir.get())
 
         scripts_and_functions.measure_pull_down_voltage(
-            filename = file_name_creation([
+            filename=file_name_creation([
                 self.test_pull_in_project.get(),
                 self.test_pull_in_cell.get(),
                 self.test_pull_in_reticule.get(),
@@ -1992,7 +2247,27 @@ class Window(tk.Tk):
         # except:
         #     print("Error")
 
-    def set_pulse_gen(self):  # Configure signal_Generator bias voltage, pulse width and prf (used in TAB5)
+    def acquire_pull_down_data_pulsed(
+            self):  # Calls scripts_and_functions module measure_pull_down_voltage_pulsed() used in TAB9)
+        # try:
+        os.chdir(self.test_pulsed_pull_in_dir.get())
+
+        scripts_and_functions.measure_pull_down_voltage_pulsed(
+            filename=file_name_creation([
+                self.test_pulsed_pull_in_project.get(),
+                self.test_pulsed_pull_in_cell.get(),
+                self.test_pulsed_pull_in_reticule.get(),
+                self.test_pulsed_pull_in_device.get(),
+                str(int(self.entered_pulsed_pull_in_v_bias.get()))], end_characters='V',
+                text=self.text_pulsed_file_name_pull_in_test))
+        # scripts_and_functions.measure_pull_down_voltage(
+        #     filename=self.text_file_name_pull_in_test.get(index1="1.0", index2="end-1c"))
+        # scripts_and_functions.print_error_log()
+        self.set_txt()
+        # except:
+        #     print("Error")
+
+    def set_pulse_gen(self):  # Configure signal_generator bias voltage, pulse width and prf (used in TAB5)
         self.set_bias_voltage()
         self.set_prf()
         self.set_pulse_width()
@@ -2000,7 +2275,7 @@ class Window(tk.Tk):
         self.text_snp_debug.insert(index="%d.%d" % (0, 0), chars=scripts_and_functions.sig_gen_set_output_ramp_log())
 
     def set_pulse_gen_ramp(
-            self):  # Calls set_bias_pull_in() & set_ramp_width() to Configure signal_Generator ramp bias voltage and pulse
+            self):  # Calls set_bias_pull_in() & set_ramp_width() to Configure signal_generator ramp bias voltage and pulse
         # width (used in TAB4)
         self.set_bias_pull_in()
         self.set_ramp_width()
@@ -2009,7 +2284,7 @@ class Window(tk.Tk):
                                                     chars=scripts_and_functions.sig_gen_set_output_ramp_log())
 
     def set_pulse_gen_pulse_mode(self):
-        # Calls scripts_and_functions module's configuration_sig_gen() to reset the signal_Generator and sends an
+        # Calls scripts_and_functions module's configuration_sig_gen() to reset the signal_generator and sends an
         # error log (used
         # in TAB7)
         scripts_and_functions.configuration_sig_gen_power()
@@ -2025,11 +2300,11 @@ class Window(tk.Tk):
         # an input (used in TAB5)
         bias = self.pull_in_v.get()
         scripts_and_functions.bias_voltage(bias)
-        self.error_log(scripts_and_functions.signal_Generator)
+        self.error_log(scripts_and_functions.signal_generator)
 
     def set_symmetrical_voltage_bias(self, voltage: str = '10'):
         scripts_and_functions.bias_pull_in_voltage(voltage)
-        self.error_log(scripts_and_functions.signal_Generator)
+        self.error_log(scripts_and_functions.signal_generator)
 
     def set_bias_pull_in(
             self):  # Calls scripts_and_functions modules's bias_voltage_s3p() function using the voltage provided by
@@ -2037,32 +2312,33 @@ class Window(tk.Tk):
         # an input (used in TAB4) !!!!FUNCTION IS LIKELY REDUNDANT!!!!
         bias = self.pull_in_v_bias.get()
         scripts_and_functions.bias_pull_in_voltage(bias)
-        self.error_log(scripts_and_functions.signal_Generator)
+        self.error_log(scripts_and_functions.signal_generator)
 
     def set_ramp_width(self):  # Calls scripts_and_functions module's ramp_width(width) to set ramp width
         width = self.ramp_width.get()
         scripts_and_functions.ramp_width(width)
-        self.error_log(scripts_and_functions.signal_Generator)
+        self.error_log(scripts_and_functions.signal_generator)
 
     def set_prf(self):  # Calls scripts_and_functions modules's set_prf(prf) to set set pulse repetition frequency
         prf = self.pulse_freq.get()
         scripts_and_functions.set_prf(prf)
-        self.error_log(scripts_and_functions.signal_Generator)
+        self.error_log(scripts_and_functions.signal_generator)
 
     def set_pulse_width(self):  # Calls scripts_and_functions modules's set_pulse_width(width) to set pulse width
         width = self.pulse_width.get()
         scripts_and_functions.set_pulse_width(width)
-        self.error_log(scripts_and_functions.signal_Generator)
+        self.error_log(scripts_and_functions.signal_generator)
 
     # Plots functions -------------------------------------------------------------
-    def trace_pull_down(self, conversion_coeff=0.040):
-        # Measurement function that calls scripts_and_functions Module to trigger signal_Generator to figure pull in
+    def trace_pull_down(self, conversion_coefficient=1):
+        # Measurement function that calls scripts_and_functions Module to trigger signal_generator to figure pull in
         # trace and display the measurement values in the text_file_name_s3p_test boxes(used in TAB6) try:
-        scripts_and_functions.signal_Generator.write('TRIG')
+        scripts_and_functions.signal_generator.write('TRIG')
+        time.sleep(1)
         curve_det = scripts_and_functions.get_curve(channel=4)
         curve_bias = scripts_and_functions.get_curve(channel=2)
         t = curve_det[:, 1]
-        rf_detector = -max(3 * curve_det[:, 0] / conversion_coeff) + 3 * curve_det[:, 0] / conversion_coeff
+        rf_detector = -max(3 * curve_det[:, 0] / conversion_coefficient) + 3 * curve_det[:, 0] / conversion_coefficient
         v_bias = curve_bias[:, 0]
         # measurement_values = scripts_and_functions.calculate_pull_in_out_voltage_measurement(v_bias, curve_det[:, 0])
         measurement_values = scripts_and_functions.calculate_actuation_and_release_voltages(v_bias, curve_det[:, 0])
@@ -2091,6 +2367,48 @@ class Window(tk.Tk):
                                                chars=measurement_values['ninetypercent_iso_ascent'])
         self.text_iso_pull_in_minus_test.insert(index="%d.%d" % (0, 0),
                                                 chars=measurement_values['ninetypercent_iso_descent'])
+
+    def trace_pull_in_pulsed(self, conversion_coefficient=1):
+        # Measurement function that calls scripts_and_functions Module to trigger signal_generator to figure pull in
+        # trace and display the measurement (used in TAB9) try:
+        scripts_and_functions.signal_generator.write('TRIG')
+        curve_det = scripts_and_functions.get_curve_using_cursors(channel=4)
+        curve_bias = scripts_and_functions.get_curve_using_cursors(channel=2)
+        t = curve_det[:, 1]
+        rf_detector = -max(curve_det[:, 0] / conversion_coefficient) + curve_det[:, 0] / conversion_coefficient
+        v_bias = curve_bias[:, 0]
+        plt.figure(num=9)
+        number_of_graphs = len(self.ax_pulsed_pull_in_wf.get_lines()[0:])
+        for axes in self.ax_pulsed_pull_in_wf.get_lines():
+            axes.remove()
+        for axes in self.ax_pulsed_pull_in_meas.get_lines():
+            axes.remove()
+        for axes in self.ax_pulsed_pull_in_wf_det.get_lines():
+            axes.remove()
+
+        self.ax_pulsed_pull_in_meas.plot(v_bias, rf_detector,
+                                         label='Cell {}'.format(self.test_pulsed_pull_in_cell.get()),
+                                         color='blue')
+        self.ax_pulsed_pull_in_meas.set(xlabel='Bias voltage (V)')
+        self.ax_pulsed_pull_in_meas.set(ylabel='Detector voltage (V)')
+        self.ax_pulsed_pull_in_meas.grid(visible=True)
+        self.ax_pulsed_pull_in_meas.legend(fancybox=True, shadow=True)
+
+        self.ax_pulsed_pull_in_wf.plot(t, rf_detector,
+                                       label='detector - Cell {}'.format(self.test_pulsed_pull_in_cell.get()),
+                                       color='green')
+        self.ax_pulsed_pull_in_wf_det.plot(t, v_bias,
+                                           label='bias - Cell {}'.format(self.test_pulsed_pull_in_cell.get()),
+                                           color='blue')
+        self.ax_pulsed_pull_in_wf.set(xlabel='time (s)')
+        self.ax_pulsed_pull_in_wf.set(ylabel='Detector voltage (V)')
+        self.ax_pulsed_pull_in_wf_det.set(ylabel='Bias voltage (V)')
+
+        self.ax_pulsed_pull_in_wf.set(xlim=(t[0], t[-1]))
+        self.ax_pulsed_pull_in_wf.grid(visible=True)
+        self.ax_pulsed_pull_in_wf.legend(fancybox=True, shadow=False)
+        self.ax_pulsed_pull_in_wf_det.legend(fancybox=True, shadow=False)
+        self.canvas_v_pull_in_meas_pulsed.draw()
 
     def plot_s3p(self):  # Display function that calls skrf Module to figure s3p files (used in display TAB)
         entered_filename = self.s3p_file_name_combobox.get()
@@ -2150,7 +2468,7 @@ class Window(tk.Tk):
         except Exception as e:
             print(e)
 
-    def plot_vpull_in(self):  # Display function to figure Isolation vs pull in voltage files (used in display TAB)
+    def plot_v_pull_in(self):  # Display function to figure Isolation vs pull in voltage files (used in display TAB)
         f = self.txt_file_name_combobox.get()
         os.chdir('{}'.format(self.pull_in_dir_name.get()))
         with open(f, newline=''):
@@ -2165,7 +2483,7 @@ class Window(tk.Tk):
             plt.figure(num=3)
             self.ax_pull_in.plot(v_bias, iso,
                                  label="{}".format(f)[:-4])  # removesuffixe non fonctionnel dans python 3.6
-            self.ax_pull_in.set_ylim(ymin=self.scale_isolation_value.get(), ymax=0)
+            self.ax_pull_in.set_ylim(ymin=self.scale_isolation_value.get() / 100, ymax=0)
             self.ax_pull_in.set_xlim(xmin=-self.scale_voltage_value.get(), xmax=self.scale_voltage_value.get())
             self.ax_pull_in.set(ylabel='Isolation (dB)')
             self.ax_pull_in.grid(visible=True)
@@ -2255,7 +2573,7 @@ class Window(tk.Tk):
 
     def error_log(self, resource):
         error_log_resource = resource.query('SYSTem:ERRor?')
-        time.sleep(1)
+        time.sleep(.1)
         error_string_resource = error_log_resource.split(",")[1]
         resource_name = resource.query('*IDN?').split(",")[:2]
         error_output = '{} ERROR LOG: {}\n'.format(resource_name, error_string_resource)
@@ -2384,12 +2702,12 @@ class Window(tk.Tk):
 
     def send_trig(self):
         scripts_and_functions.trigger_measurement_zva()
-        self.error_log(scripts_and_functions.signal_Generator)
+        self.error_log(scripts_and_functions.signal_generator)
 
     def sig_gen_cycling_config(self):
         scripts_and_functions.signal_Generator_cycling_config()
         time.sleep(3)
-        self.error_log(scripts_and_functions.signal_Generator)
+        self.error_log(scripts_and_functions.signal_generator)
 
     def cycling_test(self):
         print("Started cycling")
