@@ -14,6 +14,7 @@ from pyvisa import *
 from scipy.signal import savgol_filter, get_window, convolve
 
 import dir_and_var_declaration
+import main
 from dir_and_var_declaration import zva_init, sig_gen_init, osc_init, rf_gen_init, powermeter_init
 
 matplotlib.ticker.ScalarFormatter(useOffset=True, useMathText=True)
@@ -41,8 +42,10 @@ def initialize_hardware():
     powermeter = powermeter_init()
     rf_Generator = rf_gen_init(rf_gen_type='smb')
     signal_generator = sig_gen_init()
-
     return signal_generator, osc, zva, powermeter, rf_Generator, rm
+
+
+# def swap_zva_parameters():
 
 
 path = r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data'
@@ -365,7 +368,8 @@ def saves2p(filename: str) -> None:
         zva.write_str_with_opc(r"MMEMory:CDIRectory '{}'".format(directory), timeout=1000)
         time.sleep(1)
         # zva.write_str_with_opc(r"MMEMory:STORe:TRACe:PORTs 1, '{}.s2p', LOGPhase, 1,2".format(filename))
-        zva.write_str_with_opc(r"MMEMory:STORe:TRACe:CHAN 1, '{}.s2p'".format(filename))
+        zva.write_str_with_opc(r"MMEMory:STORe:TRACe:PORTs 1, '{}.s2p', LOGPhase, 3, 4".format(filename))
+        # zva.write_str_with_opc(r"MMEMory:STORe:TRACe:CHAN 2, '{}.s2p'".format(filename))
         print(r"sp file saved in ZVA at {}".format(directory), end='\n')
     except TimeoutException as e:
         print(e.args[0])
@@ -600,13 +604,13 @@ def triggered_data_acquisition(filename: str = r'default',
         print("Sweep time is set to {} s\n".format(sweep_time), end='\n')
         trigger_measurement_zva()
         time.sleep(1)
-        if file_format == 's3p':
+        if file_format == '.s3p':
             saves3p(filename)
             file_get(filename, zva_file_dir, pc_file_dir, extension='s3p')
-        elif file_format == 's2p':
+        elif file_format == '.s2p':
             saves2p(filename)
             file_get(filename, zva_file_dir, pc_file_dir, extension='s2p')
-        elif file_format == 's1p':
+        elif file_format == '.s1p':
             saves1p(filename)
             file_get(filename, zva_file_dir, pc_file_dir, extension='s1p')
         print_error_log()
@@ -703,6 +707,12 @@ def get_channel_info(channel: int = 4) -> dict:
 
 
 def get_curve(channel: int = 4) -> np.ndarray[np.ndarray, np.ndarray]:
+    """
+    Acquire channel data within the triangle and store it into a numpy array containing two arrays. The first array
+    (curve_data[:, 0]) is the voltage output and the second array is the time stamps (curve_data[:, 1])
+    :param channel: Channel to be acquired -> int
+    :return: Array of values and time stamps for each value in the time domain
+    """
     print(f"Acquiring curver {channel}")
     curve_data: np.ndarray[np.ndarray, np.ndarray] = np.ndarray[np.empty(shape=1)]
     try:
@@ -749,32 +759,64 @@ def get_curve(channel: int = 4) -> np.ndarray[np.ndarray, np.ndarray]:
     return curve_data
 
 
-def get_curve_fft(channel: int = 4):
+def get_curve_full_screen(channel: int = 4) -> np.ndarray[np.ndarray, np.ndarray]:
+    """
+    Acquire channel data of the whole screen and store it into a numpy array containing two arrays. The first array
+    (curve_data[:, 0]) is the voltage output and the second array is the time stamps (curve_data[:, 1])
+    :param channel: Channel to be acquired -> int
+    :return: Array of values and time stamps for each value in the time domain
+    """
     print(f"Acquiring curver {channel}")
-    try:
-        acquisition_length = int(osc.query("HORizontal:ACQLENGTH?"))  # get number of samples
-        curve_data = np.empty(shape=acquisition_length)
-        # print("acquisition_length in get curve function = {} samples\n".format(acquisition_length))
-        info = get_channel_info(channel=channel)
-        osc.write("DATa:STOP {}".format(acquisition_length))
-        # curve = np.array(osc.query('CURV?').split(','), dtype=float)
-        curve = np.array(osc.query('CURV?').split(','), dtype=float)
+    curve_data: np.ndarray[np.ndarray, np.ndarray] = np.ndarray[np.empty(shape=1)]
+    acquisition_length = int(osc.query("HORizontal:ACQLENGTH?"))  # get number of samples
+    print("Acquisition length in get curve function = {} samples\n".format(acquisition_length))
+    trigger_ref = float(osc.query(
+        'HORizontal:MAIn:DELay:POSition?')) / 100  # get trigger position in percentage of samples (default is 10%)
+    print(f'trigger ref :{trigger_ref}')
+    ref_index = acquisition_length  # get the 1st index of the ramp using trigger ref position and
+    print(f'ref index: {ref_index}')
+    sample_rate = float(osc.query('HORizontal:MODE:SAMPLERate?'))
+    number_of_samples = ref_index  # Number of samples in the triangles
+    data_truncated = np.zeros((acquisition_length, 2))
+    curve_data = data_truncated
+    info = get_channel_info(channel=channel)
+    # osc.write("DATa:STOP {}".format(acquisition_length))
+    curve = np.array(osc.query('CURV?').split(','), dtype=float)
+    y_offset = info['y_offset'][0]
+    y_scale = info['y_scale'][0]
+    time_base = info['sweep_duration'] / acquisition_length
+    time = np.arange(0, info['sweep_duration'], time_base)[:-1]
+    print("duration of sweep = {} s\n".format(info['sweep_duration']))
+    curve_data[:, 0] = (curve - y_offset) * y_scale
+    curve_data[:, 1] = time[:]
+    return curve_data
 
-        y_offset = info['y_offset'][0]
-        y_scale = info['y_scale'][0]
-        data_truncated = np.zeros((acquisition_length, 2))
-        curve_data = data_truncated
-        time_base = info['sweep_duration'] / acquisition_length
-        # print(time_base)
-        time = np.arange(0, info['sweep_duration'], time_base)
-        # print("duration of sweep = {} s\n".format(info['sweep_duration']))
-        curve_data[:, 0] = (curve - y_offset) * y_scale
-        curve_data[:, 1] = time[:]
-        # print(curve[:, 0])
-        # print(curve[:, 1])
-        # print("get_curve function ended")
-    except:
-        print("Unable to acquire Data")
+
+def get_curve_fft(channel: str = 4) -> np.ndarray[np.ndarray, np.ndarray]:
+    """
+    Acquire channel data and store it into a numpy array containing two arrays. The first array
+    (curve_data[:, 0]) is the voltage output and the second array is the time stamps (curve_data[:, 1])
+    :param channel: Channel to be acquired -> int
+    :return: Array of values and time stamps for each value in the time domain
+    """
+    print(f"Acquiring curver {channel}")
+    acquisition_length = int(osc.query("HORizontal:ACQLENGTH?"))  # get number of samples
+    print(f'Acquisition length:{acquisition_length}')
+    curve_data = np.empty(shape=acquisition_length)
+    print("acquisition_length in get curve function = {} samples\n".format(acquisition_length))
+    info = get_channel_info(channel=channel)
+    osc.write("DATa:STOP {}".format(acquisition_length))
+    curve = np.array(osc.query('CURV?').split(','), dtype=float)
+    y_offset = info['y_offset'][0]
+    y_scale = info['y_scale'][0]
+    data_truncated = np.zeros((acquisition_length, 2))
+    curve_data = data_truncated
+    time_base = info['sweep_duration'] / acquisition_length
+    print(time_base)
+    time = np.arange(0, info['sweep_duration'], time_base)[:-1]
+    print("duration of sweep = {} s\n".format(info['sweep_duration']))
+    curve_data[:, 0] = (curve - y_offset) * y_scale
+    curve_data[:, 1] = time
     return curve_data
 
 
@@ -1625,8 +1667,6 @@ def save_waveform(waveform_ch4: np.array(np.array(float)),
     data = np.zeros(shape=2)
     info = get_channel_info(channel=4)
     data = np.vstack((waveform_ch4[:, 0], waveform_ch2[:, 0], waveform_ch4[:, 1]))
-    np.savetxt('{}.txt'.format(filename), data, delimiter=',', newline='\n',
-               header='#waveform_ch4, waveform_ch2, time (s)')
     return data
 
 
@@ -2491,7 +2531,7 @@ def plot_signal_fft(data, filter_type='none', threshold_percent=5, sg_window=51,
     ax3.set_xscale('log')
     # ax3.set(xlim=[1e3, 1e6])
     ax3.set(ylim=[1e-7, 1e-2])
-    ax3.set(xlim=[1e3, 200000])
+    ax3.set(xlim=[10, 200000])
     ax3.xaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{x:.0e}'))
 
     ax3.set_xlabel('Frequency (Hz)')
@@ -3080,67 +3120,76 @@ def plot_file(filename='default.txt',
         plt.show()
 
 
+def dc_voltage(dc_value=0):
+    signal_generator.write(f"SOURce:VOLTage:OFFSET {dc_value}")
+
+
+def voltage_sweep(v1: str = '0', v2: str = '30', delay: float = 1, filname_prefix: str = 'test',
+                  dir=r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\S1P\Mesures 250425_travel_min',
+                  step: int = 1):
+    signal_generator.write('OUTPut 0')
+    starting_voltage = float(v1)
+    end_voltage = float(v2)
+    voltages = np.linspace(start=starting_voltage, stop=end_voltage, num=step)
+    os.chdir(dir)
+    # dc_voltage(dc_value=0)
+    signal_generator.write('OUTPut 1')
+    for voltage in voltages:
+        time.sleep(delay)
+        dc_voltage(voltage)
+        print(f'Acquiring S1P data for {voltage} V')
+        saves1p(filename=f'{filname_prefix}_{round(voltage, ndigits=2)}')
+        file_get(filename=f'{filname_prefix}_{round(voltage, ndigits=2)}',
+                 zva_file_dir=dir_and_var_declaration.ZVA_File_Dir_ZVA67,
+                 pc_file_dir=dir, extension='s1p')
+        time.sleep(delay)
+    # signal_generator.write('OUTPut 0')
+    dc_voltage(dc_value=0)
+    print('sweep finished')
+
+
+def toggle_trigger():
+    trigger_state = zva.query_str_with_opc("TRIGger:SOURce?")
+    if trigger_state == 'IMM':
+        zva.write_str_with_opc('TRIGger:SOURce EXTernal')
+        print("Trigger switched to external")
+    else:
+        zva.write_str_with_opc('TRIGger:SOURce IMM')
+        print("Trigger switched to immediate")
+    print(trigger_state)
+
+
+def check_if_file_name_exists(filename: str, directory: str) -> bool:
+    listed_files: list = []
+    if '.txt' in filename:
+        listed_files = main.filetypes_dir(directory)[2]
+    elif '.s1p' in filename:
+        listed_files = main.filetypes_dir(directory)[3]
+    elif '.s2p' in filename:
+        listed_files = main.filetypes_dir(directory)[1]
+    elif '.s3p' in filename:
+        listed_files = main.filetypes_dir(directory)[0]
+    # print(listed_files)
+    if filename in listed_files:
+        return True
+    else:
+        return False
+
+
 initialize_hardware()
 
 if __name__ == "__main__":
-    # wf = create_smooth_pull_in_voltage_waveform(voltages=list(np.arange(0, 40, 5)), width_pulse=20)
-    # fig, ax = plt.subplots(1, 1, squeeze=True)
-    # ax.plot(wf)
-    # filename = r'POWERPACK-MiniMEMS2-Shunt-B3-m30-1line-2MEMS-60V'
-    # filename = r'test'
-    # directory = (
-    #     r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Pullin voltage\POWERPACK-MiniMEMS-2\AN - Mesures 03-03-25')
-    # os.chdir(directory)
-    # plt.show()
-    # upload_waveform_to_signal_Generator(arb_name='pullin_test', waveform=wf, amplitude=2)
-    # create_pulsed_pull_in_test_waveform(amplitude=45, pulse_width=20, filename='pullin_test')
-    # signal_generator.write('OUTput 1')
-    # time.sleep(1)
-    # signal_generator.write("*TRG")
-    # time.sleep(1)
-    # measure_pull_down_voltage_pulsed(filename=filename)
-    # signal_generator.write('OUTput 0')
-    setup_signal_generator_pulsed_with_rst(r'TCPIP0::A-33521B-00526::inst0::INSTR')
-    # plot_file(filename + '.txt', directory)
-    # time.sleep(2)
-    # plt.close(2)
-    # fig, ax = plt.subplots(3, 1, squeeze=True)
-    # bias, detector = get_curve_using_cursors(2), get_curve_using_cursors(4)
-    # ramp_length = np.arange(start=1200, step=-100, stop=0)
-    # descending = sorted(ramp_length, reverse=True)
-    # with np.nditer(ramp_length, op_flags=['readwrite']) as it:
-    #     for length in it:
-    #         length[...] = 2 * length
-    #
-    # # for length in x:
-    # #     print(length)
-    #     # configuration_sig_gen_pull_in(ramp_length=length, amplitude=27/20)
-    #         ramp_width(width=length)
-    #         time.sleep(2)
-    #         signal_generator.write("*TRG")
-    #         time.sleep(2)
-    #         # get_curve(channel=4)
-    #         # get_curve(channel=2)
-    #         # # print(osc.query("CURSor:VBArs:POSITION2?"))
-    #         move_oscilloscope_cursor(cursor_number=2, cursor_type='X', position=str(length * 2e-6))
-    #         bias, detector = get_curve_using_cursors(2), get_curve_using_cursors(4)
-    #         # # get_waveform_using_cursors()
-    #         # plt.figure(figsize=(10, 5))
-    #         # plt.title('Generated Waveform with Pulses and Zero Gaps')
-    #         ax[0].plot(bias[:, 1], bias[:, 0], label=f'{length}')  # Time axis converted to microseconds
-    #         ax[1].plot(bias[:, 1], detector[:, 0], label=f'{length}')  # Time axis converted to microseconds
-    #         ax[2].plot(bias[:, 0], detector[:, 0], label=f'{length}')  # Time axis converted to microseconds
-    # ax[0].plot(bias[:, 1], bias[:, 0])  # , label=f'{length}')  # Time axis converted to microseconds
-    # ax[1].plot(bias[:, 1], detector[:, 0])  # , label=f'{length}')  # Time axis converted to microseconds
-    # ax[2].plot(bias[:, 0], detector[:, 0])  # , label=f'{length}')  # Time axis converted to microseconds
-    # ax[0].set(ylabel='Bias Voltage (V)', xlabel='Time (μs)')
-    # ax[1].set(ylabel='Detector Voltage (V)', xlabel='Time (μs)')
-    # ax[2].set(ylabel='Detector Voltage (V)', xlabel='Amplitude (Volts)')
-    # plt.xlabel('Time (μs)')
-    # plt.ylabel('Amplitude (Volts)')
-    # for axes in ax.flatten():
-    #     axes.grid(True)
-    # axes.legend()
-    # plt.show()
-    # load_pattern()
-    # force_trigger_osc()
+    signal_generator, osc, zva, powermeter, rf_Generator, rm = initialize_hardware()
+    signal_generator.write("*TRG")
+    os.chdir(r'D:\Essais fiabilité POWERFLEX_MiniMEMS-1')
+    detector = get_curve_full_screen(channel=4)
+    bias = get_curve_full_screen(channel=2)
+    fig, ax = plt.subplots(nrows=2, ncols=1, squeeze=True, sharex=True)
+    ax[0].plot(bias[:, 1], bias[:, 0], label='bias voltage')
+    ax[1].plot(detector[:, 1], detector[:, 0], label='detector output')
+    save_waveform_v2(waveform_ch4=detector, waveform_ch2=bias,
+                     filename='m20-e2-l1c2-4lines-4mems-100pulses-100us-1khz000_acq4')
+    for axs in ax:
+        axs.legend()
+        axs.grid(True)
+    plt.show()

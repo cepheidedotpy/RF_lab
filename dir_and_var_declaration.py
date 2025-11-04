@@ -41,14 +41,14 @@ instrument_file_ZVA67 = r'C:\Users\Public\Documents\Rohde-Schwarz\ZNA\RecallSets
 instrument_file_ZVA50 = r'C:\Rohde&Schwarz\Nwa\RecallSets\placeholder.zvx'
 
 # Default placeholder file to be stored in the zva_parameter Dicitonnary
-instrument_file = instrument_file_ZVA50
+instrument_file = instrument_file_ZVA67
 
 PC_File_Dir: str = r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data'  # Default directory for measurement data
 ZVA_File_Dir_ZVA67: str = r'C:\Users\Public\Documents\Rohde-Schwarz\ZNA\Traces'  # ZVA67 Trace file directory
 ZVA_File_Dir_ZVA50: str = r'C:\Rohde&Schwarz\Nwa\Traces'  # ZVA50 Trace file directory
 
 # Default trace directory
-zva_traces: str = ZVA_File_Dir_ZVA50
+zva_traces: str = ZVA_File_Dir_ZVA67
 # zva_traces: str = ZVA_File_Dir_ZVA67
 
 rm = pyvisa.ResourceManager()

@@ -257,7 +257,7 @@ def extension_detector(file: str) -> tuple:
     return extension, file
 
 
-def filetypes_dir(path: str) -> tuple:
+def filetypes_dir(path: str) -> tuple[str]:
     """
     Separates different file types in the specified directory and returns tuples of s3p, s2p, and txt files.
 
@@ -275,6 +275,7 @@ def filetypes_dir(path: str) -> tuple:
 
     # Initialize lists to store different types of files
     txt_files = []
+    s1p_files = []
     s3p_files = []
     s2p_files = []
 
@@ -287,9 +288,11 @@ def filetypes_dir(path: str) -> tuple:
             s3p_files.append(file)
         elif extension == '.s2p':
             s2p_files.append(file)
+        elif extension == '.s1p':
+            s1p_files.append(file)
 
     # Convert lists to tuples and return
-    return tuple(s3p_files), tuple(s2p_files), tuple(txt_files)
+    return tuple(s3p_files), tuple(s2p_files), tuple(txt_files), tuple(s1p_files)
 
 
 def add_entry(tab: ttk.LabelFrame | ttk.Frame, text_var: tk.StringVar | tk.DoubleVar, width: int, col: int,
@@ -1284,7 +1287,7 @@ class Window(tk.Tk):
 
             self.chosen_component_state = add_combobox(frame_snp_compo_info, text=self.test_s3p_state, col=1, row=5,
                                                        width=20)
-            self.chosen_component_state['values'] = ('Active', 'Frozen')
+            self.chosen_component_state['values'] = ('Active', 'Frozen', 'Passive')
             self.chosen_component_state.current(0)
 
             self.vna_connected = tk.StringVar(value=r'ZNA67')
@@ -1367,6 +1370,9 @@ class Window(tk.Tk):
             add_button(tab=frame_snp_signal_generator, button_name='Set Pulse Gen', command=self.set_pulse_gen, col=3,
                        row=3).grid(
                 sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+            add_button(tab=frame_snp_signal_generator, button_name='Toggle Trig',
+                       command=lambda: [scripts_and_functions.toggle_trigger()], col=3,
+                       row=4).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
             # ------------------------------------------------------------------------------
             self.canvas_snp_meas = create_canvas(figure=self.fig_snp_meas, frame=frame_snp_measurement,
                                                  toolbar_frame=frame_test_snp_measurement, toolbar=True)
@@ -1403,11 +1409,18 @@ class Window(tk.Tk):
             add_button(tab=frame_snp_zva, button_name='Set ZVA', command=self.set_zva, col=3, row=3).grid(sticky='e',
                                                                                                           ipadx=tab_pad_x,
                                                                                                           ipady=tab_pad_x)
-            add_button(tab=frame_snp_zva, button_name='Capture S3P', command=self.data_acquire, col=1, row=4).grid(
+            add_button(tab=frame_snp_zva, button_name='Capture S3P',
+                       command=lambda: [self.acquire_new_filename(suffix='.s3p')],
+                       col=1, row=4).grid(
                 sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
-            add_button(tab=frame_snp_zva, button_name='Capture S2P', command=self.data_acquire_s2p, col=2, row=4).grid(
+            add_button(tab=frame_snp_zva, button_name='Capture S2P',
+                       command=lambda: [self.acquire_new_filename(suffix='.s2p')],
+                       col=2, row=4).grid(
                 sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
-            add_button(tab=frame_snp_zva, button_name='Capture S1P', command=self.data_acquire_s1p, col=3, row=4).grid(
+            add_button(tab=frame_snp_zva, button_name='Capture S1P',
+                       command=lambda: [self.acquire_new_filename(suffix='.s1p')],
+                       col=3,
+                       row=4).grid(
                 sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
 
             # ------------------------------------------------------------------------------
@@ -1447,6 +1460,9 @@ class Window(tk.Tk):
                 ipadx=tab_pad_x, ipady=tab_pad_x)
             add_button(tab=frame_snp_gene_controls, button_name='S3P config', command=call_s3p_config, col=2,
                        row=4).grid(
+                ipadx=tab_pad_x, ipady=tab_pad_x)
+            add_button(tab=frame_snp_gene_controls, button_name='Toggle config', command=call_s3p_config, col=2,
+                       row=5).grid(
                 ipadx=tab_pad_x, ipady=tab_pad_x)
 
         def setup_power_measurement():
@@ -1504,7 +1520,7 @@ class Window(tk.Tk):
             self.chosen_component_state_pow = add_combobox(frame_power_compo_info, text=self.test_pow_state, col=1,
                                                            row=5,
                                                            width=20)
-            self.chosen_component_state_pow['values'] = ('Active', 'Frozen')
+            self.chosen_component_state_pow['values'] = ('Active', 'Frozen', 'Passive')
             self.chosen_component_state_pow.current(0)
 
             add_entry(tab=frame_power_compo_info, text_var=self.test_pow_dir, width=20, col=1, row=0)
@@ -1954,9 +1970,9 @@ class Window(tk.Tk):
                            pulse_width=int(self.pulsed_pulse_width.get()))],
                        col=3,
                        row=1).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
-            add_button(tab=frame_pulsed_signal_gen_measurement, button_name='Set Pulse Gen',
-                       command=None,
-                       col=3, row=3).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+            # add_button(tab=frame_pulsed_signal_gen_measurement, button_name='Set Pulse Gen',
+            #            command=None,
+            #            col=3, row=3).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
             # Oscilloscope
             add_button(tab=frame_test_pulsed_pull_in_oscilloscope, button_name='Setup Oscilloscope',
                        command=lambda: scripts_and_functions.osc_pullin_config(),
@@ -2164,7 +2180,9 @@ class Window(tk.Tk):
         self.text_snp_debug.insert(index="%d.%d" % (0, 0), chars=scripts_and_functions.zva_set_output_log())
 
     def data_acquire(
-            self):  # Calls scripts_and_functions module function triggered_data_acquisition() to acquire data and
+            self):
+        # Replaced by acquire_new_filename function
+        # Calls scripts_and_functions module function triggered_data_acquisition() to acquire data and
         # create a S3P file
         # scripts_and_functions.signal_generator.write("TRIG")
         scripts_and_functions.time.sleep(2 + float(scripts_and_functions.zva.query_str_with_opc('SENSe1:SWEep:TIME?')))
@@ -2185,6 +2203,7 @@ class Window(tk.Tk):
         self.set_txt()
 
     def data_acquire_s2p(self):
+        # Replaced by acquire_new_filename function
         # scripts_and_functions.signal_generator.write("TRIG")
         scripts_and_functions.time.sleep(2 + float(scripts_and_functions.zva.query_str_with_opc('SENSe1:SWEep:TIME?')))
         scripts_and_functions.triggered_data_acquisition(
@@ -2203,6 +2222,7 @@ class Window(tk.Tk):
         self.set_txt()
 
     def data_acquire_s1p(self):
+        # Replaced by acquire_new_filename function
         # scripts_and_functions.signal_generator.write("TRIG")
         scripts_and_functions.time.sleep(2 + float(scripts_and_functions.zva.query_str_with_opc('SENSe1:SWEep:TIME?')))
         scripts_and_functions.triggered_data_acquisition(
@@ -2217,6 +2237,49 @@ class Window(tk.Tk):
             pc_file_dir=self.test_s3p_dir.get(),
             file_format='s1p')
         self.plot_snp_test(filetype='.s1p')
+        scripts_and_functions.print_error_log()
+        self.set_txt()
+
+    def acquire_new_filename(self, suffix: str = '.s2p'):
+        # scripts_and_functions.signal_generator.write("TRIG")
+        _suffix = suffix
+        filename = file_name_creation(
+            data_list=[self.test_s3p_project.get(), self.test_s3p_cell.get(),
+                       self.test_s3p_reticule.get(),
+                       self.test_s3p_device.get(), self.chosen_component_state.get(),
+                       self.chosen_bias_voltage.get()],
+            text=self.text_file_name_s3p_test,
+            end_characters='V')
+        print(filename)
+
+        filename_exists = scripts_and_functions.check_if_file_name_exists(filename + _suffix,
+                                                                          directory=self.test_s3p_dir.get())
+        copy_number: int = 0
+        if filename_exists:  # filename exists as well
+            print('File exists already')
+            print(f'end strings : {filename.split('-')[-1]}')
+
+        current_copy = 1
+        while filename_exists:
+            if 'V' not in filename.split('-')[-1]:  # A copy exists
+                current_copy = int(filename.split('-')[-1])
+                print(f'latest copy is {current_copy}')
+            else:
+                filename + f'-{current_copy}'
+
+            copy_number += 1
+            filename = filename.removesuffix(_suffix).removesuffix('-' + str(current_copy)) + '-' + str(copy_number)
+            filename_exists = scripts_and_functions.check_if_file_name_exists(filename + _suffix,
+                                                                              directory=self.test_s3p_dir.get())
+            print(f'in loop value {filename_exists}')
+
+        scripts_and_functions.time.sleep(2 + float(scripts_and_functions.zva.query_str_with_opc('SENSe1:SWEep:TIME?')))
+        scripts_and_functions.triggered_data_acquisition(
+            filename=filename,
+            zva_file_dir=dir_and_var_declaration.zva_parameters["zva_traces"],
+            pc_file_dir=self.test_s3p_dir.get(),
+            file_format=_suffix)
+        self.plot_snp_test(filetype=_suffix)
         scripts_and_functions.print_error_log()
         self.set_txt()
 
