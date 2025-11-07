@@ -3176,7 +3176,12 @@ def define_powermeter_settings(trigger_delay: str = "00E-6",
     print(powermeter.query("*OPC?"))  # Blocks until sweep is finished
     powermeter.write("INIT:CONT:ALL ON")
     signal_generator.write("OUTPut:SYNC ON")
-    powermeter.write('AVER:STAT OFF')
+    powermeter.write('AVER:STAT ON')
+    powermeter.write(' SENSe1:AVERage:COUNt:AUTO')
+    powermeter.write(' SENSe2:AVERage:COUNt:AUTO')
+    powermeter.write('TRACe1:DEFine:DURation:REFerence 50')
+    powermeter.write('TRACe1:DEFine:DURation:REFerence 50')
+
     powermeter.query("*OPC?")  # Blocks until sweep is finished
     # powermeter.write("SENSe1:TRACe:AUToscale")
     # powermeter.write("SENSe2:TRACe:AUToscale")
@@ -3245,7 +3250,10 @@ def define_powermeter_settings(trigger_delay: str = "00E-6",
     print(f"Trace 1 time: {powermeter.query("SENSe1:TRACe:TIME?")}")
     print(f"Trace 2 time: {powermeter.query("SENSe2:TRACe:TIME?")}")
     print(f"FORMAT READINGS: {powermeter.query("FORMat:READings:DATA?")}")
-    powermeter.write("FORMat:READings:DATA ASCii")
+    powermeter.write("FORMat:READings:DATA REAL")
+    powermeter.write("FORMat:READings:BORDer NORM")
+    print(powermeter.query("FORMat:READings:BORDer?; *OPC?"))  # Blocks until sweep is finished
+    print(powermeter.query("FORMat:READings:DATA?; *OPC?"))  # Blocks until sweep is finished
     powermeter.query("*OPC?")  # Blocks until sweep is finished
 
     print(f"Scale 1: {powermeter.query("SENSe1:TRACe:X:SCALe:PDIV?")}")
@@ -3258,22 +3266,24 @@ def acquire_powermeter_trace() -> typing.Literal:
         Configures the N1912A for trace capture, acquires data, and returns
         time and power (dBm) arrays.
         """
-    powermeter.write("TRIG:SOUR INT")
+    powermeter.write("TRIG:SOUR EXT")
     powermeter.write("INIT:CONT OFF")
     powermeter.write("TRAC:STAT ON")
-    # powermeter.write("TRIG:DEL:AUTO OFF")
-    powermeter.write("INIT")
-    # powermeter.query("FETCH?")
-    print(f"Average buffer size: {powermeter.query('SENSe1:BUFFer:COUNt?')}")
-    while powermeter.query("*OPC?") == "+0":
-        print(powermeter.query("*OPC?"))
-    print("Fetching data...")
-    power_values_dBm_1 = powermeter.query_binary_values("TRACe1:DATA? HRESolution")  # Channel A
-    while powermeter.query("*OPC?") == "+0":
-        print(type(powermeter.query("*OPC?")))
-    print(f"Powermeter power values channel A acquired", end="\n")
+    # print(f"Average buffer size: {powermeter.query('SENSe1:BUFFer:COUNt?')}")
+    # while powermeter.query("*OPC?") == "+0":
+    #     print(powermeter.query("*OPC?"))
+    # print("Fetching data...")
+    power_values_dBm_1 = powermeter.query_binary_values(message="TRACe1:DATA? HRESolution",
+                                                        header_fmt="ieee", is_big_endian=True,
+                                                        chunk_size=2000)  # Channel A
+    # print(f'Pulse duration: {powermeter.write("TRACe1:MEASurement:PULSe 1:DURation?")}')
+    # while powermeter.query("*OPC?") == "+0":
+    #     print(type(powermeter.query("*OPC?")))
+    # print(f"Powermeter power values channel A acquired", end="\n")
 
-    power_values_dBm_2 = powermeter.query_binary_values("TRACe2:DATA? HRESolution")  # Channel B
+    power_values_dBm_2 = powermeter.query_binary_values(message="TRACe2:DATA? HRESolution",
+                                                        header_fmt="ieee", is_big_endian=True,
+                                                        chunk_size=20000)  # Channel B
     while powermeter.query("*OPC?") == "+0":
         print(type(powermeter.query("*OPC?")))
     print(f"Powermeter power values channel B acquired", end="\n")
@@ -3306,7 +3316,7 @@ def check_if_file_name_exists(filename: str, directory: str) -> bool:
         return False
 
 
-# initialize_hardware()
+initialize_hardware()
 
 if __name__ == "__main__":
     # signal_generator, osc, zva, powermeter, rf_Generator, rm = initialize_hardware()
@@ -3314,24 +3324,41 @@ if __name__ == "__main__":
     powermeter = powermeter_init()
     signal_generator = sig_gen_init()
 
-    print(powermeter.query("TRIG:SOURce?"))
-    print(powermeter.query("CALCulate1:LIMit:FCOunt?"))
-    define_powermeter_settings()
-
+    # print(powermeter.query("TRIG:SOURce?"))
+    print(f"Fcount limit {powermeter.query("CALCulate1:LIMit:FCOunt?")}")
+    define_powermeter_settings(trigger_delay="20E-6",
+                               trace_duration="200E-6",
+                               gate_duration="10E-6",
+                               power_unit="DBM")
     signal_generator.write("OUTPut:SYNC ON")
     signal_generator.write("OUTPut ON")
     # send_trig()
     time_values, power_values_1, power_values_2 = acquire_powermeter_trace()
-    powermeter.write("INIT:CONT ON")
     signal_generator.close()
     powermeter.close()
-
+    ax: plt.Axes
+    fig: plt.Figure
     fig, ax = plt.subplots(nrows=1, ncols=1, squeeze=True, sharex=True)
-    ax.plot(power_values_1, label='Power values_1')
-    ax.plot(power_values_2, label='Power values_2')
+    ax.plot(time_values, power_values_1, label=f'$Channel\ A$')
+    ax.plot(time_values, power_values_2, label=f'$Channel\ B$')
+    ax.set(ylim=[-30, -10])
+    ax.xaxis.set_major_locator(locator=ticker.AutoLocator())
+    # --- Modified Section ---
+    # Create a ScalarFormatter
+    formatter = ticker.ScalarFormatter(useMathText=True)  # useMathText=True makes exponents look nicer
+    formatter.set_scientific(True)  # Enable scientific notation
+    formatter.set_powerlimits((0, 0))  # Force notation for all magnitudes
 
-    # ax.set(ylim=[-50, 50])
-    # for axs in ax:
+    # Apply the formatter to the x-axis
+    ax.xaxis.set_major_formatter(formatter)
+    # --- End Modified Section ---
+
     ax.legend()
-    ax.grid(True)
-    plt.show()
+    ax.set_xlabel('Time (s)')  # Added for clarity
+    ax.set_ylabel('Power (dBm)')  # Added for clarity
+    plt.title('Pin & Pout in time domaine')  # Added for clarity
+    plt.grid()
+    # Save the figure (optional, but good practice in scripts)
+    # plt.savefig('scientific_xaxis_plot.png')
+
+    plt.show()  # If running interactively

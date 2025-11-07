@@ -636,6 +636,30 @@ def add_small_scale(frame: ttk.Frame, name: str, col: int, row: int) -> ttk.Scal
     return scale
 
 
+# class Configs3pDisplay(tk.Toplevel):
+#     """
+#     Une fenêtre dédiée à l'acquisition de la Mesure B.
+#     """
+#
+#     def __init__(self, master):
+#         super().__init__(master)
+#
+#         self.title("Acquisition - Mesure B")
+#         self.geometry("400x200")
+#         self.grab_set()
+#
+#         # --- Vos widgets pour cet onglet ---
+#         main_frame = ttk.Frame(self, padding=20)
+#         main_frame.pack(expand=True, fill="both")
+#
+#         ttk.Label(main_frame, text="Plot Sparameters - 3 ports").pack(pady=10)
+#         ttk.Progressbar(main_frame, mode="indeterminate").pack(pady=5, fill="x", padx=10)
+#
+#         start_button = ttk.Button(main_frame, text="Démarrer")
+#         start_button.pack(pady=10)
+#         # Vous pouvez lier start_button.config(command=...) à votre fonction d'acquisition
+
+
 class Window(tk.Tk):
     """
     Main application class for handling SNP file display and acquisition.
@@ -768,8 +792,8 @@ class Window(tk.Tk):
         self.stop_requested = True
 
     def configure_window(self):
-        # s = ttk.Style()
-        # s.configure(style='.', font=('Bahnschrift Light', 10))
+        s = ttk.Style()
+        s.configure(style='.', font=('Bahnschrift Light', 10))
 
         # Set window properties
         self.title(f"SUMMIT 11K Machine Interface v{_version}")
@@ -780,30 +804,37 @@ class Window(tk.Tk):
         # --------------------------------------------------------------------------------------------------------------
         # Configuration du style pour un look moderne
         # self.style = ttk.Style(self)
-        # self.style.theme_use('clam')  # 'clam', 'alt', 'default', 'classic'
+        # self.style.theme_use('classic')  # 'clam', 'alt', 'default', 'classic'
         #
         # main_frame = ttk.Frame(self, padding=20)
-        # main_frame.pack(expand=True, fill="both")
+        # main_frame.grid(column=1,  # The column position within the parent LabelFrame.
+        #                 row=1,  # The row position within the parent LabelFrame.
+        #                 sticky=tk.N + tk.S + tk.W + tk.E,  # Make the LabelFrame stick to all sides of the cell.
+        #                 rowspan=1)  # Set the number of rows the LabelFrame should span.
         #
-        # ttk.Label(main_frame, text="Sélectionnez une action :",
-        #           font=("-size", 14)).pack(pady=10)
+        # ttk.Label(main_frame, text="Select a configuration",
+        #           font=("-size", 14)).pack(pady=10, expand=True)
         #
         # # Bouton pour ouvrir la première configuration
         # btn_config_s3p_display = ttk.Button(
         #     main_frame,
-        #     text="Affichage Paramètres S - 3 ports",
+        #     text="Plot Sparameters - 3 ports",
         #     # command=self.open_config_s3p_display
-        #     command=None
+        #     command=self.open_config_s3p_display
         # )
-        # btn_config_s3p_display.pack(pady=10, fill="x")
+        # btn_config_s3p_display.pack(pady=10, fill="x", expand=True)
         #
         # # Bouton pour ouvrir la seconde configuration
         # config_s2p_display = ttk.Button(
         #     main_frame,
-        #     text="Affichage Paramètres S - 2 ports",
-        #     command=None
+        #     text="Plot Sparameters - 2 ports",
+        #     command=self.open_config_s3p_display
         # )
         # config_s2p_display.pack(pady=10, fill="x")
+        #
+        # btn_exit = ttk.Button(main_frame, text='Quit', command=main_frame.quit)
+        # btn_exit.pack(pady=10, fill="x")
+
         # --------------------------------------------------------------------------------------------------------------
 
     def init_figures(self):
@@ -2054,6 +2085,14 @@ class Window(tk.Tk):
         setup_pull_in_measurement_pulsed()
 
         # Schedule the next update
+
+    def open_config_s3p_display(self):
+        """Ouvre la fenêtre de configuration A."""
+        print("Ouverture de la configuration figure 3 ports")
+        # Crée une instance de notre fenêtre Toplevel
+        config_window = Configs3pDisplay(self)
+        # Met la fenêtre au premier plan
+        config_window.lift()
 
     # ==============================================================================
     # Methods
