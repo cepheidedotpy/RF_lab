@@ -648,7 +648,7 @@ class Window(tk.Tk):
     def __init__(self, master: Optional[tk.Tk] = None):
         super().__init__()
         self.master = master
-        # Declare figures and axes
+        # Declare figures, axes and application variables
         self.signal_generator_instance: tk.StringVar
         self.text_snp_debug: tk.Text
         self.text_file_name_s3p_test: tk.Text
@@ -726,6 +726,7 @@ class Window(tk.Tk):
         self.is_power_sweeping = False
         # Configure styles
         self.zva_inst = None
+
         self.configure_window()
 
         # Initialize figures and axes
@@ -767,8 +768,8 @@ class Window(tk.Tk):
         self.stop_requested = True
 
     def configure_window(self):
-        s = ttk.Style()
-        s.configure(style='.', font=('Bahnschrift Light', 10))
+        # s = ttk.Style()
+        # s.configure(style='.', font=('Bahnschrift Light', 10))
 
         # Set window properties
         self.title(f"SUMMIT 11K Machine Interface v{_version}")
@@ -776,6 +777,34 @@ class Window(tk.Tk):
 
         # Initialize the tab control
         self.tabControl = ttk.Notebook(self)
+        # --------------------------------------------------------------------------------------------------------------
+        # Configuration du style pour un look moderne
+        # self.style = ttk.Style(self)
+        # self.style.theme_use('clam')  # 'clam', 'alt', 'default', 'classic'
+        #
+        # main_frame = ttk.Frame(self, padding=20)
+        # main_frame.pack(expand=True, fill="both")
+        #
+        # ttk.Label(main_frame, text="Sélectionnez une action :",
+        #           font=("-size", 14)).pack(pady=10)
+        #
+        # # Bouton pour ouvrir la première configuration
+        # btn_config_s3p_display = ttk.Button(
+        #     main_frame,
+        #     text="Affichage Paramètres S - 3 ports",
+        #     # command=self.open_config_s3p_display
+        #     command=None
+        # )
+        # btn_config_s3p_display.pack(pady=10, fill="x")
+        #
+        # # Bouton pour ouvrir la seconde configuration
+        # config_s2p_display = ttk.Button(
+        #     main_frame,
+        #     text="Affichage Paramètres S - 2 ports",
+        #     command=None
+        # )
+        # config_s2p_display.pack(pady=10, fill="x")
+        # --------------------------------------------------------------------------------------------------------------
 
     def init_figures(self):
         """Initialize all the matplotlib figures and their respective axes."""

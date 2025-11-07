@@ -1,5 +1,6 @@
 import os
 import time
+import typing
 from functools import wraps
 import RsInstrument
 import matplotlib.artist
@@ -3159,6 +3160,135 @@ def toggle_trigger():
     print(trigger_state)
 
 
+def query_powermeter(command: str = "*OPC?"):
+    print(f'sending --> {command}')
+    print(powermeter.query(command))
+
+
+def define_powermeter_settings(trigger_delay: str = "00E-6",
+                               trace_duration: str = "200E-6",
+                               gate_duration: str = "10E-6",
+                               power_unit: str = "DBM"):
+    powermeter.write("TRACe1:STAT ON")
+    print(powermeter.query("*OPC?"))  # Blocks until sweep is finished
+    powermeter.write("TRACe2:STAT ON")
+    powermeter.query("*OPC?")  # Blocks until sweep is finished
+    print(powermeter.query("*OPC?"))  # Blocks until sweep is finished
+    powermeter.write("INIT:CONT:ALL ON")
+    signal_generator.write("OUTPut:SYNC ON")
+    powermeter.write('AVER:STAT OFF')
+    powermeter.query("*OPC?")  # Blocks until sweep is finished
+    # powermeter.write("SENSe1:TRACe:AUToscale")
+    # powermeter.write("SENSe2:TRACe:AUToscale")
+    powermeter.write(f"SENSe1:TRACe:TIME {trace_duration}")
+    powermeter.write(f"SENSe2:TRACe:TIME {trace_duration}")
+
+    print("Acquiring waveform...")
+    # Trigger the measurement and wait for it to complete
+    powermeter.write(f"SENS1:DET:FUNC NORM")
+    query_powermeter(command="OUTPut:RECorder1:STATe?")
+    query_powermeter(command="OUTPut:RECorder2:STATe?")
+    powermeter.write("OUTPut:RECorder2:STATe ON")
+    # powermeter.write(f"SENSe1:BUFFer:COUNt 0")
+    powermeter.write(f"SENS2:DET:FUNC NORM")
+    # powermeter.write(f"SENSe2:BUFFer:COUNt 0")
+    powermeter.write(f"SENSe1:SWE1:TIME {gate_duration}")
+    powermeter.write(f"SENSe1:SWE2:TIME {gate_duration}")
+    powermeter.write(f"SENSe1:SWE3:TIME {gate_duration}")
+    powermeter.write(f"SENSe1:SWE4:TIME {gate_duration}")
+    powermeter.write(f"SENSe2:SWE1:TIME {gate_duration}")
+    powermeter.write(f"SENSe2:SWE2:TIME {gate_duration}")
+    powermeter.write(f"SENSe2:SWE3:TIME {gate_duration}")
+    powermeter.write(f"SENSe2:SWE4:TIME {gate_duration}")
+    powermeter.query("*OPC?")  # Blocks until sweep is finished
+
+    powermeter.write(f"SENSe1:SWEep1:OFFSet:TIME {trigger_delay}")
+    powermeter.write(f"SENSe1:SWEep2:OFFSet:TIME {trigger_delay}")
+    powermeter.write(f"SENSe1:SWEep3:OFFSet:TIME {trigger_delay}")
+    powermeter.write(f"SENSe1:SWEep4:OFFSet:TIME {trigger_delay}")
+    powermeter.write(f"SENSe2:SWEep3:OFFSet:TIME {trigger_delay}")
+    powermeter.write(f"SENSe2:SWEep4:OFFSet:TIME {trigger_delay}")
+    powermeter.write(f"SENSe2:SWEep1:OFFSet:TIME {trigger_delay}")
+    powermeter.write(f"SENSe2:SWEep2:OFFSet:TIME {trigger_delay}")
+    powermeter.query("*OPC?")  # Blocks until sweetrigger_delay
+    print(f"OFFSET time Sense 1: {powermeter.query("SENSe1:SWEep1:OFFSet:TIME?")}")
+    print(f"OFFSET time Sense 2: {powermeter.query("SENSe2:SWEep1:OFFSet:TIME?")}")
+    print(f"Recorder 1: {powermeter.query("OUTPut:RECorder1:FEED?")}")
+    print(f"Recorder 2: {powermeter.query("OUTPut:RECorder2:FEED?")}")
+    powermeter.query("*OPC?")  # Blocks until sweep is finished
+
+    print(f"Sweep time Sense 1:{powermeter.query("SENSe1:SWE1:TIME?; *OPC?")}")
+    print(f"Sweep time Sense 1:{powermeter.query("SENSe1:SWE2:TIME?; *OPC?")}")
+    print(f"Sweep time Sense 1:{powermeter.query("SENSe1:SWE3:TIME?; *OPC?")}")
+    print(f"Sweep time Sense 1:{powermeter.query("SENSe1:SWE4:TIME?; *OPC?")}")
+    print(f"Sweep time Sense 2:{powermeter.query("SENSe2:SWE1:TIME?; *OPC?")}")
+    print(f"Sweep time Sense 2:{powermeter.query("SENSe2:SWE2:TIME?; *OPC?")}")
+    print(f"Sweep time Sense 2:{powermeter.query("SENSe2:SWE3:TIME?; *OPC?")}")
+    print(f"Sweep time Sense 2:{powermeter.query("SENSe2:SWE4:TIME?; *OPC?")}")
+    powermeter.query("*OPC?")  # Blocks until sweep is finished
+    powermeter.write(f"SENSe1:TRACe:UNIT {power_unit}")
+    powermeter.write(f"SENSe2:TRACe:UNIT {power_unit}")
+    # print(f"Sens 1: {powermeter.query("SENSe1:TRACe:UNIT?")}")
+    # print(f"Sens 2: {powermeter.query("SENSe2:TRACe:UNIT?")}")
+    powermeter.query("*OPC?")  # Blocks until sweep is finished
+    powermeter.write("CALC1:LIM:UPP:DATA 40")
+    powermeter.write("CALC2:LIM:UPP:DATA 40")
+    powermeter.write("CALC3:LIM:UPP:DATA 40")
+    powermeter.write("CALC4:LIM:UPP:DATA 40")
+    powermeter.write("CALC1:LIM:LOW:DATA -40")
+    powermeter.write("CALC2:LIM:LOW:DATA -40")
+    powermeter.write("CALC3:LIM:LOW:DATA -40")
+    powermeter.write("CALC4:LIM:LOW:DATA -40")
+
+    # print(f"Upper limit for the lower window upper measurement {powermeter.query("CALC2:LIM:UPP:DATA?")}")
+    # print(f"Lower limit for the lower window upper measurement {powermeter.query("CALC2:LIM:LOW:DATA?")}")
+    print(f"Trace 1 time: {powermeter.query("SENSe1:TRACe:TIME?")}")
+    print(f"Trace 2 time: {powermeter.query("SENSe2:TRACe:TIME?")}")
+    print(f"FORMAT READINGS: {powermeter.query("FORMat:READings:DATA?")}")
+    powermeter.write("FORMat:READings:DATA ASCii")
+    powermeter.query("*OPC?")  # Blocks until sweep is finished
+
+    print(f"Scale 1: {powermeter.query("SENSe1:TRACe:X:SCALe:PDIV?")}")
+    print(f"Scale 2: {powermeter.query("SENSe2:TRACe:X:SCALe:PDIV?")}")
+    powermeter.query("*OPC?")  # Blocks until sweep is finished
+
+
+def acquire_powermeter_trace() -> typing.Literal:
+    """
+        Configures the N1912A for trace capture, acquires data, and returns
+        time and power (dBm) arrays.
+        """
+    powermeter.write("TRIG:SOUR INT")
+    powermeter.write("INIT:CONT OFF")
+    powermeter.write("TRAC:STAT ON")
+    # powermeter.write("TRIG:DEL:AUTO OFF")
+    powermeter.write("INIT")
+    # powermeter.query("FETCH?")
+    print(f"Average buffer size: {powermeter.query('SENSe1:BUFFer:COUNt?')}")
+    while powermeter.query("*OPC?") == "+0":
+        print(powermeter.query("*OPC?"))
+    print("Fetching data...")
+    power_values_dBm_1 = powermeter.query_binary_values("TRACe1:DATA? HRESolution")  # Channel A
+    while powermeter.query("*OPC?") == "+0":
+        print(type(powermeter.query("*OPC?")))
+    print(f"Powermeter power values channel A acquired", end="\n")
+
+    power_values_dBm_2 = powermeter.query_binary_values("TRACe2:DATA? HRESolution")  # Channel B
+    while powermeter.query("*OPC?") == "+0":
+        print(type(powermeter.query("*OPC?")))
+    print(f"Powermeter power values channel B acquired", end="\n")
+
+    stop_time_s = float(powermeter.query("SENSe1:TRACe:TIME?"))
+    start_time_s = 0
+    num_points = len(power_values_dBm_1)
+    # Reconstruct the time axis (X-axis)
+    # The instrument only returns Y-values.
+    # stop_time_s = start_time_s + sweep_time_s
+    time_values_s = np.linspace(start_time_s, stop_time_s, num_points)
+    print(f"Acquisition complete. Received {len(power_values_dBm_1)} data points.")
+    return time_values_s, power_values_dBm_1, power_values_dBm_2
+
+
 def check_if_file_name_exists(filename: str, directory: str) -> bool:
     listed_files: list = []
     if '.txt' in filename:
@@ -3176,20 +3306,32 @@ def check_if_file_name_exists(filename: str, directory: str) -> bool:
         return False
 
 
-initialize_hardware()
+# initialize_hardware()
 
 if __name__ == "__main__":
-    signal_generator, osc, zva, powermeter, rf_Generator, rm = initialize_hardware()
-    signal_generator.write("*TRG")
-    os.chdir(r'D:\Essais fiabilité POWERFLEX_MiniMEMS-1')
-    detector = get_curve_full_screen(channel=4)
-    bias = get_curve_full_screen(channel=2)
-    fig, ax = plt.subplots(nrows=2, ncols=1, squeeze=True, sharex=True)
-    ax[0].plot(bias[:, 1], bias[:, 0], label='bias voltage')
-    ax[1].plot(detector[:, 1], detector[:, 0], label='detector output')
-    save_waveform_v2(waveform_ch4=detector, waveform_ch2=bias,
-                     filename='m20-e2-l1c2-4lines-4mems-100pulses-100us-1khz000_acq4')
-    for axs in ax:
-        axs.legend()
-        axs.grid(True)
+    # signal_generator, osc, zva, powermeter, rf_Generator, rm = initialize_hardware()
+    os.chdir(r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Power handling')
+    powermeter = powermeter_init()
+    signal_generator = sig_gen_init()
+
+    print(powermeter.query("TRIG:SOURce?"))
+    print(powermeter.query("CALCulate1:LIMit:FCOunt?"))
+    define_powermeter_settings()
+
+    signal_generator.write("OUTPut:SYNC ON")
+    signal_generator.write("OUTPut ON")
+    # send_trig()
+    time_values, power_values_1, power_values_2 = acquire_powermeter_trace()
+    powermeter.write("INIT:CONT ON")
+    signal_generator.close()
+    powermeter.close()
+
+    fig, ax = plt.subplots(nrows=1, ncols=1, squeeze=True, sharex=True)
+    ax.plot(power_values_1, label='Power values_1')
+    ax.plot(power_values_2, label='Power values_2')
+
+    # ax.set(ylim=[-50, 50])
+    # for axs in ax:
+    ax.legend()
+    ax.grid(True)
     plt.show()
