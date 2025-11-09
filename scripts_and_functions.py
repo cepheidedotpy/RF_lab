@@ -34,13 +34,23 @@ powermeter: pyvisa.resources.tcpip.TCPIPInstrument
 
 def initialize_hardware():
     global rm, osc, signal_generator, zva, powermeter, signal_generator, rf_Generator
-    rm = pyvisa.ResourceManager()
-    signal_generator = sig_gen_init()
-    osc = osc_init()
-    zva = zva_init(zva="ZVA67")
-    powermeter = powermeter_init()
-    rf_Generator = rf_gen_init(rf_gen_type='smb')
-    signal_generator = sig_gen_init()
+    try:
+        rm = pyvisa.ResourceManager()
+        signal_generator = sig_gen_init()
+        osc = osc_init()
+        zva = zva_init(zva="ZVA67")
+        powermeter = powermeter_init()
+        rf_Generator = rf_gen_init(rf_gen_type='smb')
+        signal_generator = sig_gen_init()
+    except OSError as e:
+        print(f"Hardware initialization failed: {e}")
+        print("Running in offline mode. Some functionality will be disabled.")
+        rm = None
+        signal_generator = None
+        osc = None
+        zva = None
+        powermeter = None
+        rf_Generator = None
 
     return signal_generator, osc, zva, powermeter, rf_Generator, rm
 
@@ -48,7 +58,10 @@ def initialize_hardware():
 path = r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data'
 
 # global zva, signal_generator, osc, rf_Generator
-os.chdir('{}'.format(path))
+if os.path.exists(path):
+    os.chdir('{}'.format(path))
+else:
+    print(f"Warning: Directory not found: {path}")
 
 
 # Opening resource manager
@@ -2905,14 +2918,14 @@ def upload_waveform_to_signal_Generator(arb_name: str, waveform: np.ndarray, amp
     signal_generator.write(r"DATA:VOLatile:CLEar")
     signal_generator.write(fr'SOURce1:VOLTage:LIMit:HIGH 3')
 
-    print(f"Operation status: {signal_generator.query("*OPC?")}")
+    print(f"Operation status: {signal_generator.query('*OPC?')}")
     time.sleep(2)
     signal_generator.write(f'SOURCe1:FUNCtion:ARBitrary "EXP_RISE"')
     time.sleep(2)
     print(signal_generator.query(r'SYSTem:ERRor?'))
     try:
         signal_generator.write(f"SOURCe1:DATA:ARB:DAC {arb_name}, {dac_values}")
-        print(f"Operation status: {signal_generator.query("*OPC?")}")
+        print(f"Operation status: {signal_generator.query('*OPC?')}")
     except:
         print("LOADING PHASE FAILED")
     print(signal_generator.query(r"DATA:VOLatile:CAT?"))
