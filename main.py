@@ -1,19 +1,18 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Nov 25 14:31:59 2022
-Main GUI for MEMS Characterization
+Main GUI for MEMS Characterization1
 @author: T0188303
 _version :10.5
 """
-# import ttkbootstrap as ttk
+# import tkinter.ttk
+import ttkbootstrap as ttk
 import os
 import tkinter as tk
-import tkinter.ttk
 from tkinter import Menu
 import time
 # from tkinter import font
 from tkinter import scrolledtext
-from tkinter import ttk
 from typing import Optional, Literal
 import pandas as pd
 # Implement the default Matplotlib key bindings.
@@ -115,7 +114,6 @@ def add_button(tab: ttk.LabelFrame | ttk.Frame, button_name: str, command: calla
         tab,  # The parent LabelFrame where the button is added.
         text=button_name,  # The text displayed on the button.
         command=on_press,  # The function to be executed on button press.
-        width=len(button_name),  # Set the button width to the length of the button name.
         style='Centered.TButton'  # Set the initial style.
     )
 
@@ -257,7 +255,7 @@ def extension_detector(file: str) -> tuple:
     return extension, file
 
 
-def filetypes_dir(path: str) -> tuple:
+def filetypes_dir(path: str) -> tuple[str]:
     """
     Separates different file types in the specified directory and returns tuples of s3p, s2p, and txt files.
 
@@ -270,15 +268,12 @@ def filetypes_dir(path: str) -> tuple:
     if not path:
         return 'empty', 'empty'
 
-    try:
-        # List all files in the directory
-        file_list = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
-    except FileNotFoundError:
-        print(f"Warning: Directory not found: {path}. Returning empty file lists.")
-        return (), (), () # Return empty tuples if directory not found
+    # List all files in the directory
+    file_list = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
 
     # Initialize lists to store different types of files
     txt_files = []
+    s1p_files = []
     s3p_files = []
     s2p_files = []
 
@@ -291,9 +286,11 @@ def filetypes_dir(path: str) -> tuple:
             s3p_files.append(file)
         elif extension == '.s2p':
             s2p_files.append(file)
+        elif extension == '.s1p':
+            s1p_files.append(file)
 
     # Convert lists to tuples and return
-    return tuple(s3p_files), tuple(s2p_files), tuple(txt_files)
+    return tuple(s3p_files), tuple(s2p_files), tuple(txt_files), tuple(s1p_files)
 
 
 def add_entry(tab: ttk.LabelFrame | ttk.Frame, text_var: tk.StringVar | tk.DoubleVar, width: int, col: int,
@@ -527,7 +524,7 @@ def create_canvas(figure: plt.Figure, frame: ttk.LabelFrame | ttk.Frame,
     return canvas
 
 
-def file_name_creation(data_list: list, text: tkinter.Text, end_characters: str = '') -> str:
+def file_name_creation(data_list: list, text: tk.Text, end_characters: str = '') -> str:
     """
     Creates a filename by joining elements of a data list with hyphens and appending end characters.
     Updates a given text widget with the created filename and prints it.
@@ -918,15 +915,22 @@ class Window(ttk.Frame):
         main_frame = ttk.Frame(self)
         main_frame.pack(padx=10, pady=10, fill="both", expand=True)
 
+        # Configure the grid to be centered
+        main_frame.grid_columnconfigure(0, weight=1)
+        main_frame.grid_columnconfigure(1, weight=1)
+        for i in range(5):
+            main_frame.grid_rowconfigure(i, weight=1)
+
         add_button(main_frame, "S3P Files", self.open_s3p_window, 0, 0)
         add_button(main_frame, "S2P Files", self.open_s2p_window, 0, 1)
         add_button(main_frame, "Pull-in Files", self.open_pull_in_window, 0, 2)
         add_button(main_frame, "Pull-in Test", self.open_pull_in_test_window, 0, 3)
         add_button(main_frame, "SNP Test", self.open_snp_test_window, 0, 4)
-        add_button(main_frame, "Power Test", self.open_power_test_window, 0, 5)
-        add_button(main_frame, "Cycling tab", self.open_cycling_window, 0, 6)
-        add_button(main_frame, "Resource Page", self.open_resource_page_window, 0, 7)
-        add_button(main_frame, "Pulsed pull-in", self.open_pulsed_pull_in_window, 0, 8)
+
+        add_button(main_frame, "Power Test", self.open_power_test_window, 1, 0)
+        add_button(main_frame, "Cycling tab", self.open_cycling_window, 1, 1)
+        add_button(main_frame, "Resource Page", self.open_resource_page_window, 1, 2)
+        add_button(main_frame, "Pulsed pull-in", self.open_pulsed_pull_in_window, 1, 3)
         # Add other buttons here for other windows in the future
 
     def open_s3p_window(self):
@@ -1157,7 +1161,6 @@ class Window(ttk.Frame):
                                                           toolbar_frame=frame_test_pulsed_pull_in_measurement,
                                                           toolbar=True)
 
-
     def setup_scpi_configuration(self, window):
         frame_resources = add_label_frame(window, frame_name='Ressouce Configuration', col=0, row=0)
         # Resource frame
@@ -1191,7 +1194,6 @@ class Window(ttk.Frame):
                                                         row=4)
         self.entered_var_rf_gen_address = add_entry(frame_resources, text_var=self.rf_gen_inst, width=70, col=2,
                                                     row=5)
-
 
     def setup_cycling_measurement(self, window):
         frame_cycling_comp_info = add_label_frame(tab=window, frame_name='Component information', col=0,
@@ -1376,7 +1378,6 @@ class Window(ttk.Frame):
         self.canvas_cycling = create_canvas(figure=self.fig_cycling, frame=frame_cycling_monitor,
                                             toolbar_frame=frame_osc_toolbar, toolbar=True)
 
-
     def setup_power_measurement(self, window):
         frame_power_compo_info = add_label_frame(window, frame_name='Component information', col=0,
                                                  row=0)  # power sweep frame
@@ -1534,7 +1535,6 @@ class Window(ttk.Frame):
 
         create_canvas(figure=self.fig_power_meas, frame=frame_power_meas_graph,
                       toolbar_frame=frame_test_power_measurement, toolbar=True)
-
 
     def setup_snp_measurement(self, window):
         frame_snp_compo_info = add_label_frame(window, frame_name='Component information', col=0,
@@ -1739,7 +1739,6 @@ class Window(ttk.Frame):
                    row=4).grid(
             ipadx=tab_pad_x, ipady=tab_pad_x)
 
-
     def setup_pull_in_measurement(self, window):
         # This TAB is for Pull down voltage vs isolation measurement
         frame_test_pull_in_comp_info = add_label_frame(window, frame_name='Component information', col=0,
@@ -1927,7 +1926,6 @@ class Window(ttk.Frame):
 
         frame_test_measurement.pack(fill='both')
 
-
     def setup_pull_in_display_tab(self, window):
         # TAB is for Pull voltage vs isolation display
         frame_v_pull_in_dir = add_label_frame(window, frame_name='Vpull-in Directory', col=0,
@@ -1982,7 +1980,6 @@ class Window(ttk.Frame):
 
         self.slider_isolation.pack(side='left')
         self.slider_voltage.pack(side='left')
-
 
     def setup_s2p_display_tab(self, window):
         # TAB2 S2P parameter display
@@ -2042,73 +2039,6 @@ class Window(ttk.Frame):
         self.slider_amplitude_s2p.pack(side='left', anchor='center')
         self.slider_frequency_s2p.pack(side='right')
         self.slider_lower_frequency_s2p.pack(side='left')
-
-
-        def setup_s3p_display_tab():
-            """
-            Set up the S3P tab with all related widgets and frames.
-            """
-
-            # TAB1 S3P parameter display
-            frame_s3p_directory = add_label_frame(tab_s3p, frame_name='s3p Directory', col=0, row=0)  # s3p Frame
-            frame_s3p_display = add_label_frame(tab_s3p, frame_name='s3p Display', col=0, row=1)
-            frame_s3p_sliders = add_label_frame(tab_s3p, frame_name='Frequency Range', col=0, row=2)
-
-            # Adding String variables
-            self.s3p_dir_name = tk.StringVar(
-                value=r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\S3P')  # Entry variable for s3p dir
-            self.s_parameter_s3p = tk.StringVar(value='S11')  # Entry variable for s parameter dir
-
-            # Adding labels and frame_s3p_display
-            add_label(frame_s3p_directory, label_name='Directory', col=1, row=1).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                      ipady=tab_pad_x)
-            add_label(frame_s3p_directory, label_name='File', col=1, row=2).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                 ipady=tab_pad_x)
-            add_label(frame_s3p_directory, label_name='S parameter', col=1, row=3).grid(sticky='e',
-                                                                                        ipadx=tab_pad_x,
-                                                                                        ipady=tab_pad_x)
-            # Adding entry for file directory
-            self.entered_var_s3p = add_entry(frame_s3p_directory, text_var=self.s3p_dir_name, width=70, col=2,
-                                             row=1)
-            file_s3p = filetypes_dir(self.entered_var_s3p.get())[0]
-            self.s3p_file_name_combobox = add_combobox(frame_s3p_directory, text=file_s3p, col=2, row=2, width=100)
-            self.s_parameter_chosen_s3p = add_combobox(frame_s3p_directory, text=self.s_parameter_s3p, col=2, row=3,
-                                                       width=100)
-            self.s_parameter_chosen_s3p['values'] = ('S11', 'S12', 'S13', 'S21', 'S22', 'S23', 'S31', 'S32', 'S33')
-
-            self.button_file_update = add_button(tab=frame_s3p_directory, button_name='Update Files',
-                                                 command=lambda: [
-                                                     update_entries(directory=self.entered_var_s3p.get(),
-                                                                    combobox=self.s3p_file_name_combobox,
-                                                                    filetype='.s3p'),
-                                                     update_button(self.button_file_update)], col=3,
-                                                 row=1)
-            # Adding buttons
-            add_button(tab=frame_s3p_directory, button_name='Exit',
-                       command=self._quit, col=5, row=1)
-            add_button(tab=frame_s3p_directory, button_name='Plot', command=self.plot_s3p,
-                       col=3, row=3)
-            add_button(tab=frame_s3p_directory, button_name='Delete graphs', command=self.delete_axs_s3p, col=3,
-                       row=2)
-            # Canvas creation
-            self.s3p_canvas = create_canvas(figure=self.fig_s3p, frame=frame_s3p_display,
-                                            toolbar_frame=frame_s3p_sliders)
-
-            # Sliders creation
-            self.slider_amplitude = add_slider(frame=frame_s3p_display, _from=0, to=-50,
-                                               name="Amplitude (dB)",
-                                               variable=self.scale_amplitude_value, step=5, orientation=tk.VERTICAL)
-            self.slider_frequency = add_slider(frame=frame_s3p_sliders, _from=1e9, to=50e9,
-                                               name="Upper Frequency Limit (Hz)",
-                                               variable=self.scale_frequency_upper_value, step=10e9)
-            self.slider_lower_frequency = add_slider(frame=frame_s3p_sliders, _from=1e9, to=50e9,
-                                                     name="Lower Frequency Limit (Hz)",
-                                                     variable=self.scale_frequency_lower_value, step=10e9)
-            self.slider_amplitude.pack(side='left', anchor="center")
-            self.slider_frequency.pack(side='right')
-            self.slider_lower_frequency.pack(side='left')
-
-
 
     def setup_s3p_display_tab(self, window):
         """
@@ -2916,6 +2846,7 @@ class Window(ttk.Frame):
 
 
 if __name__ == "__main__":
-    root = tk.Tk()
+    root = ttk.Window(themename="superhero")
+    root.geometry("1200x800")
     app = Window(master=root)
     app.mainloop()
