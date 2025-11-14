@@ -11,12 +11,9 @@ import os
 import tkinter as tk
 from tkinter import Menu
 import time
-# from tkinter import font
 from tkinter import scrolledtext
 from typing import Optional, Literal
 import pandas as pd
-# Implement the default Matplotlib key bindings.
-# import matplotlib.pyplot as plt
 import numpy as np
 import skrf as rf
 import matplotlib.pyplot as plt
@@ -27,6 +24,7 @@ from dir_and_var_declaration import zva_parameters
 import dir_and_var_declaration
 import threading  # Import threading module
 from matplotlib.ticker import FuncFormatter
+from ttkbootstrap.constants import *
 
 # ==============================================================================
 # Imports
@@ -50,9 +48,10 @@ plt.rcParams["legend.fontsize"] = 10
 plt.rcParams["axes.labelsize"] = 10
 plt.rcParams["font.size"] = 10
 plt.rcParams["axes.titlesize"] = 12
+default_style = 'darkly'
 
 
-def add_tab(tab_name: str, notebook: ttk.Notebook, col: int, row: int) -> ttk.LabelFrame:
+def add_tab(tab_name: str, notebook: ttk.Notebook, col: int, row: int) -> ttk.Labelframe:
     """
     Adds a tab to a notebook at the defined column and row and returns the tab instance.
 
@@ -66,7 +65,7 @@ def add_tab(tab_name: str, notebook: ttk.Notebook, col: int, row: int) -> ttk.La
     ttk.Frame: The created tab (frame) instance.
     """
     # Create a new frame (tab) with 'ridge' relief and a border width of 10.
-    tab_inst = ttk.LabelFrame(notebook, relief='ridge', borderwidth=10, name='{}'.format(tab_name.upper()))
+    tab_inst = ttk.Labelframe(notebook, relief='ridge', borderwidth=10, name='{}'.format(tab_name.upper()))
 
     # Add the newly created tab to the notebook with the given tab name.
     notebook.add(tab_inst, text='{}'.format(tab_name))
@@ -78,46 +77,33 @@ def add_tab(tab_name: str, notebook: ttk.Notebook, col: int, row: int) -> ttk.La
     return tab_inst
 
 
-def add_button(tab: ttk.LabelFrame | ttk.Frame, button_name: str, command: callable, col: int, row: int) -> ttk.Button:
+def add_button(tab: ttk.Labelframe | ttk.Frame, button_name: str, command: callable, col: int, row: int,
+               style='TButton') -> ttk.Button:
     """
-    Adds a button to a specified tab (LabelFrame) with given name, command, column, and row.
-    The button changes color for 500 milliseconds when pressed.
+    Adds a button to a specified tab (Labelframe) with given name, command, column, and row.
 
     Parameters:
-    tab (ttk.LabelFrame): The parent LabelFrame where the button is to be added.
+    tab (ttk.Labelframe): The parent Labelframe where the button is to be added.
     button_name (str): The text to be displayed on the button.
     command (callable): The function to be executed when the button is pressed.
-    col (int): The column position within the LabelFrame.
-    row (int): The row position within the LabelFrame.
+    col (int): The column position within the Labelframe.
+    row (int): The row position within the Labelframe.
+    style (str): The style to apply to the button.
 
     Returns:
     ttk.Button: The created Button widget.
     """
 
-    def on_press():
-        # Change the button color to a highlight color when pressed.
-        action.configure(style='Pressed.TButton')
-
-        # Call the original command.
-        command()
-
-        # Schedule the color to revert back to the original after 500 milliseconds.
-        action.after(ms=500, func=lambda: action.configure(style='Centered.TButton'))
-
-    # Create a style for the centered button text.
-    style = ttk.Style()
-    style.configure('Centered.TButton', anchor='center', padding=1, justify='center')
-    style.configure('Pressed.TButton', background='blue', anchor='center', padding=1, justify='center')
-
     # Create a Button widget with the specified text and additional configurations.
     action = ttk.Button(
-        tab,  # The parent LabelFrame where the button is added.
+        tab,  # The parent Labelframe where the button is added.
         text=button_name,  # The text displayed on the button.
-        command=on_press,  # The function to be executed on button press.
-        style='Centered.TButton'  # Set the initial style.
+        command=command,  # The function to be executed on button press.
+        style=style,
+        bootstyle="outline"
     )
 
-    # Place the Button widget at the specified column and row in the LabelFrame.
+    # Place the Button widget at the specified column and row in the Labelframe.
     action.grid(column=col, row=row, sticky="nsew")
 
     # Return the created Button widget.
@@ -148,15 +134,15 @@ def update_button(button: ttk.Button) -> ttk.Button:
     return button
 
 
-def add_label(tab: ttk.LabelFrame | ttk.Frame, label_name: str, col: int, row: int) -> ttk.Label:
+def add_label(tab: ttk.Labelframe | ttk.Frame, label_name: str, col: int, row: int) -> ttk.Label:
     """
-    Adds a Label widget to a specified tab (LabelFrame) at the given column and row.
+    Adds a Label widget to a specified tab (Labelframe) at the given column and row.
 
     Parameters:
-    tab (ttk.LabelFrame): The parent LabelFrame where the Label is to be added.
+    tab (ttk.Labelframe): The parent Labelframe where the Label is to be added.
     label_name (str): The text to be displayed on the Label.
-    col (int): The column position within the LabelFrame.
-    row (int): The row position within the LabelFrame.
+    col (int): The column position within the Labelframe.
+    row (int): The row position within the Labelframe.
 
     Returns:
     ttk.Label: The created Label widget.
@@ -164,19 +150,19 @@ def add_label(tab: ttk.LabelFrame | ttk.Frame, label_name: str, col: int, row: i
     # Create a Label widget with the specified text.
     label = ttk.Label(tab, text=label_name)
 
-    # Place the Label widget at the specified column and row in the LabelFrame.
+    # Place the Label widget at the specified column and row in the Labelframe.
     label.grid(column=col, row=row)
 
     # Return the created Label widget.
     return label
 
 
-def add_scrolled_text(tab: ttk.LabelFrame, scrolled_width: int, scrolled_height: int) -> scrolledtext.ScrolledText:
+def add_scrolled_text(tab: ttk.Labelframe, scrolled_width: int, scrolled_height: int) -> scrolledtext.ScrolledText:
     """
-    Adds a ScrolledText widget to a specified tab (LabelFrame) with given width and height.
+    Adds a ScrolledText widget to a specified tab (Labelframe) with given width and height.
 
     Parameters:
-    tab (ttk.LabelFrame): The parent LabelFrame where the ScrolledText is to be added.
+    tab (ttk.Labelframe): The parent Labelframe where the ScrolledText is to be added.
     scrolled_width (int): The width of the ScrolledText widget.
     scrolled_height (int): The height of the ScrolledText widget.
 
@@ -185,7 +171,7 @@ def add_scrolled_text(tab: ttk.LabelFrame, scrolled_width: int, scrolled_height:
     """
     # Create a ScrolledText widget with the specified width, height, and other configurations.
     scroll = scrolledtext.ScrolledText(
-        tab,  # The parent LabelFrame where the ScrolledText is added.
+        tab,  # The parent Labelframe where the ScrolledText is added.
         width=scrolled_width,  # Width of the ScrolledText widget.
         height=scrolled_height,  # Height of the ScrolledText widget.
         wrap=tk.WORD,  # Wrap text by words.
@@ -194,47 +180,47 @@ def add_scrolled_text(tab: ttk.LabelFrame, scrolled_width: int, scrolled_height:
         pady=0  # Padding on the y-axis.
     )
 
-    # Pack the ScrolledText widget to the top of the parent LabelFrame.
+    # Pack the ScrolledText widget to the top of the parent Labelframe.
     scroll.pack(side='top')
 
     # Return the created ScrolledText widget.
     return scroll
 
 
-def add_label_frame(tab: ttk.LabelFrame, frame_name: str, col: int, row: int, row_span: int = 1) -> ttk.LabelFrame:
+def add_label_frame(tab: ttk.Labelframe, frame_name: str, col: int, row: int, row_span: int = 1) -> ttk.Labelframe:
     """
-    Adds a LabelFrame to a specified tab (LabelFrame) with given name, column, row, and row span.
-    The LabelFrame is created with a 'ridge' relief and the label anchor set to North West.
+    Adds a Labelframe to a specified tab (Labelframe) with given name, column, row, and row span.
+    The Labelframe is created with a 'ridge' relief and the label anchor set to North West.
 
     Parameters:
-    tab (ttk.LabelFrame): The parent LabelFrame where the new LabelFrame is to be added.
-    frame_name (str): The text to be displayed on the LabelFrame.
-    col (int): The column position within the parent LabelFrame.
-    row (int): The row position within the parent LabelFrame.
-    row_span (int, optional): The number of rows the LabelFrame should span. Default is 1.
+    tab (ttk.Labelframe): The parent Labelframe where the new Labelframe is to be added.
+    frame_name (str): The text to be displayed on the Labelframe.
+    col (int): The column position within the parent Labelframe.
+    row (int): The row position within the parent Labelframe.
+    row_span (int, optional): The number of rows the Labelframe should span. Default is 1.
 
     Returns:
-    ttk.LabelFrame: The created LabelFrame widget.
+    ttk.Labelframe: The created Labelframe widget.
     """
-    # Create a LabelFrame widget with the specified text, border width, relief, and label anchor.
-    frame = ttk.LabelFrame(
-        tab,  # The parent LabelFrame where the new LabelFrame is added.
-        text=frame_name,  # The text displayed on the LabelFrame.
-        borderwidth=5,  # Set the border width of the LabelFrame.
+    # Create a Labelframe widget with the specified text, border width, relief, and label anchor.
+    frame = ttk.Labelframe(
+        tab,  # The parent Labelframe where the new Labelframe is added.
+        text=frame_name,  # The text displayed on the Labelframe.
+        borderwidth=5,  # Set the border width of the Labelframe.
         relief=tk.RIDGE,  # Set the relief style to 'ridge'.
         labelanchor='nw'  # Set the label anchor to North West.
     )
 
-    # Place the LabelFrame widget at the specified column and row in the parent LabelFrame,
+    # Place the Labelframe widget at the specified column and row in the parent Labelframe,
     # making it span the specified number of rows and stick to all sides of the cell.
     frame.grid(
-        column=col,  # The column position within the parent LabelFrame.
-        row=row,  # The row position within the parent LabelFrame.
-        sticky=tk.N + tk.S + tk.W + tk.E,  # Make the LabelFrame stick to all sides of the cell.
-        rowspan=row_span  # Set the number of rows the LabelFrame should span.
+        column=col,  # The column position within the parent Labelframe.
+        row=row,  # The row position within the parent Labelframe.
+        sticky=tk.N + tk.S + tk.W + tk.E,  # Make the Labelframe stick to all sides of the cell.
+        rowspan=row_span  # Set the number of rows the Labelframe should span.
     )
 
-    # Return the created LabelFrame widget.
+    # Return the created Labelframe widget.
     return frame
 
 
@@ -293,35 +279,35 @@ def filetypes_dir(path: str) -> tuple[str]:
     return tuple(s3p_files), tuple(s2p_files), tuple(txt_files), tuple(s1p_files)
 
 
-def add_entry(tab: ttk.LabelFrame | ttk.Frame, text_var: tk.StringVar | tk.DoubleVar, width: int, col: int,
+def add_entry(tab: ttk.Labelframe | ttk.Frame, text_var: tk.StringVar | tk.DoubleVar, width: int, col: int,
               row: int) -> ttk.Entry:
     """
-    Adds an Entry widget to a specified tab (LabelFrame) with given text variable, width, column, and row.
+    Adds an Entry widget to a specified tab (Labelframe) with given text variable, width, column, and row.
 
     Parameters:
-    tab (ttk.LabelFrame): The parent LabelFrame where the Entry is to be added.
+    tab (ttk.Labelframe): The parent Labelframe where the Entry is to be added.
     text_var (tk.StringVar or tk.DoubleVar): The text variable associated with the Entry widget.
     width (int): The width of the Entry widget.
-    col (int): The column position within the parent LabelFrame.
-    row (int): The row position within the parent LabelFrame.
+    col (int): The column position within the parent Labelframe.
+    row (int): The row position within the parent Labelframe.
 
     Returns:
     ttk.Entry: The created Entry widget.
     """
     # Create an Entry widget with the specified width, text variable, validation, and font.
     entered = ttk.Entry(
-        tab,  # The parent LabelFrame where the Entry is added.
+        tab,  # The parent Labelframe where the Entry is added.
         width=width,  # The width of the Entry widget.
         textvariable=text_var,  # The text variable associated with the Entry widget.
         validate='focus',  # Validation on focus.
         font=('Bahnschrift Light', 10)  # Font style and size.
     )
 
-    # Place the Entry widget at the specified column and row in the parent LabelFrame,
+    # Place the Entry widget at the specified column and row in the parent Labelframe,
     # and make it stretch horizontally.
     entered.grid(
-        column=col,  # The column position within the parent LabelFrame.
-        row=row,  # The row position within the parent LabelFrame.
+        column=col,  # The column position within the parent Labelframe.
+        row=row,  # The row position within the parent Labelframe.
         sticky="WE"  # Make the Entry widget stretch horizontally.
     )
 
@@ -329,15 +315,15 @@ def add_entry(tab: ttk.LabelFrame | ttk.Frame, text_var: tk.StringVar | tk.Doubl
     return entered
 
 
-def add_combobox(tab: ttk.LabelFrame, text: tk.StringVar, col: int, row: int, width: int) -> ttk.Combobox:
+def add_combobox(tab: ttk.Labelframe, text: tk.StringVar, col: int, row: int, width: int) -> ttk.Combobox:
     """
-    Adds a Combobox widget to a specified tab (LabelFrame) with given text variable, column, row, and width.
+    Adds a Combobox widget to a specified tab (Labelframe) with given text variable, column, row, and width.
 
     Parameters:
-    tab (ttk.LabelFrame): The parent LabelFrame where the Combobox is to be added.
+    tab (ttk.Labelframe): The parent Labelframe where the Combobox is to be added.
     text (tk.StringVar): The text variable associated with the Combobox widget.
-    col (int): The column position within the parent LabelFrame.
-    row (int): The row position within the parent LabelFrame.
+    col (int): The column position within the parent Labelframe.
+    row (int): The row position within the parent Labelframe.
     width (int): The width of the Combobox widget.
 
     Returns:
@@ -345,7 +331,7 @@ def add_combobox(tab: ttk.LabelFrame, text: tk.StringVar, col: int, row: int, wi
     """
     # Create a Combobox widget with the specified text variable, state, values, validation, width, height, and font.
     combobox = ttk.Combobox(
-        master=tab,  # The parent LabelFrame where the Combobox is added.
+        master=tab,  # The parent Labelframe where the Combobox is added.
         textvariable=text,  # The text variable associated with the Combobox widget.
         state='readonly',  # Make the Combobox read-only.
         values=[''],  # Initialize the Combobox with an empty list of values.
@@ -354,17 +340,17 @@ def add_combobox(tab: ttk.LabelFrame, text: tk.StringVar, col: int, row: int, wi
         font=('Bahnschrift Light', 10)  # Font style and size.
     )
 
-    # Place the Combobox widget at the specified column and row in the parent LabelFrame.
+    # Place the Combobox widget at the specified column and row in the parent Labelframe.
     combobox.grid(
-        column=col,  # The column position within the parent LabelFrame.
-        row=row  # The row position within the parent LabelFrame.
+        column=col,  # The column position within the parent Labelframe.
+        row=row  # The row position within the parent Labelframe.
     )
 
     # Return the created Combobox widget.
     return combobox
 
 
-def add_Checkbutton(tab: ttk.LabelFrame, text: tk.BooleanVar, col: int, row: int, off_value: int,
+def add_Checkbutton(tab: ttk.Labelframe, text: tk.BooleanVar, col: int, row: int, off_value: int,
                     on_value: int, command: callable) -> ttk.Checkbutton:
     checkbutton = ttk.Checkbutton(
         master=tab,
@@ -373,8 +359,8 @@ def add_Checkbutton(tab: ttk.LabelFrame, text: tk.BooleanVar, col: int, row: int
         command=command)
 
     checkbutton.grid(
-        column=col,  # The column position within the parent LabelFrame.
-        row=row  # The row position within the parent LabelFrame.
+        column=col,  # The column position within the parent Labelframe.
+        row=row  # The row position within the parent Labelframe.
     )
     return checkbutton
 
@@ -491,8 +477,8 @@ def update_entries(directory: str, combobox: ttk.Combobox, filetype: str) -> ttk
     return combobox
 
 
-def create_canvas(figure: plt.Figure, frame: ttk.LabelFrame | ttk.Frame,
-                  toolbar_frame: Optional[ttk.LabelFrame | ttk.Frame] = None,
+def create_canvas(figure: plt.Figure, frame: ttk.Labelframe | ttk.Frame,
+                  toolbar_frame: Optional[ttk.Labelframe | ttk.Frame] = None,
                   toolbar: Optional[bool] = True) -> FigureCanvasTkAgg:
     """
     Creates display Canvas in the specified frame, and optionally adds a toolbar.
@@ -567,7 +553,7 @@ def create_figure_with_axes(num: int, figsize: tuple[float, float]):
 
 
 def add_slider(frame, _from, to, name, variable, step, orientation: Literal["horizontal", "vertical"] = tk.HORIZONTAL):
-    slider_frame = ttk.Frame(frame)
+    slider_frame = ttk.Frame(frame, bootstyle=DARK, style=DARK)
     slider_frame.pack(pady=10)
 
     if orientation == tk.VERTICAL:
@@ -577,15 +563,21 @@ def add_slider(frame, _from, to, name, variable, step, orientation: Literal["hor
         canvas.pack(side=tk.LEFT, padx=5, pady=5)
 
         # Create the vertical slider
-        slider = tk.Scale(master=slider_frame, from_=_from, to=to, orient=orientation, length=250, digits=2,
-                          relief=tk.GROOVE, border=2, sliderrelief=tk.RIDGE, tickinterval=step, variable=variable,
-                          font=('Bahnschrift Light', 10))
+        # slider = tk.Scale(master=slider_frame, from_=_from, to=to, orient=orientation, length=250, digits=2,
+        #                    relief=tk.GROOVE, border=2, sliderrelief=tk.RIDGE, tickinterval=step, variable=variable,
+        #                    font=('Bahnschrift Light', 10))
+        # slider.pack(side=tk.RIGHT, padx=5, pady=5)
+        slider = ttk.Scale(master=slider_frame, from_=_from, to=to, orient=orientation, length=250,
+                           bootstyle=default_style, variable=variable)
         slider.pack(side=tk.RIGHT, padx=5, pady=5)
     else:
         # Create the horizontal slider with a label
-        slider = tk.Scale(master=slider_frame, from_=_from, to=to, orient=orientation, label=name, length=250, digits=2,
-                          relief=tk.GROOVE, border=2, sliderrelief=tk.RIDGE, tickinterval=step, variable=variable,
-                          font=('Bahnschrift Light', 10))
+        # slider = tk.Scale(master=slider_frame, from_=_from, to=to, orient=orientation, label=name, length=250,
+        #                    digits=2,
+        #                    relief=tk.GROOVE, border=2, sliderrelief=tk.RIDGE, tickinterval=step, variable=variable,
+        #                    font=('Bahnschrift Light', 10))
+        slider = ttk.Scale(master=slider_frame, from_=_from, to=to, orient=orientation, length=250,
+                           bootstyle=default_style, variable=variable)
         slider.pack()
 
     # Center the frame within the parent frame
@@ -626,9 +618,9 @@ def add_small_scale(frame: ttk.Frame, name: str, col: int, row: int) -> ttk.Scal
     # (Commented out for flexibility in positioning)
 
     # Configure the appearance of the scale via style settings.
-    scale.configure(style="TScale")
-    s = ttk.Style()
-    s.configure("TScale", thickness=10)  # Adjust thickness as needed
+    # scale.configure(style="TScale")
+    # s = ttk.Style()
+    # s.configure("TScale", thickness=10)  # Adjust thickness as needed
 
     # Return the scale so the caller can place it or further configure it.
     return scale
@@ -709,6 +701,8 @@ class Window(ttk.Frame):
         self.nb_points: tk.DoubleVar
         self.text_file_name_s3p_test: tk.Text
         self.canvas_cycling: FigureCanvasTkAgg
+        self.ax_time_domain_power_meas: plt.axes
+        self.fig_time_domain_power_meas: plt.figure
 
         self.file_df: pd.DataFrame = pd.DataFrame(
             columns=["vpullin_plus", "vpullin_minus", "vpullout_plus", "vpullout_minus", "t_on_time",
@@ -766,6 +760,8 @@ class Window(ttk.Frame):
 
     def configure_window(self):
         s = ttk.Style()
+        s.configure('TButton', anchor='center', justify='center')
+        s.configure('large.TButton', font=('Bahnschrift Light', 14))
         s.configure(style='.', font=('Bahnschrift Light', 10))
 
         # Set window properties
@@ -774,39 +770,37 @@ class Window(ttk.Frame):
 
     def init_figures(self):
         """Initialize all the matplotlib figures and their respective axes."""
-        self.fig_s3p, self.ax_s3p = create_figure_with_axes(num=1, figsize=(13, 4.1))
-        self.ax_s3p.set_title("|Sij| vs frequency")
-        self.fig_s2p, self.ax_s2p = create_figure_with_axes(num=2, figsize=(13, 4.1))
-        self.ax_s2p.set_title("|Sij| vs frequency")
-        self.fig_pull_in, self.ax_pull_in = create_figure_with_axes(num=3, figsize=(13, 3.5))
-        self.ax_pull_in.set(xlabel="V bias (V)", ylabel="Detector voltage (V)", title="Isolation vs Bias voltage")
-        self.ax_s2p.set(xlabel="Frequency (Hz)", ylabel="S Parameter (dB)", title="S Parameter vs Frequency")
-        self.ax_s3p.set(xlabel="Frequency (Hz)", ylabel="S Parameter (dB)", title="S Parameter vs Frequency")
-
-        self.fig_pull_in_meas, self.ax_pull_in_meas = create_figure_with_axes(num=4, figsize=(8.5, 6))
-        self.ax_pull_in_meas.set(xlabel="V bias (V)", ylabel="Detector voltage (V)", title="Isolation vs Bias voltage")
-
-        self.fig_snp_meas, self.ax_snp_meas = create_figure_with_axes(num=5, figsize=(8.5, 6))
-        self.ax_snp_meas.set(xlabel="Frequency (Hz)", ylabel="S Parameter (dB)", title="|S| Parameter vs Frequency")
-
-        self.fig_cycling = create_figure(num=6, figsize=(10, 6))
-        self.fig_power_meas = create_figure(num=7, figsize=(8.5, 6))
-
-        # self.fig_pulsed_pull_in_meas, self.ax_pulsed_pull_in_meas = create_figure_with_axes(num=8, figsize=(6.5, 6))
-        self.fig_pulsed_pull_in_meas = create_figure(num=8, figsize=(8.5, 6))
-        self.ax_pulsed_pull_in_meas = self.fig_pulsed_pull_in_meas.add_subplot(2, 1, 1)
-        self.ax_pulsed_pull_in_meas.grid('both')
-        self.ax_pulsed_pull_in_meas.set(xlabel="V bias (V)", ylabel="Detector voltage (V)",
-                                        title="Isolation vs Bias voltage")
-        self.ax_pulsed_pull_in_wf = self.fig_pulsed_pull_in_meas.add_subplot(2, 1, 2)
-        self.ax_pulsed_pull_in_wf.grid('both')
-        self.ax_pulsed_pull_in_wf.set(xlabel="time (s)", ylabel="Detector voltage / V bias (V)",
-                                      title="Detector voltage & V bias")
-
-        self.ax_pulsed_pull_in_wf_det = self.ax_pulsed_pull_in_wf.twinx()
-
+        self.create_pulsed_pull_in_wf()
         self.create_cycling_axes()
         self.create_power_sweeping_axes()
+        self.create_time_domain_power_axes()
+        self.create_s3p_display_wf()
+        self.create_snp_meas_wf()
+        self.create_pull_in_meas_wf()
+        self.create_s2p_display_wf()
+
+    def create_s3p_display_wf(self):
+        self.fig_s3p, self.ax_s3p = create_figure_with_axes(num=1, figsize=(13, 4.1))
+        self.ax_s3p.set_title("|Sij| vs frequency")
+        self.ax_s3p.set(xlabel="Frequency (Hz)", ylabel="S Parameter (dB)", title="S Parameter vs Frequency")
+
+    def create_s2p_display_wf(self):
+        self.fig_s2p, self.ax_s2p = create_figure_with_axes(num=2, figsize=(13, 4.1))
+        self.ax_s2p.set_title("|Sij| vs frequency")
+        self.ax_s2p.set(xlabel="Frequency (Hz)", ylabel="S Parameter (dB)", title="S Parameter vs Frequency")
+
+    def create_pull_in_display_wf(self):
+        self.fig_pull_in, self.ax_pull_in = create_figure_with_axes(num=3, figsize=(13, 3.5))
+        self.ax_pull_in.set(xlabel="V bias (V)", ylabel="Detector voltage (V)", title="Isolation vs Bias voltage")
+
+    def create_pull_in_meas_wf(self):
+        self.fig_pull_in_meas, self.ax_pull_in_meas = create_figure_with_axes(num=4, figsize=(8.5, 6))
+        self.ax_pull_in_meas.set(xlabel="V bias (V)", ylabel="Detector voltage (V)",
+                                 title="Isolation vs Bias voltage")
+
+    def create_snp_meas_wf(self):
+        self.fig_snp_meas, self.ax_snp_meas = create_figure_with_axes(num=5, figsize=(8.5, 6))
+        self.ax_snp_meas.set(xlabel="Frequency (Hz)", ylabel="S Parameter (dB)", title="|S| Parameter vs Frequency")
 
     def create_power_sweeping_axes(self):
         self.ax_power_meas = self.fig_power_meas.add_subplot(1, 1, 1)
@@ -818,6 +812,72 @@ class Window(ttk.Frame):
 
     def create_cycling_axes(self):
         """Create and configure axes for the cycling figure."""
+        self.ax_cycling_pull_in = self.fig_cycling.add_subplot(3, 2, 1)
+        self.ax_cycling_pull_in.set(xlabel="Cycles", ylabel="Pull-in (V)", title="Pull-in Voltage")
+        self.ax_cycling_pull_in.set_xscale('log')
+        self.ax_cycling_pull_in.xaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{x:.0e}'))
+
+        self.ax_cycling_pull_out = self.fig_cycling.add_subplot(3, 2, 2)
+        self.ax_cycling_pull_out.set(xlabel="Cycles", ylabel="Pull-out (V)", title="Pull-out Voltage")
+        self.ax_cycling_pull_out.set_xscale('log')
+        self.ax_cycling_pull_out.xaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{x:.0e}'))
+
+        self.ax_cycling_isolation = self.fig_cycling.add_subplot(3, 2, 3)
+        self.ax_cycling_isolation.set(xlabel="Cycles", ylabel="Isolation (dB)", title="Isolation")
+        self.ax_cycling_isolation.set_xscale('log')
+        self.ax_cycling_isolation.xaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{x:.0e}'))
+
+        self.ax_cycling_insertion_loss = self.fig_cycling.add_subplot(3, 2, 4)
+        self.ax_cycling_insertion_loss.set(xlabel="Cycles", ylabel="Insertion loss variation (dB)",
+                                           title="Insertion loss variation")
+        self.ax_cycling_insertion_loss.set_xscale('log')
+        self.ax_cycling_insertion_loss.xaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{x:.0e}'))
+
+        self.ax_cycling_t_down = self.fig_cycling.add_subplot(3, 2, 5)
+        self.ax_cycling_t_down.set(xlabel="Cycles", ylabel="ts_down (s)", title="Down state switching time")
+        self.ax_cycling_t_down.set_xscale('log')
+        self.ax_cycling_t_down.xaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{x:.0e}'))
+
+        self.ax_cycling_t_up = self.fig_cycling.add_subplot(3, 2, 6)
+        self.ax_cycling_t_up.set(xlabel="Cycles", ylabel="ts_up (s)", title="Up state switching time")
+        self.ax_cycling_t_up.set_xscale('log')
+        self.ax_cycling_t_up.xaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{x:.0e}'))
+
+        for ax in self.fig_cycling.axes:
+            ax.grid()
+
+    def create_time_domain_power_axes(self):
+        self.fig_time_domain_power_meas = create_figure(num=9, figsize=(8.5, 6))
+        self.ax_time_domain_power_meas = self.fig_time_domain_power_meas.add_subplot(1, 1, 1)
+        self.ax_time_domain_power_meas.set(xlabel="time (s)", ylabel="Power (dBm)", title="Measured Power")
+        self.ax_time_domain_power_meas.set_xscale('linear')
+        self.ax_time_domain_power_meas.set_yscale('linear')
+        self.ax_time_domain_power_meas.grid("both")
+
+    def create_pulsed_pull_in_wf(self):
+        self.fig_pulsed_pull_in_meas = create_figure(num=8, figsize=(8.5, 6))
+        self.ax_pulsed_pull_in_meas = self.fig_pulsed_pull_in_meas.add_subplot(2, 1, 1)
+        self.ax_pulsed_pull_in_meas.grid('both')
+        self.ax_pulsed_pull_in_meas.set(xlabel="V bias (V)", ylabel="Detector voltage (V)",
+                                        title="Isolation vs Bias voltage")
+        self.ax_pulsed_pull_in_wf = self.fig_pulsed_pull_in_meas.add_subplot(2, 1, 2)
+        self.ax_pulsed_pull_in_wf.grid('both')
+        self.ax_pulsed_pull_in_wf.set(xlabel="time (s)", ylabel="Detector voltage / V bias (V)",
+                                      title="Detector voltage & V bias")
+        self.ax_pulsed_pull_in_wf_det = self.ax_pulsed_pull_in_wf.twinx()
+
+    def create_power_sweeping_axes(self):
+        self.fig_power_meas = create_figure(num=7, figsize=(8.5, 6))
+        self.ax_power_meas = self.fig_power_meas.add_subplot(1, 1, 1)
+        self.ax_power_meas.set(xlabel="Pin (dBm)", ylabel="Pout (dBm)", title="Pout vs Pin")
+        self.ax_power_meas.set_xscale('linear')
+        self.ax_power_meas.grid("both")
+        self.ax_power_meas_secondary = self.ax_power_meas.twinx()
+        self.ax_power_meas_secondary.set_ylabel('Loss (dB)')
+
+    def create_cycling_axes(self):
+        """Create and configure axes for the cycling figure."""
+        self.fig_cycling = create_figure(num=6, figsize=(10, 6))
         self.ax_cycling_pull_in = self.fig_cycling.add_subplot(3, 2, 1)
         self.ax_cycling_pull_in.set(xlabel="Cycles", ylabel="Pull-in (V)", title="Pull-in Voltage")
         self.ax_cycling_pull_in.set_xscale('log')
@@ -866,50 +926,6 @@ class Window(ttk.Frame):
         self.ax_s3p.set_ylim(ymin=self.scale_amplitude_value.get(), ymax=0)
         self.ax_s3p.set_xlim(xmin=0, xmax=self.scale_frequency_upper_value.get())
 
-    def create_power_sweeping_axes(self):
-        self.ax_power_meas = self.fig_power_meas.add_subplot(1, 1, 1)
-        self.ax_power_meas.set(xlabel="Pin (dBm)", ylabel="Pout (dBm)", title="Pout vs Pin")
-        self.ax_power_meas.set_xscale('linear')
-        self.ax_power_meas.grid("both")
-        self.ax_power_meas_secondary = self.ax_power_meas.twinx()
-        self.ax_power_meas_secondary.set_ylabel('Loss (dB)')
-
-    def create_cycling_axes(self):
-        """Create and configure axes for the cycling figure."""
-        self.ax_cycling_pull_in = self.fig_cycling.add_subplot(3, 2, 1)
-        self.ax_cycling_pull_in.set(xlabel="Cycles", ylabel="Pull-in (V)", title="Pull-in Voltage")
-        self.ax_cycling_pull_in.set_xscale('log')
-        self.ax_cycling_pull_in.xaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{x:.0e}'))
-
-        self.ax_cycling_pull_out = self.fig_cycling.add_subplot(3, 2, 2)
-        self.ax_cycling_pull_out.set(xlabel="Cycles", ylabel="Pull-out (V)", title="Pull-out Voltage")
-        self.ax_cycling_pull_out.set_xscale('log')
-        self.ax_cycling_pull_out.xaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{x:.0e}'))
-
-        self.ax_cycling_isolation = self.fig_cycling.add_subplot(3, 2, 3)
-        self.ax_cycling_isolation.set(xlabel="Cycles", ylabel="Isolation (dB)", title="Isolation")
-        self.ax_cycling_isolation.set_xscale('log')
-        self.ax_cycling_isolation.xaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{x:.0e}'))
-
-        self.ax_cycling_insertion_loss = self.fig_cycling.add_subplot(3, 2, 4)
-        self.ax_cycling_insertion_loss.set(xlabel="Cycles", ylabel="Insertion loss variation (dB)",
-                                           title="Insertion loss variation")
-        self.ax_cycling_insertion_loss.set_xscale('log')
-        self.ax_cycling_insertion_loss.xaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{x:.0e}'))
-
-        self.ax_cycling_t_down = self.fig_cycling.add_subplot(3, 2, 5)
-        self.ax_cycling_t_down.set(xlabel="Cycles", ylabel="ts_down (s)", title="Down state switching time")
-        self.ax_cycling_t_down.set_xscale('log')
-        self.ax_cycling_t_down.xaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{x:.0e}'))
-
-        self.ax_cycling_t_up = self.fig_cycling.add_subplot(3, 2, 6)
-        self.ax_cycling_t_up.set(xlabel="Cycles", ylabel="ts_up (s)", title="Up state switching time")
-        self.ax_cycling_t_up.set_xscale('log')
-        self.ax_cycling_t_up.xaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{x:.0e}'))
-
-        for ax in self.fig_cycling.axes:
-            ax.grid()
-
     def create_main_menu(self):
         """Create the main menu with buttons to open different windows."""
         main_frame = ttk.Frame(self)
@@ -921,16 +937,17 @@ class Window(ttk.Frame):
         for i in range(5):
             main_frame.grid_rowconfigure(i, weight=1)
 
-        add_button(main_frame, "S3P Files", self.open_s3p_window, 0, 0)
-        add_button(main_frame, "S2P Files", self.open_s2p_window, 0, 1)
-        add_button(main_frame, "Pull-in Files", self.open_pull_in_window, 0, 2)
-        add_button(main_frame, "Pull-in Test", self.open_pull_in_test_window, 0, 3)
-        add_button(main_frame, "SNP Test", self.open_snp_test_window, 0, 4)
+        add_button(main_frame, "S3P Files", self.open_s3p_window, 0, 0, style='large.TButton')
+        add_button(main_frame, "S2P Files", self.open_s2p_window, 0, 1, style='large.TButton')
+        add_button(main_frame, "Pull-in Files", self.open_pull_in_window, 0, 2, style='large.TButton')
+        add_button(main_frame, "Pull-in Test", self.open_pull_in_test_window, 0, 3, style='large.TButton')
+        add_button(main_frame, "SNP Test", self.open_snp_test_window, 0, 4, style='large.TButton')
 
-        add_button(main_frame, "Power Test", self.open_power_test_window, 1, 0)
-        add_button(main_frame, "Cycling tab", self.open_cycling_window, 1, 1)
-        add_button(main_frame, "Resource Page", self.open_resource_page_window, 1, 2)
-        add_button(main_frame, "Pulsed pull-in", self.open_pulsed_pull_in_window, 1, 3)
+        add_button(main_frame, "Power Test", self.open_power_test_window, 1, 0, style='large.TButton')
+        add_button(main_frame, "Cycling tab", self.open_cycling_window, 1, 1, style='large.TButton')
+        add_button(main_frame, "Resource Page", self.open_resource_page_window, 1, 2, style='large.TButton')
+        add_button(main_frame, "Pulsed pull-in", self.open_pulsed_pull_in_window, 1, 3, style='large.TButton')
+        add_button(main_frame, "Exit", self._quit, 1, 4, style='large.TButton')
         # Add other buttons here for other windows in the future
 
     def open_s3p_window(self):
@@ -1012,7 +1029,12 @@ class Window(ttk.Frame):
                                                                  frame_name='Oscilloscope & RF Gen', col=0,
                                                                  row=2,
                                                                  row_span=1)
-        # Adding labels to component info labelframe
+        frame_test_pulsed_pull_in_comp_info.grid_columnconfigure(2, weight=1)
+        # frame_pulsed_signal_gen_measurement.grid_columnconfigure(3, weight=1)
+        frame_test_pulsed_pull_in_oscilloscope.grid_columnconfigure(0, weight=1)
+        frame_test_pulsed_pull_in_gen_controls.grid_columnconfigure(0, weight=1)
+        frame_test_pulsed_pull_in_gen_controls.grid_columnconfigure(1, weight=1)
+        # Adding labels to component info Labelframe
         add_label(frame_test_pulsed_pull_in_comp_info, label_name='DIR', col=0, row=0).grid(sticky='e',
 
                                                                                             ipadx=tab_pad_x,
@@ -1059,7 +1081,7 @@ class Window(ttk.Frame):
                   col=1,
                   row=5)
 
-        # Signal Generator labelframe
+        # Signal Generator Labelframe
         frame_pulsed_signal_gen_measurement = ttk.Frame(frame_test_pulsed_pull_in_signal_generator)
         frame_pulsed_signal_gen_measurement.pack()
         self.pulsed_pulse_width = tk.DoubleVar(value=100)  # Ramp length for ramp function
@@ -1127,7 +1149,7 @@ class Window(ttk.Frame):
         add_button(tab=frame_test_pulsed_pull_in_oscilloscope, button_name='Setup RF Gen',
                    command=lambda: scripts_and_functions.rf_gen_pull_in_setup(),
                    col=0, row=1).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
-        # General controls labelframe
+        # General controls Labelframe
         self.text_pulsed_file_name_pull_in_test = tk.Text(frame_test_pulsed_pull_in_gen_controls, width=40,
                                                           height=1,
                                                           wrap=tk.WORD,
@@ -1204,8 +1226,19 @@ class Window(ttk.Frame):
                                                 row_span=4)
         frame_rf_gen = add_label_frame(tab=window, frame_name='RF generator', col=0, row=3)
 
-        frame_osc_toolbar = ttk.Frame(frame_cycling_monitor)
+        frame_osc_toolbar = ttk.Frame(frame_cycling_monitor, style=default_style)
         frame_osc_toolbar.pack(anchor='nw')
+
+        frame_cycling_comp_info.grid_columnconfigure(0, weight=1)
+        frame_cycling_comp_info.grid_columnconfigure(1, weight=1)
+        frame_signal_generator.grid_columnconfigure(0, weight=1)
+        frame_signal_generator.grid_columnconfigure(1, weight=1)
+        frame_signal_generator.grid_columnconfigure(2, weight=1)
+        frame_oscilloscope.grid_columnconfigure(0, weight=1)
+        frame_oscilloscope.grid_columnconfigure(1, weight=1)
+        frame_oscilloscope.grid_columnconfigure(2, weight=1)
+        frame_oscilloscope.grid_columnconfigure(3, weight=1)
+        frame_rf_gen.grid_columnconfigure(0, weight=1)
 
         add_label(frame_cycling_comp_info,
                   label_name='DIR', col=0, row=0).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
@@ -1394,6 +1427,12 @@ class Window(ttk.Frame):
         frame_test_power_measurement = ttk.Frame(frame_power_meas_graph)
         frame_test_power_measurement.pack(anchor='nw')
 
+        frame_power_compo_info.grid_columnconfigure(2, weight=1)
+        frame_power_meas.grid_columnconfigure(1, weight=1)
+        frame_power_measurement_signal_generator.grid_columnconfigure(0, weight=1)
+        frame_power_meas_powermeter.grid_columnconfigure(0, weight=1)
+        frame_power_meas_rf_gen.grid_columnconfigure(0, weight=1)
+
         add_label(frame_power_compo_info, label_name='DIR', col=0, row=0).grid(sticky='e', ipadx=tab_pad_x,
                                                                                ipady=tab_pad_x)
         add_label(frame_power_compo_info, label_name='Project', col=0, row=1).grid(sticky='e', ipadx=tab_pad_x,
@@ -1546,6 +1585,15 @@ class Window(ttk.Frame):
                                                 row_span=2)
         frame_test_snp_measurement = ttk.Frame(frame_snp_measurement)
         frame_test_snp_measurement.pack(anchor='nw')
+
+        frame_snp_compo_info.grid_columnconfigure(2, weight=1)
+        frame_snp_signal_generator.grid_columnconfigure(3, weight=1)
+        frame_snp_zva.grid_columnconfigure(1, weight=1)
+        frame_snp_zva.grid_columnconfigure(2, weight=1)
+        frame_snp_zva.grid_columnconfigure(3, weight=1)
+        frame_snp_gene_controls.grid_columnconfigure(0, weight=1)
+        frame_snp_gene_controls.grid_columnconfigure(1, weight=1)
+        frame_snp_gene_controls.grid_columnconfigure(2, weight=1)
 
         add_label(frame_snp_compo_info, label_name='DIR', col=0, row=0).grid(sticky='e', ipadx=tab_pad_x,
                                                                              ipady=tab_pad_x)
@@ -1758,7 +1806,13 @@ class Window(ttk.Frame):
         frame_oscilloscope = add_label_frame(window, frame_name='Oscilloscope & RF Gen', col=0, row=2,
                                              row_span=1)
 
-        # Adding labels to component info labelframe
+        frame_test_pull_in_comp_info.grid_columnconfigure(2, weight=1)
+        # frame_signal_gen_measurement.grid_columnconfigure(3, weight=1)
+        frame_oscilloscope.grid_columnconfigure(0, weight=1)
+        frame_test_pull_in_gen_controls.grid_columnconfigure(0, weight=1)
+        frame_test_pull_in_gen_controls.grid_columnconfigure(1, weight=1)
+
+        # Adding labels to component info Labelframe
         add_label(frame_test_pull_in_comp_info, label_name='DIR', col=0, row=0).grid(sticky='e', ipadx=tab_pad_x,
                                                                                      ipady=tab_pad_x)
         add_label(frame_test_pull_in_comp_info, label_name='Project', col=0, row=1).grid(sticky='e',
@@ -1791,7 +1845,7 @@ class Window(ttk.Frame):
         add_entry(tab=frame_test_pull_in_comp_info, text_var=self.test_pull_in_device, width=20, col=1, row=4)
         add_entry(tab=frame_test_pull_in_comp_info, text_var=self.test_pull_in_bias_voltage, width=20, col=1, row=5)
 
-        # Signal Generator labelframe
+        # Signal Generator Labelframe
         frame_signal_gen_measurement = ttk.Frame(frame_test_pull_in_signal_generator)
         frame_signal_gen_measurement.pack()
         self.pull_in_v_bias = tk.DoubleVar(value=10)  # Peak bias voltage for ramp function
@@ -1844,7 +1898,7 @@ class Window(ttk.Frame):
         add_button(tab=frame_oscilloscope, button_name='Setup RF Gen',
                    command=lambda: scripts_and_functions.rf_gen_pull_in_setup(),
                    col=0, row=1).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
-        # General controls labelframe
+        # General controls Labelframe
         self.text_file_name_pull_in_test = tk.Text(frame_test_pull_in_gen_controls, width=40, height=1,
                                                    wrap=tk.WORD,
                                                    border=4, borderwidth=2,
@@ -1930,18 +1984,13 @@ class Window(ttk.Frame):
         # TAB is for Pull voltage vs isolation display
         frame_v_pull_in_dir = add_label_frame(window, frame_name='Vpull-in Directory', col=0,
                                               row=0)  # s2p Frame
+        frame_v_pull_in_dir.grid_columnconfigure(3, weight=1)
+        frame_v_pull_in_dir.grid_columnconfigure(5, weight=1)
         frame_v_pull_in_graph = add_label_frame(window, frame_name='Graph', col=0, row=3)  # s2p Frame
         frame_v_pull_in_sliders = add_label_frame(window, frame_name='Voltage limit', col=0, row=4)
-
-        self.pull_in_dir_name = tk.StringVar(
-            value=r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Pullin voltage')
-
-        add_label(frame_v_pull_in_dir, label_name='Directory', col=1, row=1).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                  ipady=tab_pad_x)
-        add_label(frame_v_pull_in_dir, label_name='File', col=1, row=2).grid(sticky='e', ipadx=tab_pad_x,
-                                                                             ipady=tab_pad_x)
         frame_v_pull_in_display = add_label_frame(window, frame_name='Pull-in Display', col=0, row=1)
 
+        self.pull_in_dir_name = tk.StringVar(value=r"C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data")
         # Adding entry for file directory
         self.entered_var_txt = add_entry(frame_v_pull_in_dir, text_var=self.pull_in_dir_name, width=70, col=2,
                                          row=1)
@@ -1984,6 +2033,8 @@ class Window(ttk.Frame):
     def setup_s2p_display_tab(self, window):
         # TAB2 S2P parameter display
         frame_s2p_dir = add_label_frame(window, 's2p Directory', 0, 0)  # s2p Frame
+        frame_s2p_dir.grid_columnconfigure(3, weight=1)
+        frame_s2p_dir.grid_columnconfigure(5, weight=1)
         frame_s2p_display = add_label_frame(window, frame_name='s2p Display', col=0, row=1)
         frame_s2p_sliders = add_label_frame(window, frame_name='Frequency Range', col=0, row=2)
 
@@ -1991,7 +2042,6 @@ class Window(ttk.Frame):
         self.s2p_dir_name = tk.StringVar(value=r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\S2P')
         add_label(frame_s2p_dir, label_name='Directory', col=1, row=1).grid(sticky='e', ipadx=tab_pad_x,
                                                                             ipady=tab_pad_x)
-        # Adding labels
         add_label(frame_s2p_dir, label_name='File', col=1, row=2).grid(sticky='e', ipadx=tab_pad_x,
                                                                        ipady=tab_pad_x)
         add_label(frame_s2p_dir, label_name='S parameter', col=1, row=3).grid(sticky='e', ipadx=tab_pad_x,
@@ -2046,7 +2096,9 @@ class Window(ttk.Frame):
         """
 
         # TAB1 S3P parameter display
-        frame_s3p_directory = add_label_frame(window, frame_name='s3p Directory', col=0, row=0)  # s3p Frame
+        frame_s3p_dir = add_label_frame(window, 's3p Directory', 0, 0)  # s3p Frame
+        frame_s3p_dir.grid_columnconfigure(3, weight=1)
+        frame_s3p_dir.grid_columnconfigure(5, weight=1)
         frame_s3p_display = add_label_frame(window, frame_name='s3p Display', col=0, row=1)
         frame_s3p_sliders = add_label_frame(window, frame_name='Frequency Range', col=0, row=2)
 
@@ -2056,23 +2108,23 @@ class Window(ttk.Frame):
         self.s_parameter_s3p = tk.StringVar(value='S11')  # Entry variable for s parameter dir
 
         # Adding labels and frame_s3p_display
-        add_label(frame_s3p_directory, label_name='Directory', col=1, row=1).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                  ipady=tab_pad_x)
-        add_label(frame_s3p_directory, label_name='File', col=1, row=2).grid(sticky='e', ipadx=tab_pad_x,
-                                                                             ipady=tab_pad_x)
-        add_label(frame_s3p_directory, label_name='S parameter', col=1, row=3).grid(sticky='e',
-                                                                                    ipadx=tab_pad_x,
-                                                                                    ipady=tab_pad_x)
+        add_label(frame_s3p_dir, label_name='Directory', col=1, row=1).grid(sticky='e', ipadx=tab_pad_x,
+                                                                            ipady=tab_pad_x)
+        add_label(frame_s3p_dir, label_name='File', col=1, row=2).grid(sticky='e', ipadx=tab_pad_x,
+                                                                       ipady=tab_pad_x)
+        add_label(frame_s3p_dir, label_name='S parameter', col=1, row=3).grid(sticky='e',
+                                                                              ipadx=tab_pad_x,
+                                                                              ipady=tab_pad_x)
         # Adding entry for file directory
-        self.entered_var_s3p = add_entry(frame_s3p_directory, text_var=self.s3p_dir_name, width=70, col=2,
+        self.entered_var_s3p = add_entry(frame_s3p_dir, text_var=self.s3p_dir_name, width=70, col=2,
                                          row=1)
         file_s3p = filetypes_dir(self.entered_var_s3p.get())[0]
-        self.s3p_file_name_combobox = add_combobox(frame_s3p_directory, text=file_s3p, col=2, row=2, width=100)
-        self.s_parameter_chosen_s3p = add_combobox(frame_s3p_directory, text=self.s_parameter_s3p, col=2, row=3,
+        self.s3p_file_name_combobox = add_combobox(frame_s3p_dir, text=file_s3p, col=2, row=2, width=100)
+        self.s_parameter_chosen_s3p = add_combobox(frame_s3p_dir, text=self.s_parameter_s3p, col=2, row=3,
                                                    width=100)
         self.s_parameter_chosen_s3p['values'] = ('S11', 'S12', 'S13', 'S21', 'S22', 'S23', 'S31', 'S32', 'S33')
 
-        self.button_file_update = add_button(tab=frame_s3p_directory, button_name='Update Files',
+        self.button_file_update = add_button(tab=frame_s3p_dir, button_name='Update Files',
                                              command=lambda: [
                                                  update_entries(directory=self.entered_var_s3p.get(),
                                                                 combobox=self.s3p_file_name_combobox,
@@ -2080,11 +2132,11 @@ class Window(ttk.Frame):
                                                  update_button(self.button_file_update)], col=3,
                                              row=1)
         # Adding buttons
-        add_button(tab=frame_s3p_directory, button_name='Exit',
+        add_button(tab=frame_s3p_dir, button_name='Exit',
                    command=window.destroy, col=5, row=1)
-        add_button(tab=frame_s3p_directory, button_name='Plot', command=self.plot_s3p,
+        add_button(tab=frame_s3p_dir, button_name='Plot', command=self.plot_s3p,
                    col=3, row=3)
-        add_button(tab=frame_s3p_directory, button_name='Delete graphs', command=self.delete_axs_s3p, col=3,
+        add_button(tab=frame_s3p_dir, button_name='Delete graphs', command=self.delete_axs_s3p, col=3,
                    row=2)
         # Canvas creation
         self.s3p_canvas = create_canvas(figure=self.fig_s3p, frame=frame_s3p_display,
@@ -2142,7 +2194,7 @@ class Window(ttk.Frame):
                 self.file_power_sweep['Power Input DUT Avg (dBm)'],
                 (self.file_power_sweep['Power Output DUT Avg (dBm)'] - self.file_power_sweep[
                     'Power Input DUT Avg (dBm)']),
-                marker='o', linestyle='-', label=self.test_pow_cell.get(), color='blue'
+                marker='o', linestyle='-', label=self.test_pow_cell.get(), color='gray'
             )
             self.ax_power_meas.plot(
                 self.file_power_sweep['Power Input DUT Avg (dBm)'],
@@ -2482,7 +2534,7 @@ class Window(ttk.Frame):
 
         self.ax_pulsed_pull_in_meas.plot(v_bias, rf_detector,
                                          label='Cell {}'.format(self.test_pulsed_pull_in_cell.get()),
-                                         color='blue')
+                                         color='gray')
         self.ax_pulsed_pull_in_meas.set(xlabel='Bias voltage (V)')
         self.ax_pulsed_pull_in_meas.set(ylabel='Detector voltage (V)')
         self.ax_pulsed_pull_in_meas.grid(visible=True)
@@ -2493,7 +2545,7 @@ class Window(ttk.Frame):
                                        color='green')
         self.ax_pulsed_pull_in_wf_det.plot(t, v_bias,
                                            label='bias - Cell {}'.format(self.test_pulsed_pull_in_cell.get()),
-                                           color='blue')
+                                           color='gray')
         self.ax_pulsed_pull_in_wf.set(xlabel='time (s)')
         self.ax_pulsed_pull_in_wf.set(ylabel='Detector voltage (V)')
         self.ax_pulsed_pull_in_wf_det.set(ylabel='Bias voltage (V)')
@@ -2846,7 +2898,8 @@ class Window(ttk.Frame):
 
 
 if __name__ == "__main__":
-    root = ttk.Window(themename="superhero")
-    root.geometry("1200x800")
+    root = ttk.Window(themename=default_style)
+    root.place_window_center()
+    root.geometry("500x400")
     app = Window(master=root)
     app.mainloop()

@@ -15,7 +15,8 @@ from scipy.signal import savgol_filter, get_window, convolve
 import typing
 import dir_and_var_declaration
 from dir_and_var_declaration import zva_init, sig_gen_init, osc_init, rf_gen_init, powermeter_init
-import ttkbootstrap as ttk
+
+# import ttkbootstrap as ttk
 
 matplotlib.ticker.ScalarFormatter(useOffset=True, useMathText=True)
 
@@ -76,6 +77,59 @@ else:
 
 # VNA parameter definition
 # dir_and_var_declaration.zva_directories(zva)
+def extension_detector(file: str) -> tuple:
+    """
+    Separates the file name and extension from a given file path.
+
+    Parameters:
+    file (str): The file path or file name to be processed.
+
+    Returns:
+    tuple: A tuple containing the file extension and the file name without the extension.
+    """
+    # Separate the file name and extension using os.path.splitext.
+    file, extension = os.path.splitext(file)
+
+    # Return the extension and the file name.
+    return extension, file
+
+
+def filetypes_dir(path: str) -> tuple[str]:
+    """
+    Separates different file types in the specified directory and returns tuples of s3p, s2p, and txt files.
+
+    Parameters:
+    path (str): The directory path to search for files.
+
+    Returns:
+    tuple: Three tuples containing s3p, s2p, and txt files, respectively.
+    """
+    if not path:
+        return 'empty', 'empty'
+
+    # List all files in the directory
+    file_list = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+
+    # Initialize lists to store different types of files
+    txt_files = []
+    s1p_files = []
+    s3p_files = []
+    s2p_files = []
+
+    # Loop through each file and classify by extension
+    for file in file_list:
+        extension, _ = extension_detector(file)
+        if extension == '.txt':
+            txt_files.append(file)
+        elif extension == '.s3p':
+            s3p_files.append(file)
+        elif extension == '.s2p':
+            s2p_files.append(file)
+        elif extension == '.s1p':
+            s1p_files.append(file)
+
+    # Convert lists to tuples and return
+    return tuple(s3p_files), tuple(s2p_files), tuple(txt_files), tuple(s1p_files)
 
 
 def timing_wrapper(func):
@@ -344,8 +398,11 @@ def close_all_resources() -> None:  # Close all resources VISA Session
                                                                     powermeter]
     for instrument in instrument_list:
         if instrument is not None:
-            instrument.close()
-            print(f"{instrument} closed")
+            try:
+                instrument.close()
+                print(f"{instrument} closed")
+            except pyvisa.errors.VisaIOError as e:
+                print(f"Error closing {instrument}: {e}")
 
 
 def saves3p(filename: str) -> None:
@@ -3081,7 +3138,6 @@ def plot_file(filename='default.txt',
         v_log_amp = data_np[:, 1].copy()
         t = data_np[:, 2].copy()
         fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(15, 9), num=1)
-
         ax[0].plot(t, v_bias)  # , label=f'{length}')  # Time axis converted to microseconds
         ax[0].grid()
         ax[1].plot(t, v_log_amp)  # , label=f'{length}')  # Time axis converted to microseconds
@@ -3138,26 +3194,107 @@ def query_powermeter(command: str = "*OPC?"):
     print(powermeter.query(command))
 
 
-def define_powermeter_settings(trigger_delay: str = "00E-6",
+def setPowermeterTraceDuration(duration: str = "100E-6",
+                               channel: str = "1"):
+    """Sets the trace duration (sweep time) on a powermeter.
+
+    This function sends the SCPI command `SENSe<ch>:SWE<win>:TIME <duration>`
+    to the instrument.
+
+    Crucially, it then immediately queries the instrument's error queue
+    (`SYSTem:ERRor?`). If the instrument reports an error (i.e., the
+    command was "wrong" syntactically or contextually), this function
+    will raise a general `Exception` containing the instrument's error message.
+
+    Args:
+        duration (str, optional): The sweep time in seconds. Scientific
+            notation is accepted (e.g., "100E-6"). Defaults to "100E-6".
+        channel (str, optional): The target channel (e.g., "A", "B").
+            Defaults to "A".
+
+    Raises:
+        pyvisa.errors.VisaIOError: If a communication error occurs (e.g.,
+            timeout, device disconnected, resource not valid).
+        AttributeError: If `powermeter` is not a valid PyVISA resource
+            (e.g., it is `None` or has no 'write'/'query' method).
+        Exception: If the instrument reports an error after receiving the
+            command. This is how "wrong command" errors are caught.
+            (e.g., '-113, "Undefined header"').
+    """
+    try:
+        # powermeter.write("ABORt1")
+        # powermeter.write("ABORt2")
+        # 2. CLEAR THE ERROR QUEUE
+        # Read all old errors until you get "No error"
+        while True:
+            error_message = powermeter.query("SYSTem:ERRor?")
+            print(error_message)
+            if error_message.startswith(("+0", "0,")):
+                break  # No more errors
+            print(f"Cleared old error: {error_message.strip()}")
+
+        # 3. SET ALL CONFIGURATIONS
+        # These are all instant, so there is no need to wait with *OPC?
+        powermeter.write("TRACe1:STAT ON")
+        powermeter.write("TRACe2:STAT ON")
+        powermeter.write("AVER:STAT ON")
+        powermeter.write("SENSe1:AVERage:COUNt:AUTO ON")
+        powermeter.write("SENSe2:AVERage:COUNt:AUTO ON")
+        powermeter.write("TRACe1:DEFine:DURation:REFerence 50")
+        # Note: You had this command twice, which is fine but redundant
+        powermeter.write("TRACe2:DEFine:DURation:REFerence 50")  # Assuming you meant Trace2
+
+        # Set the sweep time (your original command)
+        # Using 'channel' and 'duration' variables from the top
+        command_string = f"SENSe{channel}:TRACe:TIME {duration}"
+        powermeter.write(command_string)
+
+        # 4. ARM THE INSTRUMENT
+        # We set it to continuous mode. It will now wait for the
+        # external trigger, take a measurement, and automatically
+        # re-arm itself to wait for the next trigger.
+        powermeter.write("INIT:CONT:ALL ON")
+
+        # --- SCRIPT FINISHES ---
+        # We DO NOT send INITiate (it conflicts with CONT:ON)
+        # We DO NOT send *OPC? (we don't want the script to wait)
+
+        print("Powermeter is configured and armed for continuous external triggers.")
+        print("The script will now exit, but the instrument remains ready.")
+
+    except pyvisa.errors.VisaIOError as e:
+        # This catches communication failures (timeouts, disconnects)
+        print(f"Communication error: {e}")
+        raise e
+
+    except AttributeError as e:
+        # This catches programming errors (e.g., powermeter = None)
+        print(f"Programming error: {e}")
+        raise e
+
+    except Exception as e:
+        # This will catch any new instrument errors
+        print(f"An error occurred: {e}")
+        # Always check the instrument queue in case of an error
+        if powermeter:
+            print(f"Instrument says: {powermeter.query('SYSTem:ERRor?')}")
+        raise e
+
+
+def define_powermeter_settings(trigger_delay: str = "10E-6",
                                trace_duration: str = "200E-6",
                                gate_duration: str = "10E-6",
                                power_unit: str = "DBM"):
     powermeter.write("TRACe1:STAT ON")
-    print(powermeter.query("*OPC?"))  # Blocks until sweep is finished
     powermeter.write("TRACe2:STAT ON")
-    powermeter.query("*OPC?")  # Blocks until sweep is finished
-    print(powermeter.query("*OPC?"))  # Blocks until sweep is finished
     powermeter.write("INIT:CONT:ALL ON")
-    signal_generator.write("OUTPut:SYNC ON")
     powermeter.write('AVER:STAT ON')
-    powermeter.write(' SENSe1:AVERage:COUNt:AUTO')
-    powermeter.write(' SENSe2:AVERage:COUNt:AUTO')
+    powermeter.write('SENSe1:AVERage:COUNt:AUTO')
+    powermeter.write('SENSe2:AVERage:COUNt:AUTO')
     powermeter.write('TRACe1:DEFine:DURation:REFerence 50')
     powermeter.write('TRACe1:DEFine:DURation:REFerence 50')
-
-    powermeter.query("*OPC?")  # Blocks until sweep is finished
-    # powermeter.write("SENSe1:TRACe:AUToscale")
-    # powermeter.write("SENSe2:TRACe:AUToscale")
+    powermeter.write("SENSe1:TRACe:AUToscale")
+    powermeter.write("SENSe2:TRACe:AUToscale")
     powermeter.write(f"SENSe1:TRACe:TIME {trace_duration}")
     powermeter.write(f"SENSe2:TRACe:TIME {trace_duration}")
 
@@ -3167,9 +3304,7 @@ def define_powermeter_settings(trigger_delay: str = "00E-6",
     query_powermeter(command="OUTPut:RECorder1:STATe?")
     query_powermeter(command="OUTPut:RECorder2:STATe?")
     powermeter.write("OUTPut:RECorder2:STATe ON")
-    # powermeter.write(f"SENSe1:BUFFer:COUNt 0")
     powermeter.write(f"SENS2:DET:FUNC NORM")
-    # powermeter.write(f"SENSe2:BUFFer:COUNt 0")
     powermeter.write(f"SENSe1:SWE1:TIME {gate_duration}")
     powermeter.write(f"SENSe1:SWE2:TIME {gate_duration}")
     powermeter.write(f"SENSe1:SWE3:TIME {gate_duration}")
@@ -3178,17 +3313,17 @@ def define_powermeter_settings(trigger_delay: str = "00E-6",
     powermeter.write(f"SENSe2:SWE2:TIME {gate_duration}")
     powermeter.write(f"SENSe2:SWE3:TIME {gate_duration}")
     powermeter.write(f"SENSe2:SWE4:TIME {gate_duration}")
-    powermeter.query("*OPC?")  # Blocks until sweep is finished
 
     powermeter.write(f"SENSe1:SWEep1:OFFSet:TIME {trigger_delay}")
     powermeter.write(f"SENSe1:SWEep2:OFFSet:TIME {trigger_delay}")
     powermeter.write(f"SENSe1:SWEep3:OFFSet:TIME {trigger_delay}")
     powermeter.write(f"SENSe1:SWEep4:OFFSet:TIME {trigger_delay}")
-    powermeter.write(f"SENSe2:SWEep3:OFFSet:TIME {trigger_delay}")
-    powermeter.write(f"SENSe2:SWEep4:OFFSet:TIME {trigger_delay}")
+
     powermeter.write(f"SENSe2:SWEep1:OFFSet:TIME {trigger_delay}")
     powermeter.write(f"SENSe2:SWEep2:OFFSet:TIME {trigger_delay}")
-    powermeter.query("*OPC?")  # Blocks until sweetrigger_delay
+    powermeter.write(f"SENSe2:SWEep3:OFFSet:TIME {trigger_delay}")
+    powermeter.write(f"SENSe2:SWEep4:OFFSet:TIME {trigger_delay}")
+
     print(f"OFFSET time Sense 1: {powermeter.query("SENSe1:SWEep1:OFFSet:TIME?")}")
     print(f"OFFSET time Sense 2: {powermeter.query("SENSe2:SWEep1:OFFSet:TIME?")}")
     print(f"Recorder 1: {powermeter.query("OUTPut:RECorder1:FEED?")}")
@@ -3217,7 +3352,6 @@ def define_powermeter_settings(trigger_delay: str = "00E-6",
     powermeter.write("CALC2:LIM:LOW:DATA -40")
     powermeter.write("CALC3:LIM:LOW:DATA -40")
     powermeter.write("CALC4:LIM:LOW:DATA -40")
-
     # print(f"Upper limit for the lower window upper measurement {powermeter.query("CALC2:LIM:UPP:DATA?")}")
     # print(f"Lower limit for the lower window upper measurement {powermeter.query("CALC2:LIM:LOW:DATA?")}")
     print(f"Trace 1 time: {powermeter.query("SENSe1:TRACe:TIME?")}")
@@ -3275,13 +3409,13 @@ def acquire_powermeter_trace() -> typing.Literal:
 def check_if_file_name_exists(filename: str, directory: str) -> bool:
     listed_files: list = []
     if '.txt' in filename:
-        listed_files = main.filetypes_dir(directory)[2]
+        listed_files = filetypes_dir(directory)[2]
     elif '.s1p' in filename:
-        listed_files = main.filetypes_dir(directory)[3]
+        listed_files = filetypes_dir(directory)[3]
     elif '.s2p' in filename:
-        listed_files = main.filetypes_dir(directory)[1]
+        listed_files = filetypes_dir(directory)[1]
     elif '.s3p' in filename:
-        listed_files = main.filetypes_dir(directory)[0]
+        listed_files = filetypes_dir(directory)[0]
     # print(listed_files)
     if filename in listed_files:
         return True
@@ -3289,7 +3423,7 @@ def check_if_file_name_exists(filename: str, directory: str) -> bool:
         return False
 
 
-initialize_hardware()
+# initialize_hardware()
 
 if __name__ == "__main__":
     # wf = create_smooth_pull_in_voltage_waveform(voltages=list(np.arange(0, 40, 5)), width_pulse=20)
@@ -3309,7 +3443,7 @@ if __name__ == "__main__":
     # time.sleep(1)
     # measure_pull_down_voltage_pulsed(filename=filename)
     # signal_generator.write('OUTput 0')
-    setup_signal_generator_pulsed_with_rst(r'TCPIP0::A-33521B-00526::inst0::INSTR')
+    # setup_signal_generator_pulsed_with_rst(r'TCPIP0::A-33521B-00526::inst0::INSTR')
     # plot_file(filename + '.txt', directory)
     # time.sleep(2)
     # plt.close(2)
@@ -3357,13 +3491,13 @@ if __name__ == "__main__":
     os.chdir(r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Power handling')
     powermeter = powermeter_init()
     signal_generator = sig_gen_init()
-
-    # print(powermeter.query("TRIG:SOURce?"))
-    print(f"Fcount limit {powermeter.query("CALCulate1:LIMit:FCOunt?")}")
-    define_powermeter_settings(trigger_delay="20E-6",
-                               trace_duration="200E-6",
-                               gate_duration="10E-6",
-                               power_unit="DBM")
+    setPowermeterTraceDuration_2(duration="500E-6", channel='1')
+    setPowermeterTraceDuration_2(duration="500E-6", channel='2')
+    # define_powermeter_settings(trigger_delay='10e-6', trace_duration="500e-6", gate_duration='10e-6')
+    # define_powermeter_settings(trigger_delay="20E-6",
+    #                            trace_duration="200E-6",
+    #                            gate_duration="10E-6",
+    #                            power_unit="DBM")
     signal_generator.write("OUTPut:SYNC ON")
     signal_generator.write("OUTPut ON")
     # send_trig()
@@ -3372,11 +3506,13 @@ if __name__ == "__main__":
     powermeter.close()
     ax: plt.Axes
     fig: plt.Figure
-    fig, ax = plt.subplots(nrows=1, ncols=1, squeeze=True, sharex=True)
-    ax.plot(time_values, power_values_1, label=f'$Channel A$')
-    ax.plot(time_values, power_values_2, label=f'$Channel B$')
-    ax.set(ylim=[-30, -10])
-    ax.xaxis.set_major_locator(locator=ticker.AutoLocator())
+    fig, ax = plt.subplots(nrows=2, ncols=1, squeeze=True, sharex=True)
+    ax[0].plot(time_values, power_values_1, label=f'$Channel A$ --> SENS 1')
+    ax[1].plot(time_values, power_values_2, label=f'$Channel B$ --> SENS 2')
+    # ax[1].set(ylim=[-20, 20])
+    # ax[0].set(ylim=[-20, 20])
+    ax[0].xaxis.set_major_locator(locator=ticker.AutoLocator())
+    ax[1].xaxis.set_major_locator(locator=ticker.AutoLocator())
     # --- Modified Section ---
     # Create a ScalarFormatter
     formatter = ticker.ScalarFormatter(useMathText=True)  # useMathText=True makes exponents look nicer
@@ -3384,14 +3520,19 @@ if __name__ == "__main__":
     formatter.set_powerlimits((0, 0))  # Force notation for all magnitudes
 
     # Apply the formatter to the x-axis
-    ax.xaxis.set_major_formatter(formatter)
+    ax[0].xaxis.set_major_formatter(formatter)
+    ax[1].xaxis.set_major_formatter(formatter)
     # --- End Modified Section ---
 
-    ax.legend()
-    ax.set_xlabel('Time (s)')  # Added for clarity
-    ax.set_ylabel('Power (dBm)')  # Added for clarity
-    plt.title('Pin & Pout in time domaine')  # Added for clarity
-    plt.grid()
+    ax[0].legend()
+    ax[1].legend()
+    ax[0].set_xlabel('Time (s)')  # Added for clarity
+    ax[1].set_xlabel('Time (s)')  # Added for clarity
+    ax[0].set_ylabel('Power (dBm)')  # Added for clarity
+    ax[1].set_ylabel('Power (dBm)')  # Added for clarity
+    ax[0].set_title('Pin & Pout in time domaine')  # Added for clarity
+    ax[0].grid()
+    ax[1].grid()
     # Save the figure (optional, but good practice in scripts)
     # plt.savefig('scientific_xaxis_plot.png')
 
