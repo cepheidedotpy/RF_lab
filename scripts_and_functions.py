@@ -3491,8 +3491,8 @@ if __name__ == "__main__":
     os.chdir(r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Power handling')
     powermeter = powermeter_init()
     signal_generator = sig_gen_init()
-    setPowermeterTraceDuration_2(duration="500E-6", channel='1')
-    setPowermeterTraceDuration_2(duration="500E-6", channel='2')
+    setPowermeterTraceDuration(duration="500E-6", channel='1')
+    setPowermeterTraceDuration(duration="500E-6", channel='2')
     # define_powermeter_settings(trigger_delay='10e-6', trace_duration="500e-6", gate_duration='10e-6')
     # define_powermeter_settings(trigger_delay="20E-6",
     #                            trace_duration="200E-6",
