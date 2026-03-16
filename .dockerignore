@@ -1,0 +1,34 @@
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE configurations
+.idea/
+.vscode/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Measurement data (if you want to mount it separately)
+Measurement Data/
+ZVA config/
+
+# Git
+.git/
+.gitignore
+
+# PDF and other docs (unless needed in app)
+Docs appareils de mesure/
+ZNA_UserManual_en_32.pdf
+
+# Other local files
+changes_log.md
+qodana.yaml

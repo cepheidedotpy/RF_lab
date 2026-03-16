@@ -44,6 +44,11 @@ instrument_file_ZVA50 = r'C:\Rohde&Schwarz\Nwa\RecallSets\placeholder.zvx'
 instrument_file = instrument_file_ZVA67
 
 PC_File_Dir: str = r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data'  # Default directory for measurement data
+PC_File_Dir_pull_in_Display: str = r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Pullin voltage'  # Default directory for measurement data
+PC_File_Dir_s2p_Display: str = r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\S2P'  # Default directory for measurement data
+PC_File_Dir_s3p_Display: str = r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\S3P'  # Default directory for measurement data
+PC_File_Dir_s3p_Cycling: str = r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Mechanical cycling'  # Default directory for measurement data
+
 ZVA_File_Dir_ZVA67: str = r'C:\Users\Public\Documents\Rohde-Schwarz\ZNA\Traces'  # ZVA67 Trace file directory
 ZVA_File_Dir_ZVA50: str = r'C:\Rohde&Schwarz\Nwa\Traces'  # ZVA50 Trace file directory
 
@@ -297,5 +302,38 @@ pullin_setup_rf_gen = "/var/user/pull-in.savrcltxt"
 snp_meas_setup_sig_gen = "PULSE.sta"
 power_test_setup_sig_gen = "power.sta"
 power_test_setup_rf_gen = "/var/user/power.savrcltxt"
+time_domain_power_test_setup_rf_gen = "/var/user/time-domain-power-test.savrcltxt"
 power_test_setup_powermeter = "*RCL 3"
 power_bias_test_setup_powermeter = "*RCL 5"
+
+try:
+    from dev.mock_hardware import MockInstrument
+except ImportError:
+    # Handle the case where mock_hardware is not available, e.g., in a different environment
+    class MockInstrument:
+        def __init__(self, *args, **kwargs):
+            print("WARNING: MockInstrument class not found. Using a placeholder.")
+
+        def __getattr__(self, name):
+            # Return a dummy callable for any method call
+            return lambda *args, **kwargs: print(f"WARNING: Called '{name}' on a placeholder mock instrument.")
+
+
+def zva_init_mock(tcpip_address: str = 'MOCK_ZVA', zva="ZNA67"):
+    return MockInstrument(tcpip_address)
+
+
+def sig_gen_init_mock(tcpip_address: str = 'MOCK_SIG_GEN'):
+    return MockInstrument(tcpip_address)
+
+
+def osc_init_mock(tcpip_address: str = 'MOCK_OSC'):
+    return MockInstrument(tcpip_address)
+
+
+def rf_gen_init_mock(tcpip_address: str = 'MOCK_RF_GEN', rf_gen_type: str = 'smf'):
+    return MockInstrument(tcpip_address)
+
+
+def powermeter_init_mock(tcpip_address: str = 'MOCK_POWERMETER'):
+    return MockInstrument(tcpip_address)

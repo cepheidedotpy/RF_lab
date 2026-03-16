@@ -1,0 +1,20 @@
+services:
+  temis-mems-lab:
+    build:
+      context: .
+      dockerfile: dev/Dockerfile
+    image: temis-mems-lab:latest
+    container_name: temis-mems-lab-app
+    environment:
+      - DISPLAY=host.docker.internal:0
+      - QT_X11_NO_MITSHM=1
+      # Instrument IPs (Adjust these as needed for your setup)
+      - ZVA_IP=TCPIP0::ZNA67-101810::inst0::INSTR
+      - SIG_GEN_IP=TCPIP0::A-33521B-00526::inst0::INSTR
+      - OSC_IP=TCPIP0::DPO5054-C011738::inst0::INSTR
+      - POWERMETER_IP=TCPIP0::A-N1912A-00589::inst0::INSTR
+      - RF_GEN_IP=TCPIP0::rssmb100a179766::inst0::INSTR
+    volumes:
+      # Mount data directories to keep measurement results on the host
+      - ./Measurement Data:/app/Measurement Data
+      - ./ZVA config:/app/ZVA config
