@@ -3,7 +3,7 @@ from __future__ import annotations
 import tkinter as tk
 import ttkbootstrap as ttk
 from tkinter import scrolledtext
-from dev import scripts_and_functions
+from src.core import scripts_and_functions
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from typing import Optional, Literal, TYPE_CHECKING
 from src.gui.gui_utils import add_label_frame, add_button, add_label, add_entry, create_canvas, \

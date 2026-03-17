@@ -2,7 +2,7 @@ import tkinter as tk
 import ttkbootstrap as ttk
 from tkinter import messagebox
 
-from dev import scripts_and_functions
+from src.core import scripts_and_functions
 # from typing import TYPE_CHECKING
 
 

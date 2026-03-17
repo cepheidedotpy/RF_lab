@@ -5,7 +5,7 @@ import tkinter as tk
 import ttkbootstrap as ttk
 import os
 from typing import Optional, TYPE_CHECKING
-from dev import scripts_and_functions
+from src.core import scripts_and_functions
 from src.gui.gui_utils import add_label_frame, add_button, add_label, add_entry, add_combobox, create_canvas, \
     file_name_creation, close_resources, tab_pad_x, default_style
 

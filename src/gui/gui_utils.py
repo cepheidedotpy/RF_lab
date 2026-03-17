@@ -5,7 +5,7 @@ from tkinter import scrolledtext
 from typing import Optional, Literal
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-from dev import scripts_and_functions
+from src.core import scripts_and_functions
 from src.core.config import zva_parameters
 from src.core import config as dir_and_var_declaration
 from ttkbootstrap.constants import *

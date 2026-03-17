@@ -5,7 +5,7 @@ import skrf as rf
 import tkinter as tk
 import ttkbootstrap as ttk
 from tkinter import scrolledtext
-from dev from src.core import scripts_and_functions
+from src.core import scripts_and_functions
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from typing import Optional, Literal, TYPE_CHECKING
 import os
