@@ -47,23 +47,16 @@ class SnpTestWindow(ttk.Frame):
         frame_snp_gene_controls.grid_columnconfigure(1, weight=1)
         frame_snp_gene_controls.grid_columnconfigure(2, weight=1)
 
-        add_label(frame_snp_compo_info, label_name='DIR', col=0, row=0).grid(sticky='e', ipadx=tab_pad_x,
-                                                                             ipady=tab_pad_x)
-        add_label(frame_snp_compo_info, label_name='Project', col=0, row=1).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                 ipady=tab_pad_x)
-        add_label(frame_snp_compo_info, label_name='Cell', col=0, row=2).grid(sticky='e', ipadx=tab_pad_x,
-                                                                              ipady=tab_pad_x)
-        add_label(frame_snp_compo_info, label_name='Reticule', col=0, row=3).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                  ipady=tab_pad_x)
-        add_label(frame_snp_compo_info, label_name='Device', col=0, row=4).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                ipady=tab_pad_x)
-        add_label(frame_snp_compo_info, label_name='Status', col=0, row=5).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                ipady=tab_pad_x)
-        add_label(frame_snp_compo_info, label_name='Bias Voltage', col=0, row=6).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                      ipady=tab_pad_x)
+        add_label(frame_snp_compo_info, label_name='DIR', col=0, row=0)
+        add_label(frame_snp_compo_info, label_name='Project', col=0, row=1)
+        add_label(frame_snp_compo_info, label_name='Cell', col=0, row=2)
+        add_label(frame_snp_compo_info, label_name='Reticule', col=0, row=3)
+        add_label(frame_snp_compo_info, label_name='Device', col=0, row=4)
+        add_label(frame_snp_compo_info, label_name='Status', col=0, row=5)
+        add_label(frame_snp_compo_info, label_name='Bias Voltage', col=0, row=6)
 
         self.test_s3p_dir = tk.StringVar(
-            value=r'C:\Users\TEMIS\PycharmProjects\pythonProject\venv\TEMIS MEMS LAB\dummy_data')
+            value=dir_and_var_declaration.PC_File_Dir)
         self.test_s3p_project = tk.StringVar(value=r'Project_Name')
         self.test_s3p_cell = tk.StringVar(value=r'Cell_Name')
         self.test_s3p_reticule = tk.StringVar(value=r'Reticule')
@@ -121,52 +114,38 @@ class SnpTestWindow(ttk.Frame):
                    button_name='Osc trigger',
                    command=lambda: [scripts_and_functions.force_trigger_osc()], col=2, row=2)
 
-        add_label(frame_snp_signal_generator, label_name='Bias Voltage', col=0, row=0).grid(sticky='e',
-                                                                                            ipadx=tab_pad_x,
-                                                                                            ipady=tab_pad_x)
-        add_label(frame_snp_signal_generator, label_name='Pulse Width', col=0, row=1).grid(sticky='e',
-                                                                                           ipadx=tab_pad_x,
-                                                                                           ipady=tab_pad_x)
+        add_label(frame_snp_signal_generator, label_name='Bias Voltage', col=0, row=0)
+        add_label(frame_snp_signal_generator, label_name='Pulse Width', col=0, row=1)
         self.entered_pull_in_volt = add_entry(frame_snp_signal_generator, text_var=self.pull_in_v, width=10, col=1,
                                               row=0)
         self.entered_pulse_width = add_entry(frame_snp_signal_generator, text_var=self.pulse_width, width=10, col=1,
-                                             row=1)
-        add_label(frame_snp_signal_generator, label_name='(V)', col=2, row=0).grid(sticky='w', ipadx=tab_pad_x,
-                                                                                   ipady=tab_pad_x)
-        add_label(frame_snp_signal_generator, label_name='(s)', col=2, row=1).grid(sticky='w', ipadx=tab_pad_x,
-                                                                                   ipady=tab_pad_x)
+                                              row=1)
+        add_label(frame_snp_signal_generator, label_name='(V)', col=2, row=0)
+        add_label(frame_snp_signal_generator, label_name='(s)', col=2, row=1)
 
-        add_label(frame_snp_signal_generator, label_name='Pulse Frequency', col=0, row=2).grid(sticky='e',
-                                                                                               ipadx=tab_pad_x,
-                                                                                               ipady=tab_pad_x)
+        add_label(frame_snp_signal_generator, label_name='Pulse Frequency', col=0, row=2)
         self.entered_pulse_freq = add_entry(frame_snp_signal_generator, text_var=self.pulse_freq, width=10, col=1,
                                             row=2)
-        add_label(frame_snp_signal_generator, label_name='(Hz)', col=2, row=2).grid(sticky='w', ipadx=tab_pad_x,
-                                                                                    ipady=tab_pad_x)
+        add_label(frame_snp_signal_generator, label_name='(Hz)', col=2, row=2)
 
         add_button(tab=frame_snp_signal_generator, button_name='Set Bias Voltage',
                    command=lambda: scripts_and_functions.bias_voltage(self.pull_in_v.get()),
                    col=3,
-                   row=0).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+                   row=0)
         add_button(tab=frame_snp_signal_generator, button_name='Set Pulse Width',
                    command=lambda: scripts_and_functions.set_pulse_width(self.pulse_width.get()),
                    col=3,
-                   row=1).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+                   row=1)
         add_button(tab=frame_snp_signal_generator,
                    button_name='Set PRF', command=lambda: scripts_and_functions.set_prf(self.pulse_freq.get()), col=3,
-                   row=2).grid(
-            sticky='e', ipadx=tab_pad_x,
-            ipady=tab_pad_x)
+                   row=2)
         add_button(tab=frame_snp_signal_generator, button_name='Set Pulse Gen',
                    command=lambda: [
                        scripts_and_functions.set_signal_generator_pulse_parameters(pulse_width=self.pulse_width.get(),
                                                                                    pulse_period=1 / self.pulse_freq.get()),
                        scripts_and_functions.bias_voltage(self.pull_in_v.get())],
                    col=3,
-                   row=3).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+                   row=3)
         # ------------------------------------------------------------------------------
         self.canvas_snp_meas = create_canvas(figure=self.app.fig_snp_meas, frame=frame_snp_measurement,
                                              toolbar_frame=frame_test_snp_measurement, toolbar=True)
@@ -177,38 +156,47 @@ class SnpTestWindow(ttk.Frame):
         self.f_stop = tk.DoubleVar(value=10)
         self.nb_points = tk.DoubleVar(value=100)
 
-        add_label(frame_snp_zva, label_name='Fstart', col=0, row=0).grid(sticky='e', ipadx=tab_pad_x,
-                                                                         ipady=tab_pad_x)
-        add_label(frame_snp_zva, label_name='Fstop', col=0, row=1).grid(sticky='e', ipadx=tab_pad_x,
-                                                                        ipady=tab_pad_x)
-        add_label(frame_snp_zva, label_name='Nb Points', col=0, row=2).grid(sticky='e', ipadx=tab_pad_x,
-                                                                            ipady=tab_pad_x)
-        self.entered_f_start = add_entry(frame_snp_zva, text_var=self.f_start, width=10, col=1, row=0)
-        self.entered_fstop = add_entry(frame_snp_zva, text_var=self.f_stop, width=10, col=1, row=1)
-        self.entered_nb_points = add_entry(frame_snp_zva, text_var=self.nb_points, width=10, col=1, row=2)
-        add_label(frame_snp_zva, label_name='(GHz)', col=2, row=0).grid(sticky='w', ipadx=tab_pad_x,
-                                                                        ipady=tab_pad_x)
-        add_label(frame_snp_zva, label_name='(GHz)', col=2, row=1).grid(sticky='w', ipadx=tab_pad_x,
-                                                                        ipady=tab_pad_x)
-        add_label(frame_snp_zva, label_name='(Pts)', col=2, row=2).grid(sticky='w', ipadx=tab_pad_x,
-                                                                        ipady=tab_pad_x)
+        # --- Load Configuration Buttons (row 0) with safety toggle ---
+        self.config_buttons_enabled = tk.BooleanVar(value=False)
+        self.btn_load_s3p = add_button(tab=frame_snp_zva, button_name='Load S3P Config',
+                                       command=call_s3p_config, col=1, row=0)
+        self.btn_load_s3p.configure(state='disabled')
+
+        self.btn_load_s2p = add_button(tab=frame_snp_zva, button_name='Load S2P Config',
+                                       command=call_s2p_config, col=2, row=0)
+        self.btn_load_s2p.configure(state='disabled')
+
+        self.btn_load_s1p = add_button(tab=frame_snp_zva, button_name='Load S1P Config',
+                                       command=call_s1p_config, col=3, row=0)
+        self.btn_load_s1p.configure(state='disabled')
+
+        self.toggle_config = ttk.Checkbutton(
+            frame_snp_zva, text='Enable config loading',
+            variable=self.config_buttons_enabled,
+            command=self._toggle_config_buttons,
+            bootstyle="round-toggle")
+        self.toggle_config.grid(column=0, row=0, sticky='w', padx=tab_pad_x, pady=tab_pad_x)
+
+        # --- ZVA frequency/points settings (shifted down by 1 row) ---
+        add_label(frame_snp_zva, label_name='Fstart', col=0, row=1)
+        add_label(frame_snp_zva, label_name='Fstop', col=0, row=2)
+        add_label(frame_snp_zva, label_name='Nb Points', col=0, row=3)
+        self.entered_f_start = add_entry(frame_snp_zva, text_var=self.f_start, width=10, col=1, row=1)
+        self.entered_fstop = add_entry(frame_snp_zva, text_var=self.f_stop, width=10, col=1, row=2)
+        self.entered_nb_points = add_entry(frame_snp_zva, text_var=self.nb_points, width=10, col=1, row=3)
+        add_label(frame_snp_zva, label_name='(GHz)', col=2, row=1)
+        add_label(frame_snp_zva, label_name='(GHz)', col=2, row=2)
+        add_label(frame_snp_zva, label_name='(Pts)', col=2, row=3)
 
         add_button(tab=frame_snp_zva, button_name='Set Fstart',
-                   command=lambda: self.app.set_f_start(self.f_start.get()), col=3, row=0).grid(sticky='e',
-                                                                                                ipadx=tab_pad_x,
-                                                                                                ipady=tab_pad_x)
+                   command=lambda: self.app.set_f_start(self.f_start.get()), col=3, row=1)
         add_button(tab=frame_snp_zva, button_name='Set Fstop',
-                   command=lambda: self.app.set_fstop(self.f_stop.get()), col=3, row=1).grid(sticky='e',
-                                                                                             ipadx=tab_pad_x,
-                                                                                             ipady=tab_pad_x)
+                   command=lambda: self.app.set_fstop(self.f_stop.get()), col=3, row=2)
         add_button(tab=frame_snp_zva, button_name='Set Nb points',
-                   command=lambda: self.app.set_nb_points(self.nb_points.get()), col=3, row=2).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+                   command=lambda: self.app.set_nb_points(self.nb_points.get()), col=3, row=3)
         add_button(tab=frame_snp_zva, button_name='Set ZVA',
                    command=lambda: self.app.set_zva(self.f_start.get(), self.f_stop.get(), self.nb_points.get()), col=3,
-                   row=3).grid(sticky='e',
-                               ipadx=tab_pad_x,
-                               ipady=tab_pad_x)
+                   row=4)
         add_button(tab=frame_snp_zva, button_name='Capture S3P', command=lambda: [file_name_creation(data_list=[
             self.test_s3p_project.get(),
             self.test_s3p_cell.get(),
@@ -218,8 +206,7 @@ class SnpTestWindow(ttk.Frame):
             self.chosen_bias_voltage.get()
         ], text=self.text_file_name_s3p_test, end_characters='V'), self.data_acquire(), self.trace_snp_meas('.s3p')],
                    col=1,
-                   row=4).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+                   row=5)
         add_button(tab=frame_snp_zva, button_name='Capture S2P', command=lambda: [file_name_creation(data_list=[
             self.test_s3p_project.get(),
             self.test_s3p_cell.get(),
@@ -229,8 +216,7 @@ class SnpTestWindow(ttk.Frame):
             self.chosen_bias_voltage.get()
         ], text=self.text_file_name_s3p_test, end_characters='V'), self.data_acquire_s2p(),
             self.trace_snp_meas('.s2p')],
-                   col=2, row=4).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+                   col=2, row=5)
         add_button(tab=frame_snp_zva, button_name='Capture S1P', command=lambda: [file_name_creation(data_list=[
             self.test_s3p_project.get(),
             self.test_s3p_cell.get(),
@@ -240,8 +226,7 @@ class SnpTestWindow(ttk.Frame):
             self.chosen_bias_voltage.get()
         ], text=self.text_file_name_s3p_test, end_characters='V'), self.data_acquire_s1p(),
             self.trace_snp_meas('.s1p')],
-                   col=3, row=4).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+                   col=3, row=5)
 
         # ------------------------------------------------------------------------------
         self.text_snp_debug = tk.Text(frame_snp_gene_controls, width=40, height=10, wrap=tk.WORD, border=4,
@@ -251,28 +236,30 @@ class SnpTestWindow(ttk.Frame):
         self.text_snp_debug.grid(column=0, row=3, sticky='n', columnspan=4)
 
         add_button(tab=frame_snp_gene_controls, button_name='Comms prep', command=scripts_and_functions.comprep_zva,
-                   col=0, row=1).grid(
-            ipadx=tab_pad_x, ipady=tab_pad_x)
+                   col=0, row=1)
         add_button(tab=frame_snp_gene_controls, button_name='Reset ZVA',
                    command=lambda: [self.app.reset_zva(self.text_snp_debug)], col=0,
-                   row=2).grid(
-            ipadx=tab_pad_x,
-            ipady=tab_pad_x)
+                   row=2)
         add_button(tab=frame_snp_gene_controls, button_name='Reconnect ZVA',
                    command=lambda: [self.app.reset_zva_no_setup(self.text_snp_debug)],
                    col=2,
-                   row=2).grid(
-            ipadx=tab_pad_x,
-            ipady=tab_pad_x)
+                   row=2)
 
         add_button(tab=frame_snp_gene_controls, button_name='Exit',
                    command=lambda: [self.app._quit(), close_resources()],
                    col=1,
-                   row=1).grid(ipadx=tab_pad_x, ipady=tab_pad_x)
+                   row=1)
         add_button(tab=frame_snp_gene_controls, button_name='Reset Signal Gen',
                    command=lambda: self.app.reset_signal_generator(text_widget=self.text_snp_debug),
                    col=1,
-                   row=2).grid(ipadx=tab_pad_x, ipady=tab_pad_x)
+                   row=2)
+
+    def _toggle_config_buttons(self):
+        """Enable or disable the Load Config buttons based on the toggle state."""
+        state = 'normal' if self.config_buttons_enabled.get() else 'disabled'
+        self.btn_load_s3p.configure(state=state)
+        self.btn_load_s2p.configure(state=state)
+        self.btn_load_s1p.configure(state=state)
 
     def data_acquire(self):
         """

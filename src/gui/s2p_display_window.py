@@ -4,10 +4,9 @@ import ttkbootstrap as ttk
 from typing import TYPE_CHECKING
 # if TYPE_CHECKING:
 #     from main_refactored import Window
-from src.gui.gui_utils import add_label_frame, add_button, add_label, add_entry, add_combobox, create_canvas, \
-    add_slider, \
-    update_entries, update_button, filetypes_dir, tab_pad_x, close_resources
-
+from src.gui.gui_utils import (add_label_frame, add_button, add_label, add_entry, add_combobox, create_canvas,
+    add_slider, update_entries, update_button, filetypes_dir, tab_pad_x, close_resources,
+    add_listbox, update_listbox, get_listbox_selection, browse_directory)
 
 class S2pDisplayWindow(ttk.Frame):
     def __init__(self, master, app: "Window"):
@@ -36,27 +35,32 @@ class S2pDisplayWindow(ttk.Frame):
         # Adding entry for file directory
         self.app.entered_var_s2p = add_entry(frame_s2p_dir, text_var=self.app.s2p_dir_name, width=70, col=2, row=1)
 
-        file_s2p = filetypes_dir(self.app.entered_var_s2p.get())[1]
-        self.app.s2p_file_name_combobox = add_combobox(frame_s2p_dir, text=file_s2p, col=2, row=2, width=100)
+        self.app.s2p_file_name_listbox = add_listbox(frame_s2p_dir, col=2, row=2, width=100, height=5)
+        update_listbox(self.app.entered_var_s2p.get(), self.app.s2p_file_name_listbox, '.s2p')
         self.app.s_parameter_chosen_s2p = add_combobox(frame_s2p_dir, text=self.app.s_parameter_s2p, col=2, row=3,
                                                        width=100)
         self.app.s_parameter_chosen_s2p['values'] = ('S11', 'S12', 'S21', 'S22')
 
+        def on_s2p_select(event=None):
+            selection = get_listbox_selection(self.app.s2p_file_name_listbox)
+            if selection:
+                self.app.trace_s2p(filename=selection, s_param=self.app.s_parameter_chosen_s2p.get())
+
+        self.app.s2p_file_name_listbox.bind('<<ListboxSelect>>', on_s2p_select)
+        
+        self.app.s_parameter_chosen_s2p.bind('<<ComboboxSelected>>', on_s2p_select)
+
         # Adding buttons
-        self.app.update_s2p_button = add_button(tab=frame_s2p_dir, button_name=' Update Files ',
-                                                command=lambda: [
-                                                    update_entries(directory=self.app.entered_var_s2p.get(),
-                                                                   combobox=self.app.s2p_file_name_combobox,
-                                                                   filetype='.s2p'),
-                                                    update_button(self.app.update_s2p_button)], col=3, row=1)
-        # self.app.update_s2p_button
-        add_button(frame_s2p_dir, button_name='Exit',
-                   command=lambda: [self.app._quit(), close_resources()], col=5, row=1)
-        add_button(frame_s2p_dir, button_name='Plot',
-                   command=lambda: self.app.trace_s2p(filename=self.app.s2p_file_name_combobox.get(),
-                                                      s_param=self.app.s_parameter_chosen_s2p.get()), col=3, row=3)
+        self.app.update_s2p_button = add_button(tab=frame_s2p_dir, button_name=' Browse Folder ',
+                                                command=lambda: browse_directory(self.app.s2p_dir_name, 
+                                                                                 lambda: update_listbox(self.app.s2p_dir_name.get(), 
+                                                                                                        self.app.s2p_file_name_listbox, '.s2p')), col=3, row=1)
         add_button(frame_s2p_dir, button_name='Delete Graphs',
                    command=self.app.delete_axs_s2p, col=3, row=2)
+        add_button(frame_s2p_dir, button_name='Plot',
+                   command=on_s2p_select, col=3, row=3)
+        add_button(frame_s2p_dir, button_name='Exit',
+                   command=lambda: [self.app._quit(), close_resources()], col=3, row=4)
 
         # Canvas creation
         self.app.s2p_canvas = create_canvas(figure=self.app.fig_s2p, frame=frame_s2p_display,

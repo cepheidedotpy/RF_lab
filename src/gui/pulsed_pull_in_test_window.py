@@ -51,25 +51,12 @@ class PulsedPullInTestWindow(ttk.Frame):
         frame_test_pulsed_pull_in_gen_controls.grid_columnconfigure(0, weight=1)
         frame_test_pulsed_pull_in_gen_controls.grid_columnconfigure(1, weight=1)
         # Adding labels to component info Labelframe
-        add_label(frame_test_pulsed_pull_in_comp_info, label_name='DIR', col=0, row=0).grid(sticky='e',
-
-                                                                                            ipadx=tab_pad_x,
-                                                                                            ipady=tab_pad_x)
-        add_label(frame_test_pulsed_pull_in_comp_info, label_name='Project', col=0, row=1).grid(sticky='e',
-                                                                                                ipadx=tab_pad_x,
-                                                                                                ipady=tab_pad_x)
-        add_label(frame_test_pulsed_pull_in_comp_info, label_name='Cell', col=0, row=2).grid(sticky='e',
-                                                                                             ipadx=tab_pad_x,
-                                                                                             ipady=tab_pad_x)
-        add_label(frame_test_pulsed_pull_in_comp_info, label_name='Reticule', col=0, row=3).grid(sticky='e',
-                                                                                                 ipadx=tab_pad_x,
-                                                                                                 ipady=tab_pad_x)
-        add_label(frame_test_pulsed_pull_in_comp_info, label_name='Device', col=0, row=4).grid(sticky='e',
-                                                                                               ipadx=tab_pad_x,
-                                                                                               ipady=tab_pad_x)
-        add_label(frame_test_pulsed_pull_in_comp_info, label_name='Bias Voltage', col=0, row=5).grid(sticky='e',
-                                                                                                     ipadx=tab_pad_x,
-                                                                                                     ipady=tab_pad_x)
+        add_label(frame_test_pulsed_pull_in_comp_info, label_name='DIR', col=0, row=0)
+        add_label(frame_test_pulsed_pull_in_comp_info, label_name='Project', col=0, row=1)
+        add_label(frame_test_pulsed_pull_in_comp_info, label_name='Cell', col=0, row=2)
+        add_label(frame_test_pulsed_pull_in_comp_info, label_name='Reticule', col=0, row=3)
+        add_label(frame_test_pulsed_pull_in_comp_info, label_name='Device', col=0, row=4)
+        add_label(frame_test_pulsed_pull_in_comp_info, label_name='Bias Voltage', col=0, row=5)
         self.app.test_pulsed_pull_in_dir = tk.StringVar(
             value=r'C:\Users\TEMIS\PycharmProjects\pythonProject\venv\TEMIS MEMS LAB\dummy_data')
         self.app.test_pulsed_pull_in_project = tk.StringVar(value=r'Project_Name')
@@ -108,12 +95,8 @@ class PulsedPullInTestWindow(ttk.Frame):
         self.app.pulsed_chosen_bias_voltage_pull_in = add_entry(tab=frame_test_pulsed_pull_in_comp_info,
                                                                 text_var=self.app.pulsed_pull_in_v_bias,
                                                                 width=20, col=1, row=5)
-        add_label(frame_pulsed_signal_gen_measurement, label_name='Bias Voltage', col=0, row=0).grid(sticky='e',
-                                                                                                     ipadx=tab_pad_x,
-                                                                                                     ipady=tab_pad_x)
-        add_label(frame_pulsed_signal_gen_measurement, label_name='Ramp length', col=0, row=1).grid(sticky='e',
-                                                                                                    ipadx=tab_pad_x,
-                                                                                                    ipady=tab_pad_x)
+        add_label(frame_pulsed_signal_gen_measurement, label_name='Bias Voltage', col=0, row=0)
+        add_label(frame_pulsed_signal_gen_measurement, label_name='Ramp length', col=0, row=1)
         self.app.entered_pulsed_pull_in_v_bias = add_entry(frame_pulsed_signal_gen_measurement,
                                                            text_var=self.app.pulsed_pull_in_v_bias,
                                                            width=10,
@@ -137,33 +120,29 @@ class PulsedPullInTestWindow(ttk.Frame):
                    button_name='Osc trigger',
                    command=lambda: [scripts_and_functions.force_trigger_osc()], col=2, row=2)
 
-        add_label(frame_pulsed_signal_gen_measurement, label_name='(V)', col=2, row=0).grid(sticky='w',
-                                                                                            ipadx=tab_pad_x,
-                                                                                            ipady=tab_pad_x)
-        add_label(frame_pulsed_signal_gen_measurement, label_name='(µs)', col=2, row=1).grid(sticky='w',
-                                                                                             ipadx=tab_pad_x,
-                                                                                             ipady=tab_pad_x)
+        add_label(frame_pulsed_signal_gen_measurement, label_name='(V)', col=2, row=0)
+        add_label(frame_pulsed_signal_gen_measurement, label_name='(µs)', col=2, row=1)
         add_button(tab=frame_pulsed_signal_gen_measurement, button_name='Set Bias Voltage',
                    command=lambda: [scripts_and_functions.create_pulsed_pull_in_test_waveform(
                        amplitude=int(self.app.entered_pulsed_pull_in_v_bias.get()),
                        pulse_width=int(self.app.pulsed_pulse_width.get()))],
-                   col=3, row=0).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+                   col=3, row=0)
         add_button(tab=frame_pulsed_signal_gen_measurement, button_name='Set Ramp Width',
                    command=lambda: [scripts_and_functions.create_pulsed_pull_in_test_waveform(
                        amplitude=int(self.app.entered_pulsed_pull_in_v_bias.get()),
                        pulse_width=int(self.app.pulsed_pulse_width.get()))],
                    col=3,
-                   row=1).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+                   row=1)
         add_button(tab=frame_pulsed_signal_gen_measurement, button_name='Set Pulse Gen',
                    command=None,
-                   col=3, row=3).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+                   col=3, row=3)
         # Oscilloscope
         add_button(tab=frame_test_pulsed_pull_in_oscilloscope, button_name='Setup Oscilloscope',
                    command=lambda: scripts_and_functions.osc_pullin_config(),
-                   col=0, row=0).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+                   col=0, row=0)
         add_button(tab=frame_test_pulsed_pull_in_oscilloscope, button_name='Setup RF Gen',
                    command=lambda: scripts_and_functions.rf_gen_pull_in_setup(),
-                   col=0, row=1).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+                   col=0, row=1)
         # General controls Labelframe
         self.app.text_pulsed_file_name_pull_in_test = tk.Text(frame_test_pulsed_pull_in_gen_controls, width=40,
                                                               height=1,
@@ -182,12 +161,11 @@ class PulsedPullInTestWindow(ttk.Frame):
         add_button(tab=frame_test_pulsed_pull_in_gen_controls, button_name='Reset Signal Generator',
                    command=lambda: [scripts_and_functions.create_pulsed_pull_in_test_waveform(
                        amplitude=int(self.app.entered_pulsed_pull_in_v_bias.get()),
-                       pulse_width=int(self.app.pulsed_pulse_width.get()))], col=0, row=1).grid(ipadx=tab_pad_x,
-                                                                                                ipady=tab_pad_x)
+                       pulse_width=int(self.app.pulsed_pulse_width.get()))], col=0, row=1)
         add_button(tab=frame_test_pulsed_pull_in_gen_controls, button_name='Exit', command=lambda: [self.app._quit(),
                                                                                                     self.app.close_resources()],
                    col=1,
-                   row=1).grid(ipadx=tab_pad_x, ipady=tab_pad_x)
+                   row=1)
         add_button(tab=frame_test_pulsed_pull_in_gen_controls, button_name='Iso vs V',
                    command=lambda: [self.app.acquire_pull_down_data_pulsed(
                        filename=file_name_creation([
@@ -197,8 +175,7 @@ class PulsedPullInTestWindow(ttk.Frame):
                            self.app.test_pulsed_pull_in_device.get(),
                            str(int(self.app.entered_pulsed_pull_in_v_bias.get()))], end_characters='V',
                            text=self.app.text_pulsed_file_name_pull_in_test)), self.app.trace_pull_in_pulsed()], col=1,
-                   row=5).grid(
-            ipadx=tab_pad_x, ipady=tab_pad_x)
+                   row=5)
         # -------------------------------------------------------------------------------------------------------------
         self.app.canvas_v_pull_in_meas_pulsed = create_canvas(figure=self.app.fig_pulsed_pull_in_meas,
                                                               frame=frame_test_pulsed_osc_pull_in,

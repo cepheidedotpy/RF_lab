@@ -59,6 +59,9 @@ def initialize_hardware(zva_ip: str, sig_gen_ip: str, osc_ip: str, powermeter_ip
         zva = zva_init(tcpip_address=zva_ip, zva="ZNA67")
         powermeter = powermeter_init(powermeter_ip)
         rf_Generator = rf_gen_init(tcpip_address=rf_gen_ip, rf_gen_type='smb')
+        # Configure zva_parameters for the connected VNA model
+        if zva is not None:
+            dir_and_var_declaration.zva_directories(zva)
     except Exception as e:
         print(f"Hardware initialization failed: {e}")
         print("Running in offline mode. Some functionality will be disabled.")
@@ -89,7 +92,6 @@ else:
 
 
 # VNA parameter definition
-# dir_and_var_declaration.zva_directories(zva)
 def extension_detector(file: str) -> tuple:
     """
     Separates the file name and extension from a given file path.

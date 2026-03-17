@@ -55,14 +55,15 @@ _version = '10'
 
 # This code is dated to 15/02/24
 
-# ==============================================================================
-# Globals
-# ==============================================================================
-plt.style.use('default')
+plt.style.use('seaborn-v0_8-whitegrid')
+plt.rcParams['font.family'] = 'serif'
+plt.rcParams['mathtext.fontset'] = 'cm'
 plt.rcParams["legend.fontsize"] = 10
 plt.rcParams["axes.labelsize"] = 10
 plt.rcParams["font.size"] = 10
 plt.rcParams["axes.titlesize"] = 12
+plt.rcParams["axes.prop_cycle"] = plt.cycler(color=['#005b96', '#d9534f', '#5cb85c', '#f0ad4e', '#5bc0de', '#292b2c', '#e377c2'])
+plt.rcParams["lines.linewidth"] = 1.5
 
 
 class Window(ttk.Frame):
@@ -231,15 +232,7 @@ class Window(ttk.Frame):
 
         # Set window properties
         self.master.title(f"SUMMIT 11K Machine Interface v{_version}")
-        self.master.resizable(width=True, height=True)
-
-        s = ttk.Style()
-        s.configure('TButton', anchor='center', justify='center')
-        s.configure('large.TButton', font=('Bahnschrift Light', 14))
-        s.configure(style='.', font=('Bahnschrift Light', 10))
-
-        # Set window properties
-        self.master.title(f"SUMMIT 11K Machine Interface v{_version}")
+        self.master.geometry("500x350")
         self.master.resizable(width=True, height=True)
 
     def init_figures(self):
@@ -267,24 +260,29 @@ class Window(ttk.Frame):
         self.fig_s3p, self.ax_s3p = create_figure_with_axes(num=1, figsize=(13, 4.1))
         self.ax_s3p.set_title("|Sij| vs frequency")
         self.ax_s3p.set(xlabel="Frequency (Hz)", ylabel="S Parameter (dB)", title="S Parameter vs Frequency")
+        self.ax_s3p.grid(True)
 
     def create_s2p_display_wf(self):
         self.fig_s2p, self.ax_s2p = create_figure_with_axes(num=2, figsize=(13, 4.1))
         self.ax_s2p.set_title("|Sij| vs frequency")
         self.ax_s2p.set(xlabel="Frequency (Hz)", ylabel="S Parameter (dB)", title="S Parameter vs Frequency")
+        self.ax_s2p.grid(True)
 
     def create_pull_in_display_wf(self):
         self.fig_pull_in, self.ax_pull_in = create_figure_with_axes(num=3, figsize=(13, 3.5))
         self.ax_pull_in.set(xlabel="V bias (V)", ylabel="Detector voltage (V)", title="Isolation vs Bias voltage")
+        self.ax_pull_in.grid(True)
 
     def create_pull_in_meas_wf(self):
         self.fig_pull_in_meas, self.ax_pull_in_meas = create_figure_with_axes(num=4, figsize=(8.5, 6))
         self.ax_pull_in_meas.set(xlabel="V bias (V)", ylabel="Detector voltage (V)",
                                  title="Isolation vs Bias voltage")
+        self.ax_pull_in_meas.grid(True)
 
     def create_snp_meas_wf(self):
         self.fig_snp_meas, self.ax_snp_meas = create_figure_with_axes(num=5, figsize=(8.5, 6))
         self.ax_snp_meas.set(xlabel="Frequency (Hz)", ylabel="S Parameter (dB)", title="|S| Parameter vs Frequency")
+        self.ax_snp_meas.grid(True)
 
     def create_power_sweeping_axes(self):
         self.ax_power_meas = self.fig_power_meas.add_subplot(1, 1, 1)
@@ -386,7 +384,7 @@ class Window(ttk.Frame):
         self.ax_cycling_t_up.xaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{x:.0e}'))
 
         for ax in self.fig_cycling.axes:
-            ax.grid()
+            ax.grid(True)
 
     def init_variables(self):
         """Initialize Tkinter variables."""
@@ -430,7 +428,7 @@ class Window(ttk.Frame):
         add_button(main_frame, "Pulsed pull-in", self.open_pulsed_pull_in_window, 0, 3, style='large.TButton')
         add_button(main_frame, "Time domain Power test", self.open_time_domain_power_test_window, 1, 3,
                    style='large.TButton')
-        add_button(main_frame, "Exit", self._quit, 0, 4, style='large.TButton')
+        add_button(main_frame, "Exit", self._quit, 0, 4, style='large.TButton', columnspan=2)
         # Add other buttons here for other windows in the future
 
     def open_display_window(self):
@@ -559,7 +557,7 @@ class Window(ttk.Frame):
         """
         print("New file created")
 
-    def trace_s3p(self, filename: str, s_param: str):
+    def trace_s3p(self, filename: str | list, s_param: str):
         """
         Reads an S3P file, plots the specified S-parameter, and updates the canvas.
         """
@@ -567,25 +565,33 @@ class Window(ttk.Frame):
             return
 
         # Clear the previous plot
-        self.ax_s3p.clear()
+        self._clear_ax_lines(self.ax_s3p)
 
-        try:
-            filepath = os.path.join(self.s3p_dir_name.get(), filename)
-            # Read the S3P file using skrf
-            network = rf.Network(filepath)
-            network.frequency.unit('GHz')
-            network.frequency.unit = 'GHz'
-            # Plot the specified S-parameter
-            network.plot_s_db(m=int(s_param[1]) - 1, n=int(s_param[2]) - 1, ax=self.ax_s3p)
-            self.ax_s3p.grid()
-        except Exception as e:
-            print(f"Error plotting S3P file: {e}")
-            self.ax_s3p.text(0.5, 0.5, f"Error: {e}", ha='center', va='center')
+        if isinstance(filename, str):
+            filenames = [filename]
+        else:
+            filenames = filename
+
+        for fn in filenames:
+            try:
+                filepath = os.path.join(self.s3p_dir_name.get(), fn)
+                # Read the S3P file using skrf
+                network = rf.Network(filepath)
+                network.frequency.unit('GHz')
+                network.frequency.unit = 'GHz'
+                # Plot the specified S-parameter
+                network.plot_s_db(m=int(s_param[1]) - 1, n=int(s_param[2]) - 1, ax=self.ax_s3p, label=f"{fn} S{s_param[1]}{s_param[2]}")
+            except Exception as e:
+                print(f"Error plotting S3P file {fn}: {e}")
+
+        self.ax_s3p.grid(True)
+        if self.ax_s3p.get_legend():
+            self.ax_s3p.legend()
 
         # Redraw the canvas
         self.fig_s3p.canvas.draw()
 
-    def trace_s2p(self, filename: str, s_param: str):
+    def trace_s2p(self, filename: str | list, s_param: str):
         """
         Reads an S2P file, plots the specified S-parameter, and updates the canvas.
         """
@@ -593,172 +599,153 @@ class Window(ttk.Frame):
             return
 
         # Clear the previous plot
-        self.ax_s2p.clear()
+        self._clear_ax_lines(self.ax_s2p)
 
-        try:
-            filepath = os.path.join(self.s2p_dir_name.get(), filename)
-            # Read the S2P file using skrf
-            network = rf.Network(filepath)
-            network.frequency.unit = 'GHz'
+        if isinstance(filename, str):
+            filenames = [filename]
+        else:
+            filenames = filename
 
-            # Plot the specified S-parameter
-            network.plot_s_db(m=int(s_param[1]) - 1, n=int(s_param[2]) - 1, ax=self.ax_s2p)
-            self.ax_s2p.grid()
-        except Exception as e:
-            print(f"Error plotting S2P file: {e}")
-            self.ax_s2p.text(0.5, 0.5, f"Error: {e}", ha='center', va='center')
+        for fn in filenames:
+            try:
+                filepath = os.path.join(self.s2p_dir_name.get(), fn)
+                # Read the S2P file using skrf
+                network = rf.Network(filepath)
+                network.frequency.unit = 'GHz'
+
+                # Plot the specified S-parameter
+                network.plot_s_db(m=int(s_param[1]) - 1, n=int(s_param[2]) - 1, ax=self.ax_s2p, label=f"{fn} S{s_param[1]}{s_param[2]}")
+            except Exception as e:
+                print(f"Error plotting S2P file {fn}: {e}")
+
+        self.ax_s2p.grid(True)
+        if self.ax_s2p.get_legend():
+            self.ax_s2p.legend()
 
         # Redraw the canvas
         self.fig_s2p.canvas.draw()
 
-    def trace_s1p(self, filename: str, s_param: str):
+    def trace_s1p(self, filename: str | list, s_param: str):
         """
-        Reads an S2P file, plots the specified S-parameter, and updates the canvas.
+        Reads an S1P file, plots the specified S-parameter, and updates the canvas.
         """
         if not filename or not s_param:
             return
 
         # Clear the previous plot
-        self.ax_s2p.clear()
+        self._clear_ax_lines(self.ax_s2p)
 
-        try:
-            filepath = os.path.join(self.s2p_dir_name.get(), filename)
-            # Read the S2P file using skrf
-            network = rf.Network(filepath)
-            network.frequency.unit = 'GHz'
-            # Plot the specified S-parameter
-            network.plot_s_db(m=int(s_param[1]) - 1, n=int(s_param[2]) - 1, ax=self.ax_s2p)
-            self.ax_s2p.grid()
-        except Exception as e:
-            print(f"Error plotting S2P file: {e}")
-            self.ax_s2p.text(0.5, 0.5, f"Error: {e}", ha='center', va='center')
+        if isinstance(filename, str):
+            filenames = [filename]
+        else:
+            filenames = filename
+
+        for fn in filenames:
+            try:
+                filepath = os.path.join(self.s2p_dir_name.get(), fn)
+                # Read the S1P file using skrf
+                network = rf.Network(filepath)
+                network.frequency.unit = 'GHz'
+                # Plot the specified S-parameter
+                network.plot_s_db(m=int(s_param[1]) - 1, n=int(s_param[2]) - 1, ax=self.ax_s2p, label=f"{fn} S{s_param[1]}{s_param[2]}")
+            except Exception as e:
+                print(f"Error plotting S1P file {fn}: {e}")
+
+        self.ax_s2p.grid(True)
+        if self.ax_s2p.get_legend():
+            self.ax_s2p.legend()
 
         # Redraw the canvas
         self.fig_s2p.canvas.draw()
 
-    def trace_pull_down(self, filename: str):
+    def trace_pull_down(self, filename: str | list):
 
         if not filename:
             return
 
-        # Ensure filename has .txt extension
-        if not filename.endswith('.txt'):
-            filename += '.txt'
+        if isinstance(filename, str):
+            filenames = [filename]
+        else:
+            filenames = filename
 
         # Clear the previous plot
-        self.ax_pull_in.clear()
-        self.ax_pull_in_meas.clear()
+        self._clear_ax_lines(self.ax_pull_in)
+        self._clear_ax_lines(self.ax_pull_in_meas)
+        self.text_scroll.delete("1.0", tk.END)
+
+        for fn in filenames:
+            # Ensure filename has .txt extension
+            if not fn.endswith('.txt'):
+                fn += '.txt'
+
+            if self.pull_in_display_window_instance is not None:
+                directory_display = self.pull_in_dir_name.get()
+                filepath_display = os.path.join(directory_display, fn)
+                try:
+                    # Read the data from the file
+                    with open(filepath_display, newline=''):
+                        data_display = np.loadtxt(filepath_display, delimiter=',', unpack=True, skiprows=1)
+                        v_bias_display = data_display[:, 0].copy()
+                        v_log_amp_display = data_display[:, 1].copy()
+
+                        pull_in_calculations_data_display = scripts_and_functions.calculate_actuation_and_release_voltages(
+                            v_bias=v_bias_display,
+                            v_logamp=v_log_amp_display)
+                except FileNotFoundError:
+                    print(f"File {fn} not found or bugged processing")
+                    continue
+
+                self.text_scroll.insert(tk.END, f'--- {fn} ---\n')
+                self.text_scroll.insert(tk.END, 'Positive Pull-in voltage = {} V \n'.format(pull_in_calculations_data_display['vpullin_plus']))
+                self.text_scroll.insert(tk.END, 'Negative Pull-in voltage = {} V \n'.format(pull_in_calculations_data_display['vpullin_minus']))
+                self.text_scroll.insert(tk.END, 'Positive Pull-out voltage (+) = {} V \n'.format(pull_in_calculations_data_display['vpullout_plus']))
+                self.text_scroll.insert(tk.END, 'Negative Pull-out voltage (+) = {} V \n'.format(pull_in_calculations_data_display['vpullout_minus']))
+                self.text_scroll.insert(tk.END, 'Isolation (+) = {} dB \n'.format(pull_in_calculations_data_display['ninetypercent_iso_ascent']))
+                self.text_scroll.insert(tk.END, 'Isolation (-) = {} dB \n\n'.format(pull_in_calculations_data_display['ninetypercent_iso_descent']))
+
+                # Plot the data
+                self.ax_pull_in.plot(v_bias_display, v_log_amp_display - np.max(v_log_amp_display), label="{}".format(fn)[:-4])
+
+            if self.pull_in_test_window_instance is not None:
+                directory_test = self.test_pull_in_dir.get()
+                filepath_test = os.path.join(directory_test, fn)
+                try:
+                    with open(filepath_test, newline=''):
+                        data_test = np.loadtxt(filepath_test, delimiter=',', unpack=True, skiprows=1)
+                        v_bias_test = data_test[:, 0].copy()
+                        v_log_amp_test = data_test[:, 1].copy()
+
+                        pull_in_calculations_data_test = scripts_and_functions.calculate_actuation_and_release_voltages(
+                            v_bias=v_bias_test,
+                            v_logamp=v_log_amp_test)
+                except FileNotFoundError:
+                    print(f"File {fn} not found or bugged processing")
+                    continue
+
+                self.pull_in_test_window_instance.text_pull_in_plus_test.delete("1.0", "end")
+                self.pull_in_test_window_instance.text_pull_in_minus_test.delete("1.0", "end")
+                self.pull_in_test_window_instance.text_pull_out_plus_test.delete("1.0", "end")
+                self.pull_in_test_window_instance.text_pull_out_minus_test.delete("1.0", "end")
+                self.pull_in_test_window_instance.text_iso_pull_in_plus_test.delete("1.0", "end")
+                self.pull_in_test_window_instance.text_iso_pull_in_minus_test.delete("1.0", "end")
+
+                self.pull_in_test_window_instance.text_pull_in_plus_test.insert(tk.END, pull_in_calculations_data_test['vpullin_plus'])
+                self.pull_in_test_window_instance.text_pull_in_minus_test.insert(tk.END, pull_in_calculations_data_test['vpullin_minus'])
+                self.pull_in_test_window_instance.text_pull_out_plus_test.insert(tk.END, pull_in_calculations_data_test['vpullout_plus'])
+                self.pull_in_test_window_instance.text_pull_out_minus_test.insert(tk.END, pull_in_calculations_data_test['vpullout_minus'])
+                self.pull_in_test_window_instance.text_iso_pull_in_plus_test.insert(tk.END, pull_in_calculations_data_test['ninetypercent_iso_ascent'])
+                self.pull_in_test_window_instance.text_iso_pull_in_minus_test.insert(tk.END, pull_in_calculations_data_test['ninetypercent_iso_descent'])
+
+                # Plot the data
+                self.ax_pull_in_meas.plot(v_bias_test, v_log_amp_test - np.max(v_log_amp_test), label="{}".format(fn)[:-4])
 
         if self.pull_in_display_window_instance is not None:
-            directory_display = self.pull_in_dir_name.get()
-            filepath_display = os.path.join(directory_display, filename)
-            try:
-                # Read the data from the file
-                with open(filepath_display, newline=''):
-                    data_display = np.loadtxt(filepath_display, delimiter=',', unpack=True, skiprows=1)
-                    v_bias_display = data_display[:, 0].copy()
-                    v_log_amp_display = data_display[:, 1].copy()
-
-                    max_iso = np.max(v_log_amp_display)
-                    min_iso = np.min(v_log_amp_display)
-                    max_v_bias = np.max(v_bias_display)
-                    pull_in_calculations_data_display = scripts_and_functions.calculate_actuation_and_release_voltages(
-                        v_bias=v_bias_display,
-                        v_logamp=v_log_amp_display)
-            except FileNotFoundError:
-                print("File not found or bugged processing")
-                return
-
-            (self.text_scroll.
-             insert(index="%d.%d" % (1, 0),
-                    chars='Positive Pull-in voltage = {} dB \n'.format(
-                        pull_in_calculations_data_display[
-                            'vpullin_plus'])))
-            (self.text_scroll.
-             insert(index="%d.%d" % (1, 0),
-                    chars='Negative Pull-in voltage  = {} V  \n'.format(
-                        pull_in_calculations_data_display[
-                            'vpullin_minus'])))
-
-            (self.text_scroll.
-             insert(index="%d.%d" % (1, 0),
-                    chars='Positive Pull-out voltage (+) = {} dB \n'.format(
-                        pull_in_calculations_data_display[
-                            'vpullout_plus'])))
-            (self.text_scroll.
-             insert(index="%d.%d" % (1, 0),
-                    chars='Negative Pull-out voltage (+) = {} dB \n'.format(
-                        pull_in_calculations_data_display[
-                            'vpullout_minus'])))
-
-            self.text_scroll.insert(index="%d.%d" % (1, 0),
-                                    chars='Isolation (+) = {} dB  \n'.format(
-                                        pull_in_calculations_data_display[
-                                            'ninetypercent_iso_ascent']))
-            self.text_scroll.insert(index="%d.%d" % (1, 0),
-                                    chars='Isolation (-) = {} V  \n'.format(
-                                        pull_in_calculations_data_display[
-                                            'ninetypercent_iso_descent']))
-
-            # Plot the data
-            self.ax_pull_in.plot(v_bias_display, v_log_amp_display,
-                                 label="{}".format(filename)[:-4])
-            # self.ax_pull_in.set_ylim(ymin=min_iso * 1.1, ymax=max_iso * 1.1)
-            # self.ax_pull_in.set_xlim(xmin=-max_v_bias * 1.1, xmax=max_v_bias * 1.1)
-            self.ax_pull_in.grid()
+            self.ax_pull_in.grid(True)
             self.ax_pull_in.legend()
             self.fig_pull_in.canvas.draw()
-
+            
         if self.pull_in_test_window_instance is not None:
-            directory_test = self.test_pull_in_dir.get()
-            filepath_test = os.path.join(directory_test, filename)
-            try:
-                with open(filepath_test, newline=''):
-                    data_test = np.loadtxt(filepath_test, delimiter=',', unpack=True, skiprows=1)
-                    v_bias_test = data_test[:, 0].copy()
-                    v_log_amp_test = data_test[:, 1].copy()
-
-                    max_iso = np.max(v_log_amp_test)
-                    min_iso = np.min(v_log_amp_test)
-                    max_v_bias = np.max(v_bias_test)
-                    pull_in_calculations_data_test = scripts_and_functions.calculate_actuation_and_release_voltages(
-                        v_bias=v_bias_test,
-                        v_logamp=v_log_amp_test)
-            except FileNotFoundError:
-                print("File not found or bugged processing")
-                return
-
-            self.pull_in_test_window_instance.text_pull_in_plus_test.delete("1.0", "end")
-            self.pull_in_test_window_instance.text_pull_in_minus_test.delete("1.0", "end")
-            self.pull_in_test_window_instance.text_pull_out_plus_test.delete("1.0", "end")
-            self.pull_in_test_window_instance.text_pull_out_minus_test.delete("1.0", "end")
-            self.pull_in_test_window_instance.text_iso_pull_in_plus_test.delete("1.0", "end")
-            self.pull_in_test_window_instance.text_iso_pull_in_minus_test.delete("1.0", "end")
-            self.pull_in_test_window_instance.text_pull_in_plus_test.insert(index="%d.%d" % (0, 0),
-                                                                            chars=pull_in_calculations_data_test[
-                                                                                'vpullin_plus'])
-            self.pull_in_test_window_instance.text_pull_in_minus_test.insert(index="%d.%d" % (0, 0),
-                                                                             chars=pull_in_calculations_data_test[
-                                                                                 'vpullin_minus'])
-            self.pull_in_test_window_instance.text_pull_out_plus_test.insert(index="%d.%d" % (0, 0),
-                                                                             chars=pull_in_calculations_data_test[
-                                                                                 'vpullout_plus'])
-            self.pull_in_test_window_instance.text_pull_out_minus_test.insert(index="%d.%d" % (0, 0),
-                                                                              chars=pull_in_calculations_data_test[
-                                                                                  'vpullout_minus'])
-            self.pull_in_test_window_instance.text_iso_pull_in_plus_test.insert(index="%d.%d" % (0, 0),
-                                                                                chars=pull_in_calculations_data_test[
-                                                                                    'ninetypercent_iso_ascent'])
-            self.pull_in_test_window_instance.text_iso_pull_in_minus_test.insert(index="%d.%d" % (0, 0),
-                                                                                 chars=
-                                                                                 pull_in_calculations_data_test[
-                                                                                     'ninetypercent_iso_descent'])
-            # Plot the data
-            self.ax_pull_in_meas.plot(v_bias_test, v_log_amp_test,
-                                      label="{}".format(filename)[:-4])
-            # self.ax_pull_in_meas.set_ylim(ymin=min_iso, ymax=max_iso)
-            # self.ax_pull_in_meas.set_xlim(xmin=-max_v_bias, xmax=max_v_bias)
-            self.ax_pull_in_meas.grid()
+            self.ax_pull_in_meas.grid(True)
             self.ax_pull_in_meas.legend()
             self.fig_pull_in_meas.canvas.draw()
 
@@ -793,19 +780,29 @@ class Window(ttk.Frame):
         except Exception as e:
             print(f"Error updating S2P plot limits: {e}")
 
+    def _clear_ax_lines(self, ax):
+        while ax.lines:
+            ax.lines[0].remove()
+        for poly in getattr(ax, 'collections', []):
+            poly.remove()
+        if ax.get_legend():
+            ax.get_legend().remove()
+        ax.relim()
+        ax.autoscale_view()
+
     def delete_axs_s3p(self):
         """Clears the S3P plot axes."""
-        self.ax_s3p.clear()
+        self._clear_ax_lines(self.ax_s3p)
         self.fig_s3p.canvas.draw()
 
     def delete_axs_s2p(self):
         """Clears the S2P plot axes."""
-        self.ax_s2p.clear()
+        self._clear_ax_lines(self.ax_s2p)
         self.fig_s2p.canvas.draw()
 
     def delete_axs_vpullin(self):
         """Clears the Pull-in plot axes."""
-        self.ax_pull_in.clear()
+        self._clear_ax_lines(self.ax_pull_in)
         self.fig_pull_in.canvas.draw()
 
     def set_f_start(self, f_start_value):

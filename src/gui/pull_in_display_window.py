@@ -4,7 +4,7 @@ import ttkbootstrap as ttk
 
 from src.gui.gui_utils import (add_label_frame, add_button, add_scrolled_text, create_canvas, add_slider,
                                       update_entries, update_button, filetypes_dir, add_entry, add_combobox,
-                                      close_resources)
+                                      close_resources, add_listbox, update_listbox, get_listbox_selection, browse_directory)
 
 
 class PullInDisplayWindow(ttk.Frame):
@@ -28,25 +28,29 @@ class PullInDisplayWindow(ttk.Frame):
         self.app.entered_var_txt = add_entry(frame_v_pull_in_dir, text_var=self.app.pull_in_dir_name, width=70, col=2,
                                              row=1)
 
-        file_txt = filetypes_dir(self.app.entered_var_txt.get())[2]
-        self.app.txt_file_name_combobox = add_combobox(frame_v_pull_in_dir, text=file_txt, col=2, row=2, width=100)
+        self.app.txt_file_name_listbox = add_listbox(frame_v_pull_in_dir, col=2, row=2, width=100, height=5, rowspan=2)
+        update_listbox(self.app.entered_var_txt.get(), self.app.txt_file_name_listbox, '.txt')
+
+        def on_txt_select(event=None):
+            selection = get_listbox_selection(self.app.txt_file_name_listbox)
+            if selection:
+                self.app.trace_pull_down(filename=selection)
+
+        self.app.txt_file_name_listbox.bind('<<ListboxSelect>>', on_txt_select)
 
         # Adding buttons
-        self.app.update_pull_in_button = add_button(tab=frame_v_pull_in_dir, button_name=' Update Files ',
-                                                    command=lambda: [
-                                                        update_entries(directory=self.app.entered_var_txt.get(),
-                                                                       combobox=self.app.txt_file_name_combobox,
-                                                                       filetype='.txt'),
-                                                        update_button(self.app.update_pull_in_button)],
+        self.app.update_pull_in_button = add_button(tab=frame_v_pull_in_dir, button_name=' Browse Folder ',
+                                                    command=lambda: browse_directory(self.app.pull_in_dir_name, 
+                                                                                     lambda: update_listbox(self.app.pull_in_dir_name.get(), 
+                                                                                                            self.app.txt_file_name_listbox, '.txt')),
                                                     col=3, row=1)
-        add_button(frame_v_pull_in_dir, button_name='Exit', command=lambda: [self.app._quit(), close_resources()],
-                   col=5, row=1).grid_anchor('e')
-        add_button(frame_v_pull_in_dir, button_name='Plot',
-                   command=lambda: [
-                       self.app.trace_pull_down(filename=self.app.txt_file_name_combobox.get())],
-                   col=3, row=3)
         add_button(frame_v_pull_in_dir, button_name='Delete Graphs', command=self.app.delete_axs_vpullin, col=3,
                    row=2)
+        add_button(frame_v_pull_in_dir, button_name='Plot',
+                   command=on_txt_select,
+                   col=3, row=3)
+        add_button(frame_v_pull_in_dir, button_name='Exit', command=lambda: [self.app._quit(), close_resources()],
+                   col=3, row=4).grid_anchor('e')
         # Scrolled text creation
         self.app.text_scroll = add_scrolled_text(tab=frame_v_pull_in_display, scrolled_width=100,
                                                  scrolled_height=3)

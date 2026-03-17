@@ -171,39 +171,22 @@ class TimeDomainPowerTestWindow(ttk.Frame):
         frame_power_meas_powermeter.grid_columnconfigure(0, weight=1)
         frame_power_meas_rf_gen.grid_columnconfigure(0, weight=1)
 
-        add_label(frame_power_compo_info, label_name='DIR', col=0, row=0).grid(sticky='e', ipadx=tab_pad_x,
-                                                                               ipady=tab_pad_y)
-        add_label(frame_power_compo_info, label_name='Project', col=0, row=1).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                   ipady=tab_pad_x)
-        add_label(frame_power_compo_info, label_name='Cell', col=0, row=2).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                ipady=tab_pad_y)
-        add_label(frame_power_compo_info, label_name='Reticule', col=0, row=3).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                    ipady=tab_pad_y)
-        add_label(frame_power_compo_info, label_name='Device', col=0, row=4).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                  ipady=tab_pad_y)
-        add_label(frame_power_compo_info, label_name='Status', col=0, row=5).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                  ipady=tab_pad_y)
-        add_label(frame_power_compo_info, label_name='Bias Voltage', col=0, row=6).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                        ipady=tab_pad_y)
+        add_label(frame_power_compo_info, label_name='DIR', col=0, row=0)
+        add_label(frame_power_compo_info, label_name='Project', col=0, row=1)
+        add_label(frame_power_compo_info, label_name='Cell', col=0, row=2)
+        add_label(frame_power_compo_info, label_name='Reticule', col=0, row=3)
+        add_label(frame_power_compo_info, label_name='Device', col=0, row=4)
+        add_label(frame_power_compo_info, label_name='Status', col=0, row=5)
+        add_label(frame_power_compo_info, label_name='Bias Voltage', col=0, row=6)
 
-        add_label(frame_power_meas_powermeter, label_name='Input Attenuation (A)', col=0, row=0).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_y)
-        add_label(frame_power_meas_powermeter, label_name='Output Attenuation (B)', col=0, row=1).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_y)
-        add_label(frame_power_meas_powermeter, label_name='(dB)', col=2, row=0).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_y)
-        add_label(frame_power_meas_powermeter, label_name='(dB)', col=2, row=1).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_y)
+        add_label(frame_power_meas_powermeter, label_name='Input Attenuation (A)', col=0, row=0)
+        add_label(frame_power_meas_powermeter, label_name='Output Attenuation (B)', col=0, row=1)
+        add_label(frame_power_meas_powermeter, label_name='(dB)', col=2, row=0)
+        add_label(frame_power_meas_powermeter, label_name='(dB)', col=2, row=1)
 
-        add_label(frame_power_meas_powermeter, label_name='Trigger Delay', col=0, row=2).grid(sticky='e',
-                                                                                              ipadx=tab_pad_x,
-                                                                                              ipady=tab_pad_y)
-        add_label(frame_power_meas_powermeter, label_name='Trace Duration', col=0, row=3).grid(sticky='e',
-                                                                                               ipadx=tab_pad_x,
-                                                                                               ipady=tab_pad_y)
-        add_label(frame_power_meas_powermeter, label_name='Gate Duration', col=0, row=4).grid(sticky='e',
-                                                                                              ipadx=tab_pad_x,
-                                                                                              ipady=tab_pad_y)
+        add_label(frame_power_meas_powermeter, label_name='Trigger Delay', col=0, row=2)
+        add_label(frame_power_meas_powermeter, label_name='Trace Duration', col=0, row=3)
+        add_label(frame_power_meas_powermeter, label_name='Gate Duration', col=0, row=4)
 
         self.trigger_delay = tk.DoubleVar(value=0)
 
@@ -217,18 +200,15 @@ class TimeDomainPowerTestWindow(ttk.Frame):
 
         add_entry(tab=frame_power_meas_powermeter, text_var=self.trigger_delay, width=20, col=1, row=2)
 
-        add_label(frame_power_meas_powermeter, label_name='(s)', col=2, row=2).grid(sticky='w', ipadx=tab_pad_x,
-                                                                                    ipady=tab_pad_y)
+        add_label(frame_power_meas_powermeter, label_name='(s)', col=2, row=2)
 
         add_entry(tab=frame_power_meas_powermeter, text_var=self.trace_duration, width=20, col=1, row=3)
 
-        add_label(frame_power_meas_powermeter, label_name='(s)', col=2, row=3).grid(sticky='w', ipadx=tab_pad_x,
-                                                                                    ipady=tab_pad_y)
+        add_label(frame_power_meas_powermeter, label_name='(s)', col=2, row=3)
 
         add_entry(tab=frame_power_meas_powermeter, text_var=self.gate_duration, width=20, col=1, row=4)
 
-        add_label(frame_power_meas_powermeter, label_name='(s)', col=2, row=4).grid(sticky='w', ipadx=tab_pad_x,
-                                                                                    ipady=tab_pad_y)
+        add_label(frame_power_meas_powermeter, label_name='(s)', col=2, row=4)
 
         add_button(tab=frame_power_meas_powermeter, button_name='Set Time Domain Window',
 
@@ -240,7 +220,7 @@ class TimeDomainPowerTestWindow(ttk.Frame):
 
                        gate_duration=self.gate_duration.get()
 
-                   ), col=0, row=6).grid()
+                   ), col=0, row=6)
         add_button(tab=frame_power_meas_powermeter,
                    button_name='Set Measurement Window',
                    command=lambda: [scripts_and_functions.define_powermeter_settings(
@@ -248,7 +228,7 @@ class TimeDomainPowerTestWindow(ttk.Frame):
                        trace_duration=self.trace_duration.get(),
                        gate_duration=self.gate_duration.get(),
                        power_unit="DBM"
-                   )], col=1, row=6).grid()
+                   )], col=1, row=6)
 
         self.directory = tk.StringVar(
             value=r'C:\Users\TEMIS\PycharmProjects\pythonProject\venv\TEMIS MEMS LAB\dummy_data')
@@ -312,7 +292,7 @@ class TimeDomainPowerTestWindow(ttk.Frame):
         add_label(tab=frame_power_meas_rf_gen, label_name="Frequency (GHz)", col=0, row=3)
 
         add_button(tab=frame_power_meas_rf_gen, button_name='Set RF Gen\nParameters',
-                   command=lambda: scripts_and_functions.rf_gen_power_lim(), col=0, row=4).grid()
+                   command=lambda: scripts_and_functions.rf_gen_power_lim(), col=0, row=4)
 
         self.text_power_file_name = tk.Text(frame_power_meas, width=40, height=1, wrap=tk.WORD, border=4,
                                             borderwidth=2, relief=tk.SUNKEN,
@@ -331,44 +311,38 @@ class TimeDomainPowerTestWindow(ttk.Frame):
                        prf=self.prf.get()
                    ), col=0,
                    row=0)
-        add_label(frame_power_measurement_signal_generator, label_name='Amplitude', col=0, row=1).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_y)
-        add_label(frame_power_measurement_signal_generator, label_name='(V)', col=2, row=1).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_y)
+        add_label(frame_power_measurement_signal_generator, label_name='Amplitude', col=0, row=1)
+        add_label(frame_power_measurement_signal_generator, label_name='(V)', col=2, row=1)
         add_entry(tab=frame_power_measurement_signal_generator, text_var=self.amplitude, width=20, col=1, row=1)
 
-        add_label(frame_power_measurement_signal_generator, label_name='Pulse Width', col=0, row=2).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_y)
-        add_label(frame_power_measurement_signal_generator, label_name='(µs)', col=2, row=2).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_y)
+        add_label(frame_power_measurement_signal_generator, label_name='Pulse Width', col=0, row=2)
+        add_label(frame_power_measurement_signal_generator, label_name='(µs)', col=2, row=2)
         add_entry(tab=frame_power_measurement_signal_generator, text_var=self.pulse_width, width=20, col=1, row=2)
 
-        add_label(frame_power_measurement_signal_generator, label_name='PRF', col=0, row=3).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_y)
-        add_label(frame_power_measurement_signal_generator, label_name='(Hz)', col=2, row=3).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_y)
+        add_label(frame_power_measurement_signal_generator, label_name='PRF', col=0, row=3)
+        add_label(frame_power_measurement_signal_generator, label_name='(Hz)', col=2, row=3)
         add_entry(tab=frame_power_measurement_signal_generator, text_var=self.prf, width=20, col=1, row=3)
 
         add_button(tab=frame_power_meas, button_name='Exit', command=lambda: [self.app._quit(), close_resources()],
                    col=1,
-                   row=1).grid(ipadx=tab_pad_x, ipady=tab_pad_y)
+                   row=1)
 
         add_button(tab=frame_power_meas, button_name='Acquire Traces',
-                   command=self.acquire_and_plot_traces, col=0, row=4).grid(ipadx=tab_pad_x, ipady=tab_pad_y)
+                   command=self.acquire_and_plot_traces, col=0, row=4)
         add_button(tab=frame_power_meas, button_name='Clear Traces',
-                   command=self.clear_traces, col=1, row=4).grid(ipadx=tab_pad_x, ipady=tab_pad_y)
+                   command=self.clear_traces, col=1, row=4)
 
         add_button(tab=frame_power_meas, button_name='Launch Test',
-                   command=self.launch_time_domain_power_sweep, col=1, row=5).grid(ipadx=tab_pad_x, ipady=tab_pad_y)
+                   command=self.launch_time_domain_power_sweep, col=1, row=5)
 
         add_button(tab=frame_power_measurement_signal_generator,
                    button_name='Power Handling\nTest setup'.format(align="=", fill=' '),
-                   command=lambda: [scripts_and_functions.setup_power_test_sequence()], col=1, row=0).grid()
+                   command=lambda: [scripts_and_functions.setup_power_test_sequence()], col=1, row=0)
 
         add_button(tab=frame_power_meas_powermeter, button_name='Attenuation\nConfig',
                    command=lambda: [scripts_and_functions.set_channel_attenuation(
                        atts={"A": self.test_pow_input_atten.get(), "B": self.test_pow_output_atten.get()})],
-                   col=1, row=5).grid()
+                   col=1, row=5)
 
         add_button(tab=frame_power_meas_rf_gen, button_name="Reset RF gen",
                    command=lambda: [scripts_and_functions.rf_gen_power_setup()], col=0, row=5)
@@ -382,7 +356,7 @@ class TimeDomainPowerTestWindow(ttk.Frame):
 
         add_button(tab=frame_power_meas_powermeter, button_name='Biased time\ndomain Power\nConfig',
                    command=lambda: [scripts_and_functions.powermeter_config_power_bias()],
-                   col=0, row=5).grid()
+                   col=0, row=5)
 
         create_canvas(figure=self.app.fig_time_domain_power_meas, frame=frame_power_meas_graph,
                       toolbar_frame=frame_test_power_measurement, toolbar=True)

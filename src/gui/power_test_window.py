@@ -45,29 +45,18 @@ class PowerTestWindow(ttk.Frame):
         frame_power_meas_powermeter.grid_columnconfigure(0, weight=1)
         frame_power_meas_rf_gen.grid_columnconfigure(0, weight=1)
 
-        add_label(frame_power_compo_info, label_name='DIR', col=0, row=0).grid(sticky='e', ipadx=tab_pad_x,
-                                                                               ipady=tab_pad_y)
-        add_label(frame_power_compo_info, label_name='Project', col=0, row=1).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                   ipady=tab_pad_x)
-        add_label(frame_power_compo_info, label_name='Cell', col=0, row=2).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                ipady=tab_pad_y)
-        add_label(frame_power_compo_info, label_name='Reticule', col=0, row=3).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                    ipady=tab_pad_y)
-        add_label(frame_power_compo_info, label_name='Device', col=0, row=4).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                  ipady=tab_pad_y)
-        add_label(frame_power_compo_info, label_name='Status', col=0, row=5).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                  ipady=tab_pad_y)
-        add_label(frame_power_compo_info, label_name='Bias Voltage', col=0, row=6).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                        ipady=tab_pad_y)
+        add_label(frame_power_compo_info, label_name='DIR', col=0, row=0)
+        add_label(frame_power_compo_info, label_name='Project', col=0, row=1)
+        add_label(frame_power_compo_info, label_name='Cell', col=0, row=2)
+        add_label(frame_power_compo_info, label_name='Reticule', col=0, row=3)
+        add_label(frame_power_compo_info, label_name='Device', col=0, row=4)
+        add_label(frame_power_compo_info, label_name='Status', col=0, row=5)
+        add_label(frame_power_compo_info, label_name='Bias Voltage', col=0, row=6)
 
-        add_label(frame_power_meas_powermeter, label_name='Input Attenuation (A)', col=0, row=0).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_y)
-        add_label(frame_power_meas_powermeter, label_name='Output Attenuation (B)', col=0, row=1).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_y)
-        add_label(frame_power_meas_powermeter, label_name='(dB)', col=2, row=0).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_y)
-        add_label(frame_power_meas_powermeter, label_name='(dB)', col=2, row=1).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_y)
+        add_label(frame_power_meas_powermeter, label_name='Input Attenuation (A)', col=0, row=0)
+        add_label(frame_power_meas_powermeter, label_name='Output Attenuation (B)', col=0, row=1)
+        add_label(frame_power_meas_powermeter, label_name='(dB)', col=2, row=0)
+        add_label(frame_power_meas_powermeter, label_name='(dB)', col=2, row=1)
 
         self.directory = tk.StringVar(
             value=r'C:\Users\TEMIS\PycharmProjects\pythonProject\venv\TEMIS MEMS LAB\dummy_data')
@@ -135,7 +124,7 @@ class PowerTestWindow(ttk.Frame):
         add_label(tab=frame_power_meas_rf_gen, label_name="Frequency (GHz)", col=0, row=3)
 
         add_button(tab=frame_power_meas_rf_gen, button_name='Set RF Gen\nParameters',
-                   command=lambda: scripts_and_functions.rf_gen_power_lim(), col=0, row=4).grid()
+                   command=lambda: scripts_and_functions.rf_gen_power_lim(), col=0, row=4)
 
         self.text_power_file_name = tk.Text(frame_power_meas, width=40, height=1, wrap=tk.WORD, border=4,
                                             borderwidth=2, relief=tk.SUNKEN,
@@ -154,31 +143,25 @@ class PowerTestWindow(ttk.Frame):
                        prf=self.prf.get()
                    ), col=0,
                    row=0)
-        add_label(frame_power_measurement_signal_generator, label_name='Amplitude', col=0, row=1).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_y)
-        add_label(frame_power_measurement_signal_generator, label_name='(V)', col=2, row=1).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_y)
+        add_label(frame_power_measurement_signal_generator, label_name='Amplitude', col=0, row=1)
+        add_label(frame_power_measurement_signal_generator, label_name='(V)', col=2, row=1)
         add_entry(tab=frame_power_measurement_signal_generator, text_var=self.amplitude, width=20, col=1, row=1)
 
-        add_label(frame_power_measurement_signal_generator, label_name='Pulse Width', col=0, row=2).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_y)
-        add_label(frame_power_measurement_signal_generator, label_name='(µs)', col=2, row=2).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_y)
+        add_label(frame_power_measurement_signal_generator, label_name='Pulse Width', col=0, row=2)
+        add_label(frame_power_measurement_signal_generator, label_name='(µs)', col=2, row=2)
         add_entry(tab=frame_power_measurement_signal_generator, text_var=self.pulse_width, width=20, col=1, row=2)
 
-        add_label(frame_power_measurement_signal_generator, label_name='PRF', col=0, row=3).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_y)
-        add_label(frame_power_measurement_signal_generator, label_name='(Hz)', col=2, row=3).grid(
-            sticky='e', ipadx=tab_pad_x, ipady=tab_pad_y)
+        add_label(frame_power_measurement_signal_generator, label_name='PRF', col=0, row=3)
+        add_label(frame_power_measurement_signal_generator, label_name='(Hz)', col=2, row=3)
         add_entry(tab=frame_power_measurement_signal_generator, text_var=self.prf, width=20, col=1, row=3)
 
         add_button(tab=frame_power_meas, button_name='Exit', command=lambda: [self.app._quit(), close_resources()],
                    col=1,
-                   row=1).grid(ipadx=tab_pad_x, ipady=tab_pad_y)
+                   row=1)
         add_button(tab=frame_power_meas, button_name='Reset Signal Generator',
                    command=lambda: [self.app.reset_signal_generator(self.text_power_debug)],
                    col=1,
-                   row=2).grid(ipadx=tab_pad_x, ipady=tab_pad_y)
+                   row=2)
 
         add_button(tab=frame_power_meas, button_name='Launch Test',
                    command=lambda: [os.chdir(self.directory.get()), self.start_power_test_sequence(
@@ -193,16 +176,16 @@ class PowerTestWindow(ttk.Frame):
                        sleep_duration=1,
                        offset_b1=self.test_pow_output_atten.get(),
                        offset_a1=self.test_pow_input_atten.get(),
-                   )], col=1, row=5).grid(ipadx=tab_pad_x, ipady=tab_pad_y)
+                   )], col=1, row=5)
 
         add_button(tab=frame_power_measurement_signal_generator,
                    button_name='Power Handling\nTest setup'.format(align="=", fill=' '),
-                   command=lambda: [scripts_and_functions.setup_power_test_sequence()], col=1, row=0).grid()
+                   command=lambda: [scripts_and_functions.setup_power_test_sequence()], col=1, row=0)
 
         add_button(tab=frame_power_meas_powermeter, button_name='Attenuation\nConfig',
                    command=lambda: [scripts_and_functions.set_channel_attenuation(
                        atts={"A": self.test_pow_input_atten.get(), "B": self.test_pow_output_atten.get()})],
-                   col=0, row=2).grid()
+                   col=0, row=2)
 
         add_button(tab=frame_power_meas_rf_gen, button_name="Reset RF gen",
                    command=lambda: [scripts_and_functions.rf_gen_power_setup()], col=0, row=5)
@@ -212,7 +195,7 @@ class PowerTestWindow(ttk.Frame):
                    row=6)
         add_button(tab=frame_power_meas_powermeter, button_name='Biased Power\nConfig',
                    command=lambda: [scripts_and_functions.powermeter_config_power_bias()],
-                   col=0, row=3).grid()
+                   col=0, row=3)
 
         create_canvas(figure=self.app.fig_power_meas, frame=frame_power_meas_graph,
                       toolbar_frame=frame_test_power_measurement, toolbar=True)

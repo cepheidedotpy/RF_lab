@@ -1,7 +1,7 @@
 import tkinter as tk
 import ttkbootstrap as ttk
 import os
-from tkinter import scrolledtext
+from tkinter import scrolledtext, filedialog
 from typing import Optional, Literal
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
@@ -45,7 +45,7 @@ def add_tab(tab_name: str, notebook: ttk.Notebook, col: int, row: int) -> ttk.La
 
 
 def add_button(tab: ttk.Labelframe | ttk.Frame, button_name: str, command: callable, col: int, row: int,
-               style='TButton') -> ttk.Button:
+               style='TButton', columnspan: int = 1, rowspan: int = 1) -> ttk.Button:
     """
     Adds a button to a specified tab (Labelframe) with given name, command, column, and row.
 
@@ -71,7 +71,8 @@ def add_button(tab: ttk.Labelframe | ttk.Frame, button_name: str, command: calla
     )
 
     # Place the Button widget at the specified column and row in the Labelframe.
-    action.grid(column=col, row=row, sticky="nsew")
+    action.grid(column=col, row=row, columnspan=columnspan, rowspan=rowspan, sticky="nsew", padx=2, pady=2)
+    tab.grid_columnconfigure(col, weight=1)
 
     # Return the created Button widget.
     return action
@@ -118,7 +119,7 @@ def add_label(tab: ttk.Labelframe | ttk.Frame, label_name: str, col: int, row: i
     label = ttk.Label(tab, text=label_name)
 
     # Place the Label widget at the specified column and row in the Labelframe.
-    label.grid(column=col, row=row)
+    label.grid(column=col, row=row, sticky="ew")
 
     # Return the created Label widget.
     return label
@@ -188,6 +189,7 @@ def add_label_frame(tab: ttk.Labelframe, frame_name: str, col: int, row: int, ro
         sticky=sticky,  # Make the Labelframe stick to all sides of the cell.
         rowspan=row_span  # Set the number of rows the Labelframe should span.
     )
+    tab.grid_columnconfigure(col, weight=1)
 
     # Return the created Labelframe widget.
     return frame
@@ -277,8 +279,9 @@ def add_entry(tab: ttk.Labelframe | ttk.Frame, text_var: tk.StringVar | tk.Doubl
     entered.grid(
         column=col,  # The column position within the parent Labelframe.
         row=row,  # The row position within the parent Labelframe.
-        sticky="WE"  # Make the Entry widget stretch horizontally.
+        sticky="ew"  # Make the Entry widget stretch horizontally.
     )
+    tab.grid_columnconfigure(col, weight=1)
 
     # Return the created Entry widget.
     return entered
@@ -312,11 +315,47 @@ def add_combobox(tab: ttk.Labelframe, text: tk.StringVar, col: int, row: int, wi
     # Place the Combobox widget at the specified column and row in the parent Labelframe.
     combobox.grid(
         column=col,  # The column position within the parent Labelframe.
-        row=row  # The row position within the parent Labelframe.
+        row=row,  # The row position within the parent Labelframe.
+        sticky="ew"
     )
+    tab.grid_columnconfigure(col, weight=1)
 
     # Return the created Combobox widget.
     return combobox
+
+
+def add_listbox(tab: ttk.Labelframe | ttk.Frame, col: int, row: int, width: int, height: int, rowspan: int = 1, columnspan: int = 1) -> tk.Listbox:
+    listbox = tk.Listbox(tab, width=width, height=height, selectmode=tk.EXTENDED, exportselection=False, font=('Bahnschrift Light', 10))
+    scrollbar = ttk.Scrollbar(tab, orient=tk.VERTICAL, command=listbox.yview)
+    listbox.config(yscrollcommand=scrollbar.set)
+    listbox.grid(column=col, row=row, rowspan=rowspan, columnspan=columnspan, sticky="nsew")
+    scrollbar.grid(column=col+columnspan, row=row, rowspan=rowspan, sticky="ns")
+    tab.grid_columnconfigure(col, weight=1)
+    return listbox
+
+
+def update_listbox(directory: str, listbox: tk.Listbox, filetype: str) -> tk.Listbox:
+    files = filetypes_dir(directory)
+    listbox.delete(0, tk.END)
+    if filetype == '.s2p':
+        for f in files[1]: listbox.insert(tk.END, f)
+    elif filetype == '.s3p':
+        for f in files[0]: listbox.insert(tk.END, f)
+    elif filetype == '.txt':
+        for f in files[2]: listbox.insert(tk.END, f)
+    return listbox
+
+
+def get_listbox_selection(listbox: tk.Listbox) -> list:
+    return [listbox.get(i) for i in listbox.curselection()]
+
+
+def browse_directory(text_var: tk.StringVar, command=None) -> None:
+    directory = filedialog.askdirectory()
+    if directory:
+        text_var.set(directory)
+        if command:
+            command()
 
 
 def add_Checkbutton(tab: ttk.Labelframe, text: tk.BooleanVar, col: int, row: int, off_value: int,
@@ -329,8 +368,10 @@ def add_Checkbutton(tab: ttk.Labelframe, text: tk.BooleanVar, col: int, row: int
 
     checkbutton.grid(
         column=col,  # The column position within the parent Labelframe.
-        row=row  # The row position within the parent Labelframe.
+        row=row,  # The row position within the parent Labelframe.
+        sticky="ew"
     )
+    tab.grid_columnconfigure(col, weight=1)
     return checkbutton
 
 

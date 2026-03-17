@@ -51,24 +51,15 @@ class PullInTestWindow(ttk.Frame):
         frame_test_pull_in_gen_controls.grid_columnconfigure(1, weight=1)
 
         # Adding labels to component info Labelframe
-        add_label(frame_test_pull_in_comp_info, label_name='DIR', col=0, row=0).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                     ipady=tab_pad_x)
-        add_label(frame_test_pull_in_comp_info, label_name='Project', col=0, row=1).grid(sticky='e',
-                                                                                         ipadx=tab_pad_x,
-                                                                                         ipady=tab_pad_x)
-        add_label(frame_test_pull_in_comp_info, label_name='Cell', col=0, row=2).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                      ipady=tab_pad_x)
-        add_label(frame_test_pull_in_comp_info, label_name='Reticule', col=0, row=3).grid(sticky='e',
-                                                                                          ipadx=tab_pad_x,
-                                                                                          ipady=tab_pad_x)
-        add_label(frame_test_pull_in_comp_info, label_name='Device', col=0, row=4).grid(sticky='e', ipadx=tab_pad_x,
-                                                                                        ipady=tab_pad_x)
-        add_label(frame_test_pull_in_comp_info, label_name='Bias Voltage', col=0, row=5).grid(sticky='e',
-                                                                                              ipadx=tab_pad_x,
-                                                                                              ipady=tab_pad_x)
+        add_label(frame_test_pull_in_comp_info, label_name='DIR', col=0, row=0)
+        add_label(frame_test_pull_in_comp_info, label_name='Project', col=0, row=1)
+        add_label(frame_test_pull_in_comp_info, label_name='Cell', col=0, row=2)
+        add_label(frame_test_pull_in_comp_info, label_name='Reticule', col=0, row=3)
+        add_label(frame_test_pull_in_comp_info, label_name='Device', col=0, row=4)
+        add_label(frame_test_pull_in_comp_info, label_name='Bias Voltage', col=0, row=5)
         # Variables for the TAB
         self.test_pull_in_dir = tk.StringVar(
-            value=r'C:\Users\TEMIS\PycharmProjects\pythonProject\venv\TEMIS MEMS LAB\dummy_data')
+            value=r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Pullin voltage')
         self.test_pull_in_project = tk.StringVar(value=r'Project_Name')
         self.test_pull_in_cell = tk.StringVar(value=r'Cell_Name')
         self.test_pull_in_reticule = tk.StringVar(value=r'Reticule')
@@ -94,12 +85,8 @@ class PullInTestWindow(ttk.Frame):
         self.ramp_width = tk.DoubleVar(value=100)  # Ramp length for ramp function
         self.chosen_bias_voltage_pull_in = add_entry(tab=frame_test_pull_in_comp_info, text_var=self.pull_in_v_bias,
                                                      width=20, col=1, row=5)
-        add_label(frame_signal_gen_measurement, label_name='Bias Voltage', col=0, row=0).grid(sticky='e',
-                                                                                              ipadx=tab_pad_x,
-                                                                                              ipady=tab_pad_x)
-        add_label(frame_signal_gen_measurement, label_name='Ramp length', col=0, row=1).grid(sticky='e',
-                                                                                             ipadx=tab_pad_x,
-                                                                                             ipady=tab_pad_x)
+        add_label(frame_signal_gen_measurement, label_name='Bias Voltage', col=0, row=0)
+        add_label(frame_signal_gen_measurement, label_name='Ramp length', col=0, row=1)
         self.entered_ramp_volt = add_entry(frame_signal_gen_measurement, text_var=self.pull_in_v_bias, width=10,
                                            col=1,
                                            row=0)
@@ -122,28 +109,26 @@ class PullInTestWindow(ttk.Frame):
 
         self.entered_ramp_width = add_entry(frame_signal_gen_measurement, text_var=self.ramp_width, width=10, col=1,
                                             row=1)
-        add_label(frame_signal_gen_measurement, label_name='(V)', col=2, row=0).grid(sticky='w', ipadx=tab_pad_x,
-                                                                                     ipady=tab_pad_x)
-        add_label(frame_signal_gen_measurement, label_name='(µs)', col=2, row=1).grid(sticky='w', ipadx=tab_pad_x,
-                                                                                      ipady=tab_pad_x)
+        add_label(frame_signal_gen_measurement, label_name='(V)', col=2, row=0)
+        add_label(frame_signal_gen_measurement, label_name='(µs)', col=2, row=1)
         add_button(tab=frame_signal_gen_measurement, button_name='Set Bias Voltage',
                    command=lambda: self.app.set_bias_pull_in(self.pull_in_v_bias.get()),
-                   col=3, row=0).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+                   col=3, row=0)
         add_button(tab=frame_signal_gen_measurement, button_name='Set Ramp Width',
                    command=lambda: self.app.set_ramp_width(self.ramp_width.get()),
                    col=3,
-                   row=1).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+                   row=1)
         add_button(tab=frame_signal_gen_measurement, button_name='Set Pulse Gen',
                    command=lambda: self.app.set_pulse_gen_ramp_and_bias(self.pull_in_v_bias.get(),
                                                                         self.ramp_width.get()),
-                   col=3, row=3).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+                   col=3, row=3)
         # Oscilloscope
         add_button(tab=frame_oscilloscope, button_name='Setup Oscilloscope',
                    command=lambda: self.app.setup_oscilloscope_pull_in_test(),
-                   col=0, row=0).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+                   col=0, row=0)
         add_button(tab=frame_oscilloscope, button_name='Setup RF Gen',
                    command=lambda: self.app.setup_rf_gen_pull_in_setup(),
-                   col=0, row=1).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+                   col=0, row=1)
         # General controls Labelframe
         self.text_file_name_pull_in_test = tk.Text(frame_test_pull_in_gen_controls, width=40, height=1,
                                                    wrap=tk.WORD,
@@ -160,13 +145,11 @@ class PullInTestWindow(ttk.Frame):
         add_button(tab=frame_test_pull_in_gen_controls, button_name='Reset Signal Generator',
                    command=lambda: [
                        self.app.reset_signal_generator_ramp(text_widget=self.text_gen_controls_pull_in_debug)], col=0,
-                   row=1).grid(
-            ipadx=tab_pad_x,
-            ipady=tab_pad_x)
+                   row=1)
         add_button(tab=frame_test_pull_in_gen_controls, button_name='Exit', command=lambda: [self.app._quit(),
                                                                                              close_resources()],
                    col=1,
-                   row=1).grid(ipadx=tab_pad_x, ipady=tab_pad_x)
+                   row=1)
         add_button(tab=frame_test_pull_in_gen_controls, button_name='Iso vs V',
                    command=lambda: [file_name_creation([self.test_pull_in_project.get(),
                                                         self.test_pull_in_cell.get(),
@@ -180,7 +163,7 @@ class PullInTestWindow(ttk.Frame):
                                     self.app.trace_pull_down(
                                         filename=self.text_file_name_pull_in_test.get("1.0", "end-1c"))],
                    col=1,
-                   row=5).grid(ipadx=tab_pad_x, ipady=tab_pad_x)
+                   row=5)
         # -------------------------------------------------------------------------------------------------------------
         self.canvas_v_pull_in_meas = create_canvas(figure=self.app.fig_pull_in_meas,
                                                    frame=frame_osc_pull_in_test,
@@ -188,39 +171,35 @@ class PullInTestWindow(ttk.Frame):
                                                    toolbar_side=tk.BOTTOM, canvas_side=tk.TOP)
 
         add_label(frame_test_measurement,
-                  label_name='Positive-Pull-in', col=0, row=0).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+                  label_name='Positive-Pull-in', col=0, row=0)
         self.text_pull_in_plus_test = tk.Text(frame_test_measurement, width=15, height=1, wrap=tk.WORD,
                                               border=4, borderwidth=2,
                                               relief=tk.SUNKEN, font=('Bahnschrift Light', 10))  # Positive Pull-in
         self.text_pull_in_plus_test.grid(column=1, row=0, sticky='n', columnspan=5)
 
         add_label(frame_test_measurement,
-                  label_name='Negative-Pull-in', col=0, row=1).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+                  label_name='Negative-Pull-in', col=0, row=1)
         self.text_pull_in_minus_test = tk.Text(frame_test_measurement, width=15,
                                                height=1, wrap=tk.WORD, border=4, borderwidth=2, relief=tk.SUNKEN,
                                                font=('Bahnschrift Light', 10))  # Negative Pull-in
         self.text_pull_in_minus_test.grid(column=1, row=1, sticky='n', columnspan=5)
 
         add_label(frame_test_measurement,
-                  label_name='Positive-Pull-out', col=0, row=2).grid(sticky='e', ipadx=tab_pad_x, ipady=tab_pad_x)
+                  label_name='Positive-Pull-out', col=0, row=2)
         self.text_pull_out_plus_test = tk.Text(frame_test_measurement,
                                                width=15, height=1, wrap=tk.WORD, border=4,
                                                borderwidth=2, relief=tk.SUNKEN,
                                                font=('Bahnschrift Light', 10))  # Positive Pull-out
         self.text_pull_out_plus_test.grid(column=1, row=2, sticky='n', columnspan=5)
 
-        add_label(frame_test_measurement, label_name='Negative-Pull-out', col=0, row=3).grid(sticky='e',
-                                                                                             ipadx=tab_pad_x,
-                                                                                             ipady=tab_pad_x)
+        add_label(frame_test_measurement, label_name='Negative-Pull-out', col=0, row=3)
         self.text_pull_out_minus_test = tk.Text(frame_test_measurement, width=15, height=1, wrap=tk.WORD,
                                                 border=4, borderwidth=2,
                                                 relief=tk.SUNKEN,
                                                 font=('Bahnschrift Light', 10))  # Negative Pull-out
         self.text_pull_out_minus_test.grid(column=1, row=3, sticky='n', columnspan=5)
 
-        add_label(frame_test_measurement, label_name='Isolation at PI(+)', col=0, row=4).grid(sticky='e',
-                                                                                              ipadx=tab_pad_x,
-                                                                                              ipady=tab_pad_x)
+        add_label(frame_test_measurement, label_name='Isolation at PI(+)', col=0, row=4)
 
         self.text_iso_pull_in_plus_test = tk.Text(frame_test_measurement, width=15, height=1, wrap=tk.WORD,
                                                   border=4, borderwidth=2,
@@ -228,9 +207,7 @@ class PullInTestWindow(ttk.Frame):
                                                   font=('Bahnschrift Light', 10))  # Isolation at PI (+)
         self.text_iso_pull_in_plus_test.grid(column=1, row=4, sticky='n', columnspan=5)
 
-        add_label(frame_test_measurement, label_name='Isolation at PI (-)', col=0, row=6).grid(sticky='e',
-                                                                                               ipadx=tab_pad_x,
-                                                                                               ipady=tab_pad_x)
+        add_label(frame_test_measurement, label_name='Isolation at PI (-)', col=0, row=6)
         self.text_iso_pull_in_minus_test = tk.Text(frame_test_measurement, width=15, height=1, wrap=tk.WORD,
                                                    border=4,
                                                    borderwidth=2, relief=tk.SUNKEN,

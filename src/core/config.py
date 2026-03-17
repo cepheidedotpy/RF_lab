@@ -44,10 +44,10 @@ instrument_file_ZVA50 = r'C:\Rohde&Schwarz\Nwa\RecallSets\placeholder.zvx'
 instrument_file = instrument_file_ZVA67
 
 PC_File_Dir: str = r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data'  # Default directory for measurement data
-PC_File_Dir_pull_in_Display: str = r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Pullin voltage'  # Default directory for measurement data
-PC_File_Dir_s2p_Display: str = r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\S2P'  # Default directory for measurement data
-PC_File_Dir_s3p_Display: str = r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\S3P'  # Default directory for measurement data
-PC_File_Dir_s3p_Cycling: str = r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Mechanical cycling'  # Default directory for measurement data
+PC_File_Dir_pull_in_Display: str = PC_File_Dir
+PC_File_Dir_s2p_Display: str = PC_File_Dir
+PC_File_Dir_s3p_Display: str = PC_File_Dir
+PC_File_Dir_s3p_Cycling: str = PC_File_Dir
 
 ZVA_File_Dir_ZVA67: str = r'C:\Users\Public\Documents\Rohde-Schwarz\ZNA\Traces'  # ZVA67 Trace file directory
 ZVA_File_Dir_ZVA50: str = r'C:\Rohde&Schwarz\Nwa\Traces'  # ZVA50 Trace file directory
@@ -243,6 +243,7 @@ def rf_gen_init(tcpip_address: str = r'TCPIP0::rssmb100a179766::inst0::INSTR',
         try:
             tcpip_address = r'TCPIP0::rssmb100a179766::inst0::INSTR'
             rf_gen = RsInstrument(tcpip_address, id_query=False, reset=False)
+            print(type(rf_gen))
         except TimeoutException as e:
             error = True
             print(e.args[0])
