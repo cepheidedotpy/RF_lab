@@ -307,6 +307,17 @@ time_domain_power_test_setup_rf_gen = "/var/user/time-domain-power-test.savrcltx
 power_test_setup_powermeter = "*RCL 3"
 power_bias_test_setup_powermeter = "*RCL 5"
 
+patterns = {
+    '1%': '1000pulses_100us_pulse_dc1%_36Vtop40V_triangle.arb',
+    '2%': '1000pulses_100us_pulse_dc2%_36Vtop40V_triangle.arb',
+    '3%': '1000pulses_100us_pulse_dc3%_36Vtop40V_triangle.arb',
+    '4%': '1000pulses_100us_pulse_dc4%_36Vtop40V_triangle.arb',
+    '5%': '1000pulses_100us_pulse_dc5%_36Vtop40V_triangle.arb',
+    '10%': '1000pulses_100us_pulse_dc10%_36Vtop40V_triangle.arb',
+    '15%': '1000pulses_100us_pulse_dc15%_36Vtop40V_triangle.arb',
+    '20%': '1000pulses_100us_pulse_dc20%_36Vtop40V_triangle.arb',
+}
+
 try:
     from src.hardware.mock_hardware import MockInstrument
 except ImportError:

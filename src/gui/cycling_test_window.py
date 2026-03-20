@@ -4,7 +4,7 @@ from tkinter import messagebox
 
 from src.core import scripts_and_functions
 # from typing import TYPE_CHECKING
-
+from src.core import config
 
 # if TYPE_CHECKING:
 #     from main_refactored import Window
@@ -131,23 +131,21 @@ class CyclingTestWindow(ttk.Frame):
                    row=2)
 
         add_button(tab=frame_signal_generator, button_name='Set Bias Voltage',
-                   command=lambda: self.app.set_symmetrical_voltage_bias(voltage=self.app.test_cycling_var_bias.get()),
+                   command=lambda: [scripts_and_functions.set_bias_voltage_cycling(voltage_input=self.app.test_cycling_var_bias.get())],
                    col=1,
                    row=2)
+                   
         add_button(tab=frame_signal_generator, button_name='Output ON/OFF',
                    command=lambda: [scripts_and_functions.on_off_signal_generator_switch()], col=2,
                    row=2)
         add_button(tab=frame_signal_generator, button_name='1kHz-1000pulses\n100us-1%',
-                   command=lambda: [scripts_and_functions.load_pattern(
-                       r"1000pulses_100us_pulse_dc1%_36Vtop40V_triangle.arb")], col=0,
+                   command=lambda: [scripts_and_functions.load_pattern(config.patterns['1%'])], col=0,
                    row=3)
         add_button(tab=frame_signal_generator, button_name='2kHz-1000pulses\n100us-5%',
-                   command=lambda: [scripts_and_functions.load_pattern(
-                       r"1000pulses_100us_pulse_dc5%_36Vtop40V_triangle.arb")], col=1,
+                   command=lambda: [scripts_and_functions.load_pattern(config.patterns['5%'])], col=1,
                    row=3)
         add_button(tab=frame_signal_generator, button_name='4kHz-1000pulses\n100us-10%',
-                   command=lambda: [scripts_and_functions.load_pattern(
-                       r"1000pulses_100us_pulse_dc10%_36Vtop40V_triangle.arb")], col=2,
+                   command=lambda: [scripts_and_functions.load_pattern(config.patterns['10%'])], col=2,
                    row=3)
 
         add_label(frame_oscilloscope,

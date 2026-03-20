@@ -30,6 +30,8 @@ from src.gui.s2p_display_window import S2pDisplayWindow
 from src.gui.s3p_display_window import S3pDisplayWindow
 from src.gui.time_domain_power_test_window import TimeDomainPowerTestWindow
 from src.gui.display_window import DisplayWindow
+from src.gui.user_guide_window import UserGuideWindow
+from src.gui.pattern_generator_window import PatternGeneratorWindow
 import threading  # Import threading module
 from matplotlib.ticker import FuncFormatter
 from ttkbootstrap.constants import *
@@ -144,6 +146,13 @@ class Window(ttk.Frame):
         self.canvas_cycling: FigureCanvasTkAgg
         self.ax_time_domain_power_meas: plt.axes
         self.fig_time_domain_power_meas: plt.figure
+        
+        # Initialize window instances and widgets to None
+        self.pull_in_test_window_instance = None
+        self.pull_in_display_window_instance = None
+        self.text_scroll = None
+        self.text_gen_controls_pull_in_debug = None
+        self.ax_pull_in_diff = None
 
         self.zva_inst: tk.StringVar = tk.StringVar(value='TCPIP0::ZNA67-101810::inst0::INSTR')
         self.signal_generator_instance: tk.StringVar = tk.StringVar(value='TCPIP0::A-33521B-00526::inst0::INSTR')
@@ -216,6 +225,7 @@ class Window(ttk.Frame):
         self.pull_in_test_window_instance: Optional[PullInTestWindow] = None
         self.pull_in_display_window_instance: Optional[PullInDisplayWindow] = None
         self.snp_test_window_instance: Optional[SnpTestWindow] = None
+        self.text_scroll: Optional[ttk.ScrolledText] = None
 
     def on_checkbutton_toggle(self):
         """Handles the toggle action from the Checkbutton."""
@@ -274,10 +284,18 @@ class Window(ttk.Frame):
         self.ax_pull_in.grid(True)
 
     def create_pull_in_meas_wf(self):
-        self.fig_pull_in_meas, self.ax_pull_in_meas = create_figure_with_axes(num=4, figsize=(8.5, 6))
+        from src.gui.gui_utils import create_figure
+        self.fig_pull_in_meas = create_figure(num=4, figsize=(8.5, 8))
+        self.ax_pull_in_meas = self.fig_pull_in_meas.add_subplot(2, 1, 1)
         self.ax_pull_in_meas.set(xlabel="V bias (V)", ylabel="Detector voltage (V)",
                                  title="Isolation vs Bias voltage")
         self.ax_pull_in_meas.grid(True)
+        
+        self.ax_pull_in_diff = self.fig_pull_in_meas.add_subplot(2, 1, 2)
+        self.ax_pull_in_diff.set(xlabel="V bias (V)", ylabel="2nd Derivative (a.u.)",
+                                 title="Differentiated Signal (Numerical)")
+        self.ax_pull_in_diff.grid(True)
+        self.fig_pull_in_meas.tight_layout()
 
     def create_snp_meas_wf(self):
         self.fig_snp_meas, self.ax_snp_meas = create_figure_with_axes(num=5, figsize=(8.5, 6))
@@ -416,19 +434,21 @@ class Window(ttk.Frame):
         # Configure the grid to be centered
         main_frame.grid_columnconfigure(0, weight=1)
         main_frame.grid_columnconfigure(1, weight=1)
-        for i in range(5):
+        for i in range(6):
             main_frame.grid_rowconfigure(i, weight=1)
 
         add_button(main_frame, "Display", self.open_display_window, 0, 0, style='large.TButton')
         add_button(main_frame, "Power Test", self.open_power_test_window, 1, 0, style='large.TButton')
         add_button(main_frame, "Pull-in Test", self.open_pull_in_test_window, 0, 1, style='large.TButton')
-        add_button(main_frame, "Cycling tab", self.open_cycling_window, 1, 1, style='large.TButton')
+        add_button(main_frame, "Cycling Test", self.open_cycling_window, 1, 1, style='large.TButton')
         add_button(main_frame, "SNP Test", self.open_snp_test_window, 0, 2, style='large.TButton')
         add_button(main_frame, "Resource Page", self.open_resource_page_window, 1, 2, style='large.TButton')
-        add_button(main_frame, "Pulsed pull-in", self.open_pulsed_pull_in_window, 0, 3, style='large.TButton')
+        add_button(main_frame, "Pulsed pull-in Test", self.open_pulsed_pull_in_window, 0, 3, style='large.TButton')
         add_button(main_frame, "Time domain Power test", self.open_time_domain_power_test_window, 1, 3,
                    style='large.TButton')
-        add_button(main_frame, "Exit", self._quit, 0, 4, style='large.TButton', columnspan=2)
+        add_button(main_frame, "User Guide", self.open_user_guide_window, 0, 4, style='large.TButton')
+        add_button(main_frame, "Pattern Generator", self.open_pattern_generator_window, 1, 4, style='large.TButton')
+        add_button(main_frame, "Exit", self._quit, 0, 5,style='large.TButton', rowspan=1, columnspan=2)
         # Add other buttons here for other windows in the future
 
     def open_display_window(self):
@@ -439,6 +459,10 @@ class Window(ttk.Frame):
         display_window.grid_rowconfigure(0, weight=1)
         display_window.grid_columnconfigure(0, weight=1)
         DisplayWindow(display_window, self)
+
+    def open_pattern_generator_window(self):
+        """Open the Pattern Generator window."""
+        PatternGeneratorWindow(self)
 
     def open_time_domain_power_test_window(self):
         """Open the Time domain Power test window."""
@@ -504,6 +528,14 @@ class Window(ttk.Frame):
         pulsed_pull_in_window.grid_columnconfigure(0, weight=1)
         PulsedPullInTestWindow(pulsed_pull_in_window, self)
 
+    def open_user_guide_window(self):
+        """Open the User Guide window."""
+        user_guide_window = tk.Toplevel(self)
+        user_guide_window.title("User Guide - Procedure v2026")
+        user_guide_window.geometry("800x600")
+        user_guide_window.resizable(width=True, height=True)
+        UserGuideWindow(user_guide_window, self)
+
     def menubar(self):
         """
         Creates the main menu bar for the application window.
@@ -522,6 +554,7 @@ class Window(ttk.Frame):
 
         # Create the Help menu
         help_menu = Menu(menubar, tearoff=0)
+        help_menu.add_command(label='User Guide', command=self.open_user_guide_window)
         help_menu.add_command(label='About', command=self._about_msg)
         menubar.add_cascade(label="Help", menu=help_menu)
 
@@ -536,9 +569,12 @@ class Window(ttk.Frame):
         """
         Displays an 'About' message box with information about the application.
         """
-        # about_message = (f"This is a GUI for MEMS characterization, version {_version}. "
-        #                  "For more information, please contact the author at a.person@mail.com")
-        # msg.showinfo('About', about_message)
+        import tkinter.messagebox as msg
+        about_message = (f"SUMMIT 11K Machine Interface\n"
+                         f"Version: {_version}\n"
+                         f"A GUI for MEMS characterization and bench control.\n"
+                         "For support, contact the laboratory team.")
+        msg.showinfo('About', about_message)
 
     def _open_file(self):
         """
@@ -658,7 +694,7 @@ class Window(ttk.Frame):
         # Redraw the canvas
         self.fig_s2p.canvas.draw()
 
-    def trace_pull_down(self, filename: str | list):
+    def trace_pull_down(self, filename: str | list, directory: Optional[str] = None):
 
         if not filename:
             return
@@ -671,15 +707,18 @@ class Window(ttk.Frame):
         # Clear the previous plot
         self._clear_ax_lines(self.ax_pull_in)
         self._clear_ax_lines(self.ax_pull_in_meas)
-        self.text_scroll.delete("1.0", tk.END)
+        if hasattr(self, 'ax_pull_in_diff'):
+            self._clear_ax_lines(self.ax_pull_in_diff)
+        if self.text_scroll:
+            self.text_scroll.delete("1.0", tk.END)
 
         for fn in filenames:
             # Ensure filename has .txt extension
             if not fn.endswith('.txt'):
                 fn += '.txt'
 
-            if self.pull_in_display_window_instance is not None:
-                directory_display = self.pull_in_dir_name.get()
+            if self.pull_in_display_window_instance is not None or directory is not None:
+                directory_display = directory if directory is not None else self.pull_in_dir_name.get()
                 filepath_display = os.path.join(directory_display, fn)
                 try:
                     # Read the data from the file
@@ -695,13 +734,14 @@ class Window(ttk.Frame):
                     print(f"File {fn} not found or bugged processing")
                     continue
 
-                self.text_scroll.insert(tk.END, f'--- {fn} ---\n')
-                self.text_scroll.insert(tk.END, 'Positive Pull-in voltage = {} V \n'.format(pull_in_calculations_data_display['vpullin_plus']))
-                self.text_scroll.insert(tk.END, 'Negative Pull-in voltage = {} V \n'.format(pull_in_calculations_data_display['vpullin_minus']))
-                self.text_scroll.insert(tk.END, 'Positive Pull-out voltage (+) = {} V \n'.format(pull_in_calculations_data_display['vpullout_plus']))
-                self.text_scroll.insert(tk.END, 'Negative Pull-out voltage (+) = {} V \n'.format(pull_in_calculations_data_display['vpullout_minus']))
-                self.text_scroll.insert(tk.END, 'Isolation (+) = {} dB \n'.format(pull_in_calculations_data_display['ninetypercent_iso_ascent']))
-                self.text_scroll.insert(tk.END, 'Isolation (-) = {} dB \n\n'.format(pull_in_calculations_data_display['ninetypercent_iso_descent']))
+                if self.text_scroll:
+                    self.text_scroll.insert(tk.END, f'--- {fn} ---\n')
+                    self.text_scroll.insert(tk.END, 'Positive Pull-in voltage = {} V \n'.format(pull_in_calculations_data_display['vpullin_plus']))
+                    self.text_scroll.insert(tk.END, 'Negative Pull-in voltage = {} V \n'.format(pull_in_calculations_data_display['vpullin_minus']))
+                    self.text_scroll.insert(tk.END, 'Positive Pull-out voltage (+) = {} V \n'.format(pull_in_calculations_data_display['vpullout_plus']))
+                    self.text_scroll.insert(tk.END, 'Negative Pull-out voltage (+) = {} V \n'.format(pull_in_calculations_data_display['vpullout_minus']))
+                    self.text_scroll.insert(tk.END, 'Isolation (+) = {} dB \n'.format(pull_in_calculations_data_display['ninetypercent_iso_ascent']))
+                    self.text_scroll.insert(tk.END, 'Isolation (-) = {} dB \n\n'.format(pull_in_calculations_data_display['ninetypercent_iso_descent']))
 
                 # Plot the data
                 self.ax_pull_in.plot(v_bias_display, v_log_amp_display - np.max(v_log_amp_display), label="{}".format(fn)[:-4])
@@ -738,6 +778,23 @@ class Window(ttk.Frame):
 
                 # Plot the data
                 self.ax_pull_in_meas.plot(v_bias_test, v_log_amp_test - np.max(v_log_amp_test), label="{}".format(fn)[:-4])
+                
+                # Plot the differentiated signal (2nd derivative)
+                if 'd2_signal' in pull_in_calculations_data_test:
+                    d2 = pull_in_calculations_data_test['d2_signal']
+                    # The d2 array corresponds to v_bias
+                    self.ax_pull_in_diff.plot(v_bias_test, d2, label=f"d2 {fn}")
+                    
+                    # Add markers
+                    indices = pull_in_calculations_data_test.get('indices', {})
+                    for key, idx in indices.items():
+                        if idx is not None and idx < len(v_bias_test):
+                            # Marker on the original curve
+                            self.ax_pull_in_meas.plot(v_bias_test[idx], v_log_amp_test[idx] - np.max(v_log_amp_test), 
+                                                     'ro' if 'pi' in key else 'gx', markersize=8)
+                            # Marker on the derivative curve
+                            self.ax_pull_in_diff.plot(v_bias_test[idx], d2[idx], 
+                                                     'ro' if 'pi' in key else 'gx', markersize=8)
 
         if self.pull_in_display_window_instance is not None:
             self.ax_pull_in.grid(True)
@@ -747,6 +804,8 @@ class Window(ttk.Frame):
         if self.pull_in_test_window_instance is not None:
             self.ax_pull_in_meas.grid(True)
             self.ax_pull_in_meas.legend()
+            self.ax_pull_in_diff.grid(True)
+            self.ax_pull_in_diff.legend()
             self.fig_pull_in_meas.canvas.draw()
 
     def calculate_pull_in_out_voltage(self):
@@ -904,12 +963,14 @@ class Window(ttk.Frame):
 
             scripts_and_functions.send_trig()
             scripts_and_functions.measure_pull_down_voltage(filename)
-            text_widget.delete("1.0", "end-1c")
-            text_widget.insert("1.0", f"Pull-in data saved as {filename}\n")
+            if text_widget:
+                text_widget.delete("1.0", "end-1c")
+                text_widget.insert("1.0", f"Pull-in data saved as {filename}\n")
             self.trace_pull_down(filename, directory=directory)
         except Exception as e:
             print(f"Error acquiring pull-down data: {e}")
-            text_widget.insert("1.0", f"Error: {e}\n")
+            if text_widget:
+                text_widget.insert("1.0", f"Error: {e}\n")
 
     def acquire_pull_down_data_pulsed(self):
         """
@@ -923,10 +984,12 @@ class Window(ttk.Frame):
         try:
             os.chdir(self.test_pulsed_pull_in_dir.get())
             scripts_and_functions.measure_pull_down_voltage_pulsed(filename)
-            self.text_gen_controls_pull_in_debug.insert("1.0", f"Pulsed pull-in data saved as {filename}\n")
+            if self.text_gen_controls_pull_in_debug:
+                self.text_gen_controls_pull_in_debug.insert("1.0", f"Pulsed pull-in data saved as {filename}\n")
         except Exception as e:
             print(f"Error acquiring pulsed pull-down data: {e}")
-            self.text_gen_controls_pull_in_debug.insert("1.0", f"Error: {e}\n")
+            if self.text_gen_controls_pull_in_debug:
+                self.text_gen_controls_pull_in_debug.insert("1.0", f"Error: {e}\n")
 
     def trace_pull_in_pulsed(self):
         """
