@@ -1,9 +1,0 @@
-ttkbootstrap
-pandas
-numpy
-scipy
-pyvisa
-pyvisa-py
-RsInstrument
-matplotlib
-scikit-rf
