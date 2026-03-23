@@ -245,6 +245,9 @@ class Window(ttk.Frame):
         self.master.geometry("500x350")
         self.master.resizable(width=True, height=True)
 
+        # Ensure the application closes completely when the window is closed
+        self.master.protocol("WM_DELETE_WINDOW", self._quit)
+
     def init_figures(self):
         """Initialize all the matplotlib figures and their respective axes."""
         self.create_pulsed_pull_in_wf()
@@ -562,8 +565,15 @@ class Window(ttk.Frame):
         """
         Exits the application, ensuring that the window is closed and destroyed.
         """
+        try:
+            from src.core import scripts_and_functions
+            scripts_and_functions.close_all_resources()
+        except Exception:
+            pass
         self.master.quit()
         self.master.destroy()
+        import sys
+        sys.exit(0)
 
     def _about_msg(self):
         """
@@ -611,14 +621,15 @@ class Window(ttk.Frame):
         for fn in filenames:
             try:
                 filepath = os.path.join(self.s3p_dir_name.get(), fn)
-                # Read the S3P file using skrf
                 network = rf.Network(filepath)
-                network.frequency.unit('GHz')
+                # Ensure frequency unit is GHz for plotting
                 network.frequency.unit = 'GHz'
                 # Plot the specified S-parameter
                 network.plot_s_db(m=int(s_param[1]) - 1, n=int(s_param[2]) - 1, ax=self.ax_s3p, label=f"{fn} S{s_param[1]}{s_param[2]}")
             except Exception as e:
                 print(f"Error plotting S3P file {fn}: {e}")
+                import traceback
+                traceback.print_exc()
 
         self.ax_s3p.grid(True)
         if self.ax_s3p.get_legend():

@@ -59,7 +59,7 @@ class PowerTestWindow(ttk.Frame):
         add_label(frame_power_meas_powermeter, label_name='(dB)', col=2, row=1)
 
         self.directory = tk.StringVar(
-            value=r'C:\Users\TEMIS\PycharmProjects\pythonProject\venv\TEMIS MEMS LAB\dummy_data')
+            value=self.app.s3p_dir_name.get())
         self.test_pow_project = tk.StringVar(value=r'Project_Name')
         self.test_pow_cell = tk.StringVar(value=r'Cell_Name')
         self.test_pow_reticule = tk.StringVar(value=r'Reticule')
@@ -164,7 +164,7 @@ class PowerTestWindow(ttk.Frame):
                    row=2)
 
         add_button(tab=frame_power_meas, button_name='Launch Test',
-                   command=lambda: [os.chdir(self.directory.get()), self.start_power_test_sequence(
+                   command=lambda: [self.start_power_test_sequence(
                        self, filename=file_name_creation(data_list=[self.test_pow_project.get(),
                                                                     self.test_pow_cell.get(),
                                                                     self.test_pow_reticule.get(),

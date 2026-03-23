@@ -65,7 +65,7 @@ class S3pDisplayWindow(ttk.Frame):
         add_button(tab=frame_s3p_dir, button_name='Plot', command=on_s3p_select,
                    col=3, row=3)
         add_button(tab=frame_s3p_dir, button_name='Exit',
-                   command=master.destroy, col=3, row=4)
+                   command=self.app._quit, col=3, row=4)
         # Canvas creation
         self.app.s3p_canvas = create_canvas(figure=self.app.fig_s3p, frame=frame_s3p_display,
                                         toolbar_frame=frame_s3p_sliders)

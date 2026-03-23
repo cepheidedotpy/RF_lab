@@ -72,7 +72,7 @@ class CyclingTestWindow(ttk.Frame):
                    col=0, row=9)
 
         self.entered_cycling_dir = tk.StringVar(
-            value=r'C:\Users\TEMIS\PycharmProjects\pythonProject\venv\TEMIS MEMS LAB\dummy_data')
+            value=self.app.test_cycling_dir.get())
         self.app.test_cycling_project = tk.StringVar(value=r'Project_Name')
         self.app.test_cycling_cell = tk.StringVar(value='Cell_name')
         self.app.test_cycling_ret = tk.StringVar(value='Reticule')

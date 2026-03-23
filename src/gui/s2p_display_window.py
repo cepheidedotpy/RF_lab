@@ -60,7 +60,7 @@ class S2pDisplayWindow(ttk.Frame):
         add_button(frame_s2p_dir, button_name='Plot',
                    command=on_s2p_select, col=3, row=3)
         add_button(frame_s2p_dir, button_name='Exit',
-                   command=lambda: [self.app._quit(), close_resources()], col=3, row=4)
+                   command=self.app._quit, col=3, row=4)
 
         # Canvas creation
         self.app.s2p_canvas = create_canvas(figure=self.app.fig_s2p, frame=frame_s2p_display,

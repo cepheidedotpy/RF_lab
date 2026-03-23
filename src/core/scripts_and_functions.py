@@ -34,14 +34,15 @@ matplotlib.ticker.ScalarFormatter(useOffset=True, useMathText=True)
 """
 Developer : T0188303 - A.N.
 """
-os.system('cls')
+if os.name == 'nt': os.system('cls')
+else: os.system('clear')
 
 # Initialize global instrument variables to None
 
 
 
 
-path = r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data'
+path = dir_and_var_declaration.PC_File_Dir
 
 # global zva, signal_generator, osc, rf_Generator
 if os.path.exists(path):
@@ -141,9 +142,13 @@ else:
 
 
 def triggered_data_acquisition(filename: str = r'default',
-                               zva_file_dir: str = r"C:\Users\Public\Documents\Rohde-Schwarz\ZNA\Traces",
-                               pc_file_dir: str = r"C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\S2P",
+                               zva_file_dir: str = None,
+                               pc_file_dir: str = None,
                                file_format: str = 's2p') -> None:
+    if zva_file_dir is None:
+        zva_file_dir = dir_and_var_declaration.zva_traces
+    if pc_file_dir is None:
+        pc_file_dir = dir_and_var_declaration.PC_File_Dir_s2p_Display
     try:
         sweep_time: str = zva.query_str_with_opc('SENSe1:SWEep:TIME?')
         print("Sweep time is set to {} s\n".format(sweep_time), end='\n')
@@ -430,7 +435,6 @@ def power_test_sequence(
 
     # Save results to file
     file_array = np.vstack((power_input_dut_avg, power_output_dut_avg))
-    # os.chdir(path=r"C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data")
     np.savetxt(f'{filename}.txt', file_array, delimiter=',', newline='\n',
                header='#P_in_DUT(dBm), P_out_DUT(dBm)')
 
@@ -499,7 +503,6 @@ def power_test_smf(
 
     # Save results to file
     file_array = np.vstack((power_input_dut_avg, power_output_dut_avg))
-    # os.chdir(path=r"C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data")
     np.savetxt(f'{filename}.txt', file_array, delimiter=',', newline='\n',
                header='#P_in_DUT(dBm), P_out_DUT(dBm)')
 
@@ -612,8 +615,10 @@ def switching_time():
 def cycling_sequence(app, new_data_event, number_of_cycles: float = 1e9, number_of_pulses_in_wf: float = 1000,
                      filename: str = "test",
                      wf_duration: float = 0.205, events: float = 100, header: str = "",
-                     df_path=r"C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Mechanical cycling",
+                     df_path=None,
                      conversion_coeff: float = 0.046):
+    if df_path is None:
+        df_path = dir_and_var_declaration.PC_File_Dir_s3p_Cycling
     """
     Cycling test sequence outputs MEMS characteristics during the tested duration.
 
@@ -698,8 +703,10 @@ def cycling_sequence_no_processing(app, new_data_event, number_of_cycles: float 
                                    number_of_pulses_in_wf: float = 1000,
                                    filename: str = "test",
                                    wf_duration: float = 0.205, events: float = 100, header: str = "",
-                                   df_path=r"C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Mechanical cycling",
+                                   df_path=None,
                                    conversion_coeff: float = 0.046):
+    if df_path is None:
+        df_path = dir_and_var_declaration.PC_File_Dir_s3p_Cycling
     """
        Cycling test sequence outputs MEMS characteristics during the tested duration.
 
@@ -785,7 +792,9 @@ def cycling_sequence_with_escape_interrupt(app, new_data_event,
                                            wf_duration: float = 0.205,
                                            events: float = 100,
                                            header: str = "",
-                                           df_path=r"C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Mechanical cycling"):
+                                           df_path=None):
+    if df_path is None:
+        df_path = dir_and_var_declaration.PC_File_Dir_s3p_Cycling
     """
     Cycling test sequence outputs MEMS characteristics during the tested duration.
 
@@ -945,7 +954,7 @@ def online_mode():
         # Main-------------------------------------------------------------------------------------------------------------------------
         RsInstrument.assert_minimum_version('1.5.0')
 
-        os.chdir(r"C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data")
+        # Removed hardcoded os.chdir
 
         print("Connected instrument list: \n")
         # for ressouce in list(ressources.values()):
@@ -1129,7 +1138,7 @@ def get_curve_using_cursors(channel: int = 4):
 def test_1() -> None:
     try:
         signal_generator.write("OUTput 1")
-        os.chdir(path=r"C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Mechanical cycling")
+        # Removed hardcoded os.chdir
         time.sleep(5)
         ch4 = get_curve_cycling(channel=4)
         ch2 = get_curve_cycling(channel=2)
@@ -1186,10 +1195,12 @@ def create_pulsed_pull_in_test_waveform(amplitude: int | float = 26, pulse_width
 
 
 def plot_file(filename='default.txt',
-              directory=r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Pullin voltage'):
-    os.chdir('{}'.format(directory))
-    with open(filename, newline='') as f:
-        data_np = np.loadtxt(fname=filename, delimiter=',', unpack=True, skiprows=1)
+              directory=None):
+    if directory is None:
+        directory = dir_and_var_declaration.PC_File_Dir_pull_in_Display
+    # Removed hardcoded os.chdir
+    with open(os.path.join(directory, filename), newline='') as f:
+        data_np = np.loadtxt(fname=f, delimiter=',', unpack=True, skiprows=1)
         v_bias = data_np[:, 0].copy()
         v_log_amp = data_np[:, 1].copy()
         t = data_np[:, 2].copy()
@@ -1255,7 +1266,7 @@ def powermeter_trace_acquisition_sequence():
 # initialize_hardware()
 
 # if __name__ == "__main__":
-#     os.chdir(r'C:\Users\TEMIS\PycharmProjects\pythonProject\venv\TEMIS MEMS LAB\dummy_data')
+#     os.chdir('data')
 #     data = pd.read_csv(filepath_or_buffer=r"Project_Name-Cell_Name-Reticule-Device_name-10V.txt", sep=',')
 #     v_bias = data['# #V_bias(V)'].values
 #     print(v_bias)

@@ -4,6 +4,6 @@ numpy
 scipy
 pyvisa
 pyvisa-py
-RohdeSchwarz.RsInstrument
+RsInstrument
 matplotlib
 scikit-rf

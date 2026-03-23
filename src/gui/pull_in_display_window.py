@@ -49,7 +49,7 @@ class PullInDisplayWindow(ttk.Frame):
         add_button(frame_v_pull_in_dir, button_name='Plot',
                    command=on_txt_select,
                    col=3, row=3)
-        add_button(frame_v_pull_in_dir, button_name='Exit', command=lambda: [self.app._quit(), close_resources()],
+        add_button(frame_v_pull_in_dir, button_name='Exit', command=self.app._quit,
                    col=3, row=4).grid_anchor('e')
         # Scrolled text creation
         self.app.text_scroll = add_scrolled_text(tab=frame_v_pull_in_display, scrolled_width=100,

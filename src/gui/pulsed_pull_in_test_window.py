@@ -58,7 +58,7 @@ class PulsedPullInTestWindow(ttk.Frame):
         add_label(frame_test_pulsed_pull_in_comp_info, label_name='Device', col=0, row=4)
         add_label(frame_test_pulsed_pull_in_comp_info, label_name='Bias Voltage', col=0, row=5)
         self.app.test_pulsed_pull_in_dir = tk.StringVar(
-            value=r'C:\Users\TEMIS\PycharmProjects\pythonProject\venv\TEMIS MEMS LAB\dummy_data')
+            value=self.app.pull_in_dir_name.get())
         self.app.test_pulsed_pull_in_project = tk.StringVar(value=r'Project_Name')
         self.app.test_pulsed_pull_in_cell = tk.StringVar(value=r'Cell_Name')
         self.app.test_pulsed_pull_in_reticule = tk.StringVar(value=r'Reticule')

@@ -59,7 +59,7 @@ class PullInTestWindow(ttk.Frame):
         add_label(frame_test_pull_in_comp_info, label_name='Bias Voltage', col=0, row=5)
         # Variables for the TAB
         self.test_pull_in_dir = tk.StringVar(
-            value=r'C:\Users\TEMIS\Desktop\TEMIS MEMS LAB\Measurement Data\Pullin voltage')
+            value=self.app.pull_in_dir_name.get())
         self.test_pull_in_project = tk.StringVar(value=r'Project_Name')
         self.test_pull_in_cell = tk.StringVar(value=r'Cell_Name')
         self.test_pull_in_reticule = tk.StringVar(value=r'Reticule')
