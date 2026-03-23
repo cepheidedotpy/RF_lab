@@ -59,14 +59,36 @@ zva_traces: str = ZVA_File_Dir_ZVA67
 
 rm = pyvisa.ResourceManager()
 
-# IP Addresses for different apparatus
-signal_generator_ip: str = r'TCPIP0::A-33521B-00526::inst0::INSTR'
-rf_generator_ip: str = r'TCPIP0::rssmb100a179766::inst0::INSTR'
-powermeter_ip: str = r'TCPIP0::169.254.64.175::inst0::I=STR'
-oscilloscope_ip: str = r'TCPIP0::DPO5054-C011738::inst0::INSTR'
+# Dynamic Address Resolution
+from src.core.network_utils import resolve_mdns_hostname
+import re
 
-zva_ip_ZNA67: str = r'TCPIP0::ZNA67-101810::inst0::INSTR'
-zva_ip_ZVA50: str = r'TCPIP0::ZVx-000000::inst0::INSTR'
+def resolve_visa_address(address: str) -> str:
+    """
+    Translates hostname-based VISA addresses to IP-based ones if possible.
+    e.g. 'TCPIP0::ZNA67-101810::inst0::INSTR' -> 'TCPIP0::192.168.1.50::inst0::INSTR'
+    """
+    # Pattern to extract hostname between TCPIP0:: and ::inst0 or similar
+    match = re.search(r'TCPIP0?::([^:]+)::', address)
+    if match:
+        hostname = match.group(1)
+        # Skip if it's already an IP
+        if re.match(r'^\d{1,3}(\.\d{1,3}){3}$', hostname):
+            return address
+        
+        resolved_ip = resolve_mdns_hostname(hostname)
+        if resolved_ip != hostname:
+            return address.replace(hostname, resolved_ip)
+    return address
+
+# IP Addresses for different apparatus
+signal_generator_ip: str = resolve_visa_address(r'TCPIP0::A-33521B-00526::inst0::INSTR')
+rf_generator_ip: str = resolve_visa_address(r'TCPIP0::rssmb100a179766::inst0::INSTR')
+powermeter_ip: str = resolve_visa_address(r'TCPIP0::169.254.64.175::inst0::I=STR')
+oscilloscope_ip: str = resolve_visa_address(r'TCPIP0::DPO5054-C011738::inst0::INSTR')
+
+zva_ip_ZNA67: str = resolve_visa_address(r'TCPIP0::ZNA67-101810::inst0::INSTR')
+zva_ip_ZVA50: str = resolve_visa_address(r'TCPIP0::ZVx-000000::inst0::INSTR')
 
 ip_zva: str = zva_ip_ZNA67  # ZVA IP variable
 
