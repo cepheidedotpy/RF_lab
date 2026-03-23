@@ -199,7 +199,7 @@ class PowerTestWindow(ttk.Frame):
 
         add_button(tab=frame_power_meas_powermeter, button_name='Standard Power\nConfig',
                    command=lambda: [scripts_and_functions.powermeter_config_power_test()],
-                   col=0, row=4)
+                   col=1, row=2)
 
         create_canvas(figure=self.app.fig_power_meas, frame=frame_power_meas_graph,
                       toolbar_frame=frame_test_power_measurement, toolbar=True)
