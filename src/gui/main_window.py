@@ -414,9 +414,10 @@ class Window(ttk.Frame):
 
         self.scale_amplitude_value = tk.DoubleVar(value=-20)
         self.scale_voltage_value = tk.DoubleVar(value=50)
+        self.scale_voltage_min_value = tk.DoubleVar(value=0) # New slider for min voltage
         self.scale_isolation_value = tk.DoubleVar(value=-1)
-        self.scale_frequency_upper_value = tk.DoubleVar(value=2 * 10e9)
-        self.scale_frequency_lower_value = tk.DoubleVar(value=0.1 * 10e9)
+        self.scale_frequency_upper_value = tk.DoubleVar(value=20 * 1e9)
+        self.scale_frequency_lower_value = tk.DoubleVar(value=0.1 * 1e9)
         self.ramp_width = tk.DoubleVar(value=100)
         self.f_start = tk.DoubleVar(value=1)
         self.f_stop = tk.DoubleVar(value=10)
@@ -426,8 +427,8 @@ class Window(ttk.Frame):
         self.pulse_width = tk.DoubleVar(value=0.0)
         self.pulse_freq = tk.DoubleVar(value=0.0)
 
-        self.ax_s3p.set_ylim(ymin=self.scale_amplitude_value.get(), ymax=0)
-        self.ax_s3p.set_xlim(xmin=0, xmax=self.scale_frequency_upper_value.get())
+        self.ax_s3p.set_ylim(bottom=self.scale_amplitude_value.get(), top=0)
+        self.ax_s3p.set_xlim(left=0, right=self.scale_frequency_upper_value.get())
 
     def create_main_menu(self):
         """Create the main menu with buttons to open different windows."""
@@ -850,6 +851,20 @@ class Window(ttk.Frame):
         except Exception as e:
             print(f"Error updating S2P plot limits: {e}")
 
+    def update_pull_in_plot_limits(self, *args):
+        """
+        Updates the plot limits for the Pull-in graph based on the slider values.
+        """
+        try:
+            # X limits from scale_voltage_min_value to scale_voltage_value
+            self.ax_pull_in.set_xlim(left=self.scale_voltage_min_value.get(),
+                                     right=self.scale_voltage_value.get())
+            # Y limits from scale_isolation_value to 0
+            self.ax_pull_in.set_ylim(bottom=self.scale_isolation_value.get(), top=0)
+            self.fig_pull_in.canvas.draw()
+        except Exception as e:
+            print(f"Error updating Pull-in plot limits: {e}")
+
     def _clear_ax_lines(self, ax):
         while ax.lines:
             ax.lines[0].remove()
@@ -857,6 +872,10 @@ class Window(ttk.Frame):
             poly.remove()
         if ax.get_legend():
             ax.get_legend().remove()
+        
+        # Reset the color cycler so new plots start with the same color
+        ax.set_prop_cycle(None)
+        
         ax.relim()
         ax.autoscale_view()
 

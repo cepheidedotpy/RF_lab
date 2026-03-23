@@ -57,11 +57,11 @@ class UserGuideWindow(ttk.Frame):
 
     def setup_intro_tab(self):
         content = """--- Sécurité ---
-• Sécurité RF : Les signaux RF sont conduits. Le risque de rayonnement est faible, mais restez vigilant.
+• Sécurité RF : Les signaux RF sont conduits. Le risque de rayonnement est faible.
 • Protection ESD : Port de bracelet obligatoire pour toute manipulation des équipements (particulièrement le VNA).
 
 --- Démarrage du Banc ---
-1. Séquence d'allumage : Respecter l'ordre pour éviter les pics de tension sur le DUT.
+1. Séquence d'allumage : Respecter l'ordre pour éviter les pics de tension sur le DUT. Vérifier que les sources de tensions sont à 0V avant de commencer.
 2. Temps de chauffe : Laisser le matériel se stabiliser thermiquement (~30 min).
 3. Initialisation Logicielle : S'assurer que tous les instruments sont accessibles (Resource Page).
 """
@@ -71,9 +71,9 @@ class UserGuideWindow(ttk.Frame):
         content = """--- Zones de l'interface ---
 • Menu Principal : Accès aux différents tests (SNP, Power, Pull-in, Cycling).
 • Resource Page : Configuration des adresses IP des instruments.
-• Graphiques : Affichage en temps réel des mesures (Matplotlib).
+• Graphiques : Affichage des mesures.
 • Contrôles : Boutons de lancement (Start, Stop, Plot, Update Files).
-• Visualisation Double : Le 'Pull-in Test' affiche désormais deux graphiques (Isolation et Dérivée Seconde) pour une validation visuelle précise.
+• Visualisation Double : Le 'Pull-in Test' affiche désormais deux graphiques (Isolation et Dérivée Seconde) pour une validation visuelle précise de la mesure de tension d'actionnement et de.
 • Marqueurs : Points rouges (PI) et croix vertes (PO) indiquent les événements détectés.
 
 --- Configuration ---

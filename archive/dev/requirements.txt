@@ -1,0 +1,9 @@
+ttkbootstrap
+pandas
+numpy
+scipy
+pyvisa
+pyvisa-py
+RohdeSchwarz.RsInstrument
+matplotlib
+scikit-rf

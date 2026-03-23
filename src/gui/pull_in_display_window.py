@@ -62,10 +62,23 @@ class PullInDisplayWindow(ttk.Frame):
         self.app.slider_isolation = add_slider(frame=frame_v_pull_in_graph, _from=0, to=-20,
                                                name="Detector voltage (dB)", variable=self.app.scale_isolation_value,
                                                step=1,
-                                               orientation=tk.VERTICAL)
+                                               orientation=tk.VERTICAL,
+                                               command=self.app.update_pull_in_plot_limits,
+                                               unit="dB")
+        
+        # New minimum voltage slider (-100 to 0)
+        self.app.slider_voltage_min = add_slider(frame=frame_v_pull_in_sliders, _from=-100, to=0,
+                                                 name="Voltage lower limit (V)", variable=self.app.scale_voltage_min_value,
+                                                 step=10,
+                                                 command=self.app.update_pull_in_plot_limits,
+                                                 unit="V")
+                                                 
         self.app.slider_voltage = add_slider(frame=frame_v_pull_in_sliders, _from=0, to=100,
                                              name="Voltage upper limit (V)", variable=self.app.scale_voltage_value,
-                                             step=10)
+                                             step=10,
+                                             command=self.app.update_pull_in_plot_limits,
+                                             unit="V")
 
         self.app.slider_isolation.pack(side='left')
+        self.app.slider_voltage_min.pack(side='left')
         self.app.slider_voltage.pack(side='left')

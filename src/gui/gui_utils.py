@@ -565,9 +565,20 @@ def create_figure_with_axes(num: int, figsize: tuple[float, float]):
     return fig, ax
 
 
-def add_slider(frame, _from, to, name, variable, step, orientation: Literal["horizontal", "vertical"] = tk.HORIZONTAL):
+def add_slider(frame, _from, to, name, variable, step, orientation: Literal["horizontal", "vertical"] = tk.HORIZONTAL, command=None, multiplier=1.0, unit=""):
     slider_frame = ttk.Frame(frame, bootstyle=DARK, style=DARK)
     slider_frame.pack(pady=10)
+
+    # Label for the value
+    value_label = ttk.Label(slider_frame, text=f"{variable.get() * multiplier:.2f} {unit}", 
+                            font=('Bahnschrift Light', 10), bootstyle=(DARK, INVERSE))
+    
+    def internal_command(val):
+        # Update the value label
+        value_label.config(text=f"{float(val) * multiplier:.2f} {unit}")
+        # Call the original command if it exists
+        if command:
+            command(val)
 
     if orientation == tk.VERTICAL:
         # Create a canvas for the vertical text
@@ -576,21 +587,15 @@ def add_slider(frame, _from, to, name, variable, step, orientation: Literal["hor
         canvas.pack(side=tk.LEFT, padx=5, pady=5)
 
         # Create the vertical slider
-        # slider = tk.Scale(master=slider_frame, from_=_from, to=to, orient=orientation, length=250, digits=2,
-        #                    relief=tk.GROOVE, border=2, sliderrelief=tk.RIDGE, tickinterval=step, variable=variable,
-        #                    font=('Bahnschrift Light', 10))
-        # slider.pack(side=tk.RIGHT, padx=5, pady=5)
         slider = ttk.Scale(master=slider_frame, from_=_from, to=to, orient=orientation, length=250,
-                           bootstyle=default_style, variable=variable)
+                           bootstyle=default_style, variable=variable, command=internal_command)
         slider.pack(side=tk.RIGHT, padx=5, pady=5)
+        value_label.pack(side=tk.BOTTOM)
     else:
         # Create the horizontal slider with a label
-        # slider = tk.Scale(master=slider_frame, from_=_from, to=to, orient=orientation, label=name, length=250,
-        #                    digits=2,
-        #                    relief=tk.GROOVE, border=2, sliderrelief=tk.RIDGE, tickinterval=step, variable=variable,
-        #                    font=('Bahnschrift Light', 10))
         slider = ttk.Scale(master=slider_frame, from_=_from, to=to, orient=orientation, length=250,
-                           bootstyle=default_style, variable=variable)
+                           bootstyle=default_style, variable=variable, command=internal_command)
+        value_label.pack(side=tk.TOP)
         slider.pack()
 
     # Center the frame within the parent frame

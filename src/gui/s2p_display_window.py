@@ -67,16 +67,22 @@ class S2pDisplayWindow(ttk.Frame):
                                             toolbar_frame=frame_s2p_sliders)
 
         # Sliders creation
-        self.app.slider_amplitude_s2p = add_slider(frame=frame_s2p_display, _from=0, to=-60,
+        self.app.slider_amplitude_s2p = add_slider(frame=frame_s2p_display, _from=0, to=-80,
                                                    name="Amplitude (dB)",
                                                    variable=self.app.scale_amplitude_value, step=5,
-                                                   orientation=tk.VERTICAL)
-        self.app.slider_frequency_s2p = add_slider(frame=frame_s2p_sliders, _from=1e9, to=40e9,
+                                                   orientation=tk.VERTICAL,
+                                                   command=self.app.update_s2p_plot_limits,
+                                                   unit="dB")
+        self.app.slider_frequency_s2p = add_slider(frame=frame_s2p_sliders, _from=0, to=110e9,
                                                    name="Upper Frequency limit (Hz)",
-                                                   variable=self.app.scale_frequency_upper_value, step=10e9)
-        self.app.slider_lower_frequency_s2p = add_slider(frame=frame_s2p_sliders, _from=1e9, to=40e9,
+                                                   variable=self.app.scale_frequency_upper_value, step=10e9,
+                                                   command=self.app.update_s2p_plot_limits,
+                                                   multiplier=1e-9, unit="GHz")
+        self.app.slider_lower_frequency_s2p = add_slider(frame=frame_s2p_sliders, _from=0, to=40e9,
                                                          name=" Lower Frequency Limit (Hz)",
-                                                         variable=self.app.scale_frequency_lower_value, step=10e9)
+                                                         variable=self.app.scale_frequency_lower_value, step=10e9,
+                                                         command=self.app.update_s2p_plot_limits,
+                                                         multiplier=1e-9, unit="GHz")
 
         self.app.slider_amplitude_s2p.pack(side='left', anchor='center')
         self.app.slider_frequency_s2p.pack(side='right')
