@@ -175,7 +175,7 @@ patterns = {
 }
 
 try:
-    from dev.mock_hardware import MockInstrument
+    from src.hardware.mock_hardware import MockInstrument
 except ImportError:
     class MockInstrument:
         def __init__(self, *args, **kwargs): pass
