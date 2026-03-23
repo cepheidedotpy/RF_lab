@@ -258,6 +258,11 @@ def powermeter_config_power_bias() -> None:
     powermeter.write('*RST')
     powermeter.write(f'{dir_and_var_declaration.power_bias_test_setup_powermeter}')
 
+@powermeter_opc_control
+def powermeter_config_power_test() -> None:
+    powermeter.write('*RST')
+    powermeter.write(f'{dir_and_var_declaration.power_test_setup_powermeter}')
+
 def comprep_zva():  # Preparation of the communication
     zva.visa_timeout = 5000
     zva.opc_timeout = 5000
