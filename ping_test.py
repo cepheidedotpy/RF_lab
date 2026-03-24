@@ -5,7 +5,7 @@ import re
 from src.core.network_utils import resolve_mdns_hostname
 
 def ping_host(host):
-    """
+    """wl
     Returns True if host responds to a ping request.
     """
     param = '-n' if platform.system().lower() == 'windows' else '-c'

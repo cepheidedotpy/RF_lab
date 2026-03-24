@@ -61,6 +61,9 @@ rm = pyvisa.ResourceManager()
 
 # Dynamic Address Resolution
 import os
+from dotenv import load_dotenv
+load_dotenv()
+
 from src.core.network_utils import resolve_mdns_hostname
 import re
 

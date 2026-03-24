@@ -8,3 +8,4 @@ RsInstrument
 matplotlib
 scikit-rf
 zeroconf
+python-dotenv
