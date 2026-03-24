@@ -18,6 +18,12 @@ class InstrumentListener(ServiceListener):
                     self.found[self.targets[host_part]] = addresses[0]
                     print(f"  [+] Found {self.targets[host_part]} at {addresses[0]}")
 
+    def update_service(self, zc, type_, name):
+        self.add_service(zc, type_, name)
+
+    def remove_service(self, zc, type_, name):
+        pass
+
 def resolve_all():
     targets = [
         "ZNA67-101810",

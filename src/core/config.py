@@ -92,6 +92,12 @@ oscilloscope_ip: str = resolve_visa_address(os.environ.get('OSC_IP', r'TCPIP0::D
 zva_ip_ZNA67: str = resolve_visa_address(os.environ.get('VNA_IP', r'TCPIP0::ZNA67-101810::inst0::INSTR'))
 zva_ip_ZVA50: str = resolve_visa_address(r'TCPIP0::ZVx-000000::inst0::INSTR')
 
+print(f"DEBUG: VNA Address: {zva_ip_ZNA67}")
+print(f"DEBUG: SIG_GEN Address: {signal_generator_ip}")
+print(f"DEBUG: RF_GEN Address: {rf_generator_ip}")
+print(f"DEBUG: OSC Address: {oscilloscope_ip}")
+print(f"DEBUG: POWERMETER Address: {powermeter_ip}")
+
 ip_zva: str = zva_ip_ZNA67  # ZVA IP variable
 
 zva_parameters: dict[str, str] = {
