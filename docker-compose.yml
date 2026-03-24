@@ -3,13 +3,19 @@ services:
     build: .
     image: temis-mems-lab:latest
     container_name: temis-mems-lab
+    env_file:
+      - .env
     environment:
       - DISPLAY=host.docker.internal:0.0
+      - VNA_IP=${VNA_IP:-ZNA67-101810}
+      - SIG_GEN_IP=${SIG_GEN_IP:-A-33521B-00526}
+      - RF_GEN_IP=${RF_GEN_IP:-rssmb100a179766}
+      - OSC_IP=${OSC_IP:-DPO5054-C011738}
+      - POWERMETER_IP=${POWERMETER_IP:-169.254.64.175}
     volumes:
       - ./data:/app/data
       - ./docs:/app/docs
       - ./config:/app/config
       - ./setup:/app/setup
-    # This allows the container to resolve 'host.docker.internal' on Windows/Mac
     extra_hosts:
       - "host.docker.internal:host-gateway"

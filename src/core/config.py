@@ -60,6 +60,7 @@ zva_traces: str = ZVA_File_Dir_ZVA67
 rm = pyvisa.ResourceManager()
 
 # Dynamic Address Resolution
+import os
 from src.core.network_utils import resolve_mdns_hostname
 import re
 
@@ -82,12 +83,13 @@ def resolve_visa_address(address: str) -> str:
     return address
 
 # IP Addresses for different apparatus
-signal_generator_ip: str = resolve_visa_address(r'TCPIP0::A-33521B-00526::inst0::INSTR')
-rf_generator_ip: str = resolve_visa_address(r'TCPIP0::rssmb100a179766::inst0::INSTR')
-powermeter_ip: str = resolve_visa_address(r'TCPIP0::169.254.64.175::inst0::I=STR')
-oscilloscope_ip: str = resolve_visa_address(r'TCPIP0::DPO5054-C011738::inst0::INSTR')
+# Prioritize Environment Variables (set by host-side discovery)
+signal_generator_ip: str = resolve_visa_address(os.environ.get('SIG_GEN_IP', r'TCPIP0::A-33521B-00526::inst0::INSTR'))
+rf_generator_ip: str = resolve_visa_address(os.environ.get('RF_GEN_IP', r'TCPIP0::rssmb100a179766::inst0::INSTR'))
+powermeter_ip: str = resolve_visa_address(os.environ.get('POWERMETER_IP', r'TCPIP0::169.254.64.175::inst0::I=STR'))
+oscilloscope_ip: str = resolve_visa_address(os.environ.get('OSC_IP', r'TCPIP0::DPO5054-C011738::inst0::INSTR'))
 
-zva_ip_ZNA67: str = resolve_visa_address(r'TCPIP0::ZNA67-101810::inst0::INSTR')
+zva_ip_ZNA67: str = resolve_visa_address(os.environ.get('VNA_IP', r'TCPIP0::ZNA67-101810::inst0::INSTR'))
 zva_ip_ZVA50: str = resolve_visa_address(r'TCPIP0::ZVx-000000::inst0::INSTR')
 
 ip_zva: str = zva_ip_ZNA67  # ZVA IP variable
