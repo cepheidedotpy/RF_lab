@@ -52,10 +52,10 @@ def resolve_all():
     if remaining:
         zeroconf = Zeroconf()
         listener = InstrumentListener(remaining)
-        services = ["_vxi-11._tcp.local.", "_hislip._tcp.local.", "_lxi._tcp.local."]
+        services = ["_vxi-11._tcp.local.", "_hislip._tcp.local.", "_lxi._tcp.local.", "_scpi-raw._tcp.local.", "_http._tcp.local."]
         browser = ServiceBrowser(zeroconf, services, listener)
         
-        time.sleep(3) # Give it time to discover
+        time.sleep(5) # Give it more time to discover
         zeroconf.close()
         found_ips.update(listener.found)
 

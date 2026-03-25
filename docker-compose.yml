@@ -13,9 +13,6 @@ services:
       - OSC_IP=${OSC_IP:-DPO5054-C011738}
       - POWERMETER_IP=${POWERMETER_IP:-169.254.64.175}
     volumes:
-      - ./data:/app/data
-      - ./docs:/app/docs
-      - ./config:/app/config
-      - ./setup:/app/setup
+      - .:/app
     extra_hosts:
       - "host.docker.internal:host-gateway"
