@@ -1,6 +1,7 @@
 import tkinter as tk
 import ttkbootstrap as ttk
 import os
+import sys
 import socket
 import re
 from tkinter import scrolledtext, filedialog, messagebox
@@ -10,6 +11,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from src.core import scripts_and_functions
 from src.core.config import zva_parameters
 from src.core import config as dir_and_var_declaration
+from src.core.resource_utils import get_resource_path
 from ttkbootstrap.constants import *
 
 # ==============================================================================

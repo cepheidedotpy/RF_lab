@@ -759,6 +759,7 @@ class Window(ttk.Frame):
                 # Plot the data
                 self.ax_pull_in.plot(v_bias_display, v_log_amp_display - np.max(v_log_amp_display), label="{}".format(fn)[:-4])
                 self.fig_pull_in_meas.tight_layout()
+                
             if self.pull_in_test_window_instance is not None:
                 directory_test = self.test_pull_in_dir.get()
                 filepath_test = os.path.join(directory_test, fn)

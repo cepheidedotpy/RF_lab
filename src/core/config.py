@@ -8,8 +8,10 @@ Developer : T0188303 - A.N.
 Refactored for resilience: Paths are now relative to the project root.
 """
 
+from src.core.resource_utils import get_base_dir
+
 # Base directory for the project
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+BASE_DIR = get_base_dir()
 
 # Project directories
 CONFIG_DIR = os.path.join(BASE_DIR, 'config')
