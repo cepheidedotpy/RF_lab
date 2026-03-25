@@ -12,11 +12,14 @@ class InstrumentListener(ServiceListener):
         info = zc.get_service_info(type_, name)
         if info:
             host_part = info.server.lower().split('.')[0]
+            addresses = info.parsed_addresses()
+            if not addresses: return
             if host_part in self.targets:
-                addresses = info.parsed_addresses()
-                if addresses:
-                    self.found[self.targets[host_part]] = addresses[0]
-                    print(f"  [+] Found {self.targets[host_part]} at {addresses[0]}")
+                self.found[self.targets[host_part]] = addresses[0]
+                print(f"  [+] Found {self.targets[host_part]} at {addresses[0]}")
+            elif "zna" in host_part or "zva" in host_part:
+                self.found["ZNA67-101810"] = addresses[0]
+                print(f"  [+] Found VNA ({host_part}) at {addresses[0]}")
 
     def update_service(self, zc, type_, name):
         self.add_service(zc, type_, name)

@@ -264,6 +264,9 @@ def powermeter_config_power_test() -> None:
     powermeter.write(f'{dir_and_var_declaration.power_test_setup_powermeter}')
 
 def comprep_zva():  # Preparation of the communication
+    if zva is None:
+        print("ZVA not initialized, skipping comms prep")
+        return
     zva.visa_timeout = 5000
     zva.opc_timeout = 5000
     zva.instrument_status_checking = True
