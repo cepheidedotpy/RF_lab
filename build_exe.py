@@ -24,7 +24,7 @@ def build():
 
     # Build the PyInstaller command
     cmd = [
-        "pyinstaller",
+        sys.executable, "-m", "PyInstaller",
         "--noconsole",
         "--name", app_name,
         "--clean",
