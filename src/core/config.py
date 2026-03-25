@@ -114,12 +114,34 @@ def open_resource_robust(rm, address):
 
 # IP Addresses for different apparatus
 # Prioritize Environment Variables (set by host-side discovery)
-signal_generator_ip: str = resolve_visa_address(os.environ.get('SIG_GEN_IP', r'TCPIP0::A-33521B-00526::inst0::INSTR'))
-rf_generator_ip: str = resolve_visa_address(os.environ.get('RF_GEN_IP', r'TCPIP0::rssmb100a179766::inst0::INSTR'))
-powermeter_ip: str = resolve_visa_address(os.environ.get('POWERMETER_IP', r'TCPIP0::169.254.64.175::inst0::I=STR'))
-oscilloscope_ip: str = resolve_visa_address(os.environ.get('OSC_IP', r'TCPIP0::DPO5054-C011738::inst0::INSTR'))
+# The .env file stores bare IPs (e.g. 169.254.5.21), so we wrap them into full VISA strings.
+def make_visa_address(env_key: str, default_hostname: str) -> str:
+    """Builds a VISA address from an env IP or falls back to mDNS hostname."""
+    env_val = os.environ.get(env_key, '')
+    if env_val:
+        # If it looks like an IP, use it directly
+        if re.match(r'^\d{1,3}(\.\d{1,3}){3}$', env_val):
+            return f'TCPIP0::{env_val}::inst0::INSTR'
+        # If it looks like a full VISA string already
+        if 'TCPIP' in env_val:
+            return env_val
+    # Fallback: try mDNS, then return a hostname-based VISA string
+    resolved = resolve_mdns_hostname(default_hostname)
+    return f'TCPIP0::{resolved}::inst0::INSTR'
 
-zva_ip_ZNA67: str = resolve_visa_address(os.environ.get('VNA_IP', r'TCPIP0::ZNA67-101810::inst0::INSTR'))
+signal_generator_ip: str = make_visa_address('SIG_GEN_IP', 'A-33521B-00526')
+rf_generator_ip: str = make_visa_address('RF_GEN_IP', 'rssmb100a179766')
+powermeter_ip: str = make_visa_address('POWERMETER_IP', '169.254.64.175')
+oscilloscope_ip: str = make_visa_address('OSC_IP', 'DPO5054-C011738')
+
+zva_env = os.environ.get('VNA_IP', '')
+if zva_env and re.match(r'^\d{1,3}(\.\d{1,3}){3}$', zva_env):
+    zva_ip_ZNA67: str = f'TCPIP0::{zva_env}::inst0::INSTR'
+elif zva_env and 'TCPIP' in zva_env:
+    zva_ip_ZNA67: str = zva_env
+else:
+    _zna_host = resolve_mdns_hostname('ZNA67-101810')
+    zva_ip_ZNA67: str = f'TCPIP0::{_zna_host}::inst0::INSTR'
 zva_ip_ZVA50: str = resolve_visa_address(r'TCPIP0::ZVx-000000::inst0::INSTR')
 
 print(f"DEBUG: VNA Address: {zva_ip_ZNA67}")
