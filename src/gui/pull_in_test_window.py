@@ -7,7 +7,7 @@ from src.core import scripts_and_functions
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from typing import Optional, Literal, TYPE_CHECKING
 from src.gui.gui_utils import add_label_frame, add_button, add_label, add_entry, create_canvas, \
-    file_name_creation, \
+    file_name_creation, browse_directory, \
     close_resources, tab_pad_x
 
 
@@ -69,6 +69,7 @@ class PullInTestWindow(ttk.Frame):
 
         self.app.test_pull_in_dir = add_entry(tab=frame_test_pull_in_comp_info,
                                               text_var=self.test_pull_in_dir, width=20, col=1, row=0)
+        add_button(frame_test_pull_in_comp_info, "Browse", lambda: browse_directory(self.test_pull_in_dir), col=2, row=0)
         add_entry(tab=frame_test_pull_in_comp_info, text_var=self.test_pull_in_project, width=20, col=1, row=1)
         add_entry(tab=frame_test_pull_in_comp_info, text_var=self.test_pull_in_cell, width=20, col=1, row=2)
         add_entry(tab=frame_test_pull_in_comp_info, text_var=self.test_pull_in_reticule, width=20, col=1, row=3)
@@ -99,13 +100,13 @@ class PullInTestWindow(ttk.Frame):
                                                                   self.test_pull_in_device.get(),
                                                                   self.entered_ramp_volt.get()],
                                                        text=self.text_file_name_pull_in_test, end_characters='V')],
-                   col=2, row=0)
+                   col=3, row=0)
         add_button(tab=frame_test_pull_in_comp_info,
                    button_name='Send trigger',
-                   command=lambda: [self.app.send_trig_sig_gen()], col=2, row=1)
+                   command=lambda: [self.app.send_trig_sig_gen()], col=3, row=1)
         add_button(tab=frame_test_pull_in_comp_info,
                    button_name='Osc trigger',
-                   command=lambda: [self.app.send_trig_osc()], col=2, row=2)
+                   command=lambda: [self.app.send_trig_osc()], col=3, row=2)
 
         self.entered_ramp_width = add_entry(frame_signal_gen_measurement, text_var=self.ramp_width, width=10, col=1,
                                             row=1)

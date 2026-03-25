@@ -1,7 +1,9 @@
 import tkinter as tk
 import ttkbootstrap as ttk
 import os
-from tkinter import scrolledtext, filedialog
+import socket
+import re
+from tkinter import scrolledtext, filedialog, messagebox
 from typing import Optional, Literal
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
@@ -353,9 +355,31 @@ def get_listbox_selection(listbox: tk.Listbox) -> list:
 def browse_directory(text_var: tk.StringVar, command=None) -> None:
     directory = filedialog.askdirectory()
     if directory:
+        # Normalize path for the OS
+        directory = os.path.normpath(directory)
         text_var.set(directory)
         if command:
             command()
+
+def ping_address(address: str) -> bool:
+    """
+    Checks if an instrument is reachable by attempting to open a socket 
+    on the standard SCPI port (5025).
+    """
+    # Extract IP or hostname from VISA string
+    # e.g. TCPIP0::169.254.5.21::inst0::INSTR -> 169.254.5.21
+    ip_match = re.search(r'TCPIP0?::([^:]+)', address)
+    if ip_match:
+        target = ip_match.group(1)
+    else:
+        target = address # Assume it's a bare IP/hostname if no VISA prefix
+
+    try:
+        # 1 second timeout
+        with socket.create_connection((target, 5025), timeout=1.0):
+            return True
+    except (socket.timeout, ConnectionRefusedError, OSError):
+        return False
 
 
 def add_Checkbutton(tab: ttk.Labelframe, text: tk.BooleanVar, col: int, row: int, off_value: int,

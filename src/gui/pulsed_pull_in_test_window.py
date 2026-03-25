@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 # if TYPE_CHECKING:
 # from main_refactored import Window
-from .gui_utils import add_label_frame, add_button, add_label, add_entry, create_canvas, file_name_creation, tab_pad_x
+from .gui_utils import add_label_frame, add_button, add_label, add_entry, create_canvas, file_name_creation, browse_directory, tab_pad_x
 
 
 class PulsedPullInTestWindow(ttk.Frame):
@@ -68,6 +68,7 @@ class PulsedPullInTestWindow(ttk.Frame):
 
         add_entry(tab=frame_test_pulsed_pull_in_comp_info, text_var=self.app.test_pulsed_pull_in_dir, width=20, col=1,
                   row=0)
+        add_button(frame_test_pulsed_pull_in_comp_info, "Browse", lambda: browse_directory(self.app.test_pulsed_pull_in_dir), col=2, row=0)
         add_entry(tab=frame_test_pulsed_pull_in_comp_info, text_var=self.app.test_pulsed_pull_in_project, width=20,
                   col=1,
                   row=1)
@@ -112,13 +113,13 @@ class PulsedPullInTestWindow(ttk.Frame):
                                                                   self.app.entered_pulsed_pull_in_v_bias.get()],
                                                        text=self.app.text_pulsed_file_name_pull_in_test,
                                                        end_characters='V')],
-                   col=2, row=0)
+                   col=3, row=0)
         add_button(tab=frame_test_pulsed_pull_in_comp_info,
                    button_name='Send trigger',
-                   command=lambda: [scripts_and_functions.send_trig()], col=2, row=1)
+                   command=lambda: [scripts_and_functions.send_trig()], col=3, row=1)
         add_button(tab=frame_test_pulsed_pull_in_comp_info,
                    button_name='Osc trigger',
-                   command=lambda: [scripts_and_functions.force_trigger_osc()], col=2, row=2)
+                   command=lambda: [scripts_and_functions.force_trigger_osc()], col=3, row=2)
 
         add_label(frame_pulsed_signal_gen_measurement, label_name='(V)', col=2, row=0)
         add_label(frame_pulsed_signal_gen_measurement, label_name='(µs)', col=2, row=1)

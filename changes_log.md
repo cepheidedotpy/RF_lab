@@ -1,3 +1,17 @@
+### Wednesday, 25 March 2026
+
+**Dockerization & Hardware Connectivity Improvements**
+- **mDNS Instrument Discovery:** Implemented `resolve_ips.py` to discover instruments (ZNA, Signal Generator, etc.) on the host network via mDNS and generate a `.env` file for the container.
+- **Robust Connection Logic:** Updated `src/core/config.py` to force the `@py` backend for PyVISA and implemented `open_resource_robust` with a raw socket fallback (port 5025) for better reliability in Docker/WSL2 environments.
+- **Docker Volume Mapping:** Enhanced `docker-compose.yml` to map host `Desktop` and `Documents` folders to the container, ensuring data persistence and easy file access.
+
+**GUI Enhancements & Connectivity Tools**
+- **Folder Selection (Browse Button):** Added "Browse" buttons to all test windows (Pull-in, SNP, Cycling, Power, Pulsed Pull-in, Time Domain Power) for easier directory selection.
+- **Connectivity Ping:** Integrated a "Ping" feature in the Resource Configuration window to verify instrument reachability on the SCPI port (5025).
+- **Dynamic Reconnect:** Added a "RECONNECT ALL HARDWARE" button to the configuration page to allow updating instrument IPs without restarting the application.
+- **Bug Fixes:** Resolved button overlap issues in `PowerTestWindow` and `SnpTestWindow`.
+- **UI Tweaks:** Applied `tight_layout()` to Pull-in display for better visualization.
+
 ### Thursday, 19 February 2026
 
 **Docker Installation Issue - Hyper-V Enablement**

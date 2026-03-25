@@ -12,7 +12,7 @@ import os
 from src.core.config import zva_parameters
 from src.core import config as dir_and_var_declaration
 from src.gui.gui_utils import add_label_frame, add_button, add_label, add_entry, add_combobox, create_canvas, \
-    file_name_creation, close_resources, call_s3p_config, call_s2p_config, call_s1p_config, tab_pad_x
+    file_name_creation, browse_directory, close_resources, call_s3p_config, call_s2p_config, call_s1p_config, tab_pad_x
 
 
 class SnpTestWindow(ttk.Frame):
@@ -80,6 +80,7 @@ class SnpTestWindow(ttk.Frame):
         self.chosen_vna.current(0)
 
         add_entry(tab=frame_snp_compo_info, text_var=self.test_s3p_dir, width=20, col=1, row=0)
+        add_button(frame_snp_compo_info, "Browse", lambda: browse_directory(self.test_s3p_dir), col=2, row=0)
         add_entry(tab=frame_snp_compo_info, text_var=self.test_s3p_project, width=20, col=1, row=1)
         add_entry(tab=frame_snp_compo_info, text_var=self.test_s3p_cell, width=20, col=1, row=2)
         add_entry(tab=frame_snp_compo_info, text_var=self.test_s3p_reticule, width=20, col=1, row=3)
@@ -104,15 +105,15 @@ class SnpTestWindow(ttk.Frame):
                                   self.test_s3p_reticule.get(),
                                   self.test_s3p_device.get(), self.chosen_component_state.get(),
                                   self.chosen_bias_voltage.get()], text=self.text_file_name_s3p_test,
-                       end_characters='V')], col=2,
+                       end_characters='V')], col=3,
                    row=0)
         add_button(tab=frame_snp_compo_info,
                    button_name='Send trigger',
-                   command=lambda: [scripts_and_functions.send_trig()], col=2, row=1)
+                   command=lambda: [scripts_and_functions.send_trig()], col=3, row=1)
 
         add_button(tab=frame_snp_compo_info,
                    button_name='Osc trigger',
-                   command=lambda: [scripts_and_functions.force_trigger_osc()], col=2, row=2)
+                   command=lambda: [scripts_and_functions.force_trigger_osc()], col=3, row=2)
 
         add_label(frame_snp_signal_generator, label_name='Bias Voltage', col=0, row=0)
         add_label(frame_snp_signal_generator, label_name='Pulse Width', col=0, row=1)

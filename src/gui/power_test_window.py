@@ -7,7 +7,7 @@ import os
 from typing import Optional, TYPE_CHECKING
 from src.core import scripts_and_functions
 from src.gui.gui_utils import add_label_frame, add_button, add_label, add_entry, add_combobox, create_canvas, \
-    file_name_creation, close_resources, tab_pad_x, default_style
+    file_name_creation, browse_directory, close_resources, tab_pad_x, default_style
 
 
 class PowerTestWindow(ttk.Frame):
@@ -81,6 +81,7 @@ class PowerTestWindow(ttk.Frame):
         self.chosen_component_state_pow.current(0)
 
         add_entry(tab=frame_power_compo_info, text_var=self.directory, width=20, col=1, row=0)
+        add_button(frame_power_compo_info, "Browse", lambda: browse_directory(self.directory), col=2, row=0)
         add_entry(tab=frame_power_compo_info, text_var=self.test_pow_project, width=20, col=1, row=1)
         add_entry(tab=frame_power_compo_info, text_var=self.test_pow_cell, width=20, col=1, row=2)
         add_entry(tab=frame_power_compo_info, text_var=self.test_pow_reticule, width=20, col=1, row=3)
@@ -100,12 +101,12 @@ class PowerTestWindow(ttk.Frame):
                                                      self.chosen_component_state_pow.get(),
                                                      self.bias_voltage_pow.get()],
                                           text=self.text_power_file_name, end_characters='V')],
-                   col=2, row=0)
+                   col=3, row=0)
         add_button(tab=frame_power_compo_info, button_name='Send trigger', command=scripts_and_functions.send_trig,
-                   col=2, row=1)
+                   col=3, row=1)
         add_button(tab=frame_power_compo_info, button_name='Osc trigger',
                    command=lambda: [scripts_and_functions.force_trigger_osc()],
-                   col=2, row=2)
+                   col=3, row=2)
 
         # General controls--------------------------------------------------------------- 
 

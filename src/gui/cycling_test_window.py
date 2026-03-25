@@ -9,7 +9,7 @@ from src.core import config
 # if TYPE_CHECKING:
 #     from main_refactored import Window
 from src.gui.gui_utils import add_label_frame, add_button, add_label, add_entry, add_Checkbutton, create_canvas, \
-    tab_pad_x, \
+    browse_directory, tab_pad_x, \
     default_style
 
 
@@ -91,6 +91,7 @@ class CyclingTestWindow(ttk.Frame):
 
         self.app.entered_cycling_dir = add_entry(
             frame_cycling_comp_info, text_var=self.app.test_cycling_dir, width=20, col=1, row=0)
+        add_button(frame_cycling_comp_info, "Browse", lambda: browse_directory(self.app.test_cycling_dir), col=2, row=0)
         self.app.entered_var_cycling_project = add_entry(
             frame_cycling_comp_info, text_var=self.app.test_cycling_project, width=20, col=1, row=1)
         self.app.entered_var_cycling_cell = add_entry(

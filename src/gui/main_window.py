@@ -6,8 +6,9 @@ import ttkbootstrap as ttk
 import tkinter as tk
 from tkinter import Menu
 import time
-from tkinter import scrolledtext
+from tkinter import scrolledtext, messagebox
 from typing import Optional, Literal
+from . import gui_utils
 import pandas as pd
 import numpy as np
 import skrf as rf
@@ -757,7 +758,7 @@ class Window(ttk.Frame):
 
                 # Plot the data
                 self.ax_pull_in.plot(v_bias_display, v_log_amp_display - np.max(v_log_amp_display), label="{}".format(fn)[:-4])
-
+                self.fig_pull_in_meas.tight_layout()
             if self.pull_in_test_window_instance is not None:
                 directory_test = self.test_pull_in_dir.get()
                 filepath_test = os.path.join(directory_test, fn)
@@ -945,6 +946,23 @@ class Window(ttk.Frame):
         self.set_bias_voltage(pull_in_v_value)
         self.set_ramp_width(ramp_width_value)
         self.set_prf(pulse_freq_value)
+
+    def ping_instrument_status(self, address: str):
+        if gui_utils.ping_address(address):
+            messagebox.showinfo("Connectivity Check", f"Success! {address} is reachable on SCPI port 5025.")
+        else:
+            messagebox.showerror("Connectivity Check", f"Failed! {address} is NOT reachable on SCPI port 5025.")
+
+    def reconnect_hardware(self):
+        scripts_and_functions.initialize_hardware(
+            zva_ip=self.zva_inst.get(),
+            sig_gen_ip=self.signal_generator_instance.get(),
+            osc_ip=self.osc_inst.get(),
+            powermeter_ip=self.powermeter_inst.get(),
+            rf_gen_ip=self.rf_gen_inst.get(),
+            offline=False
+        )
+        messagebox.showinfo("Hardware Reconnect", "Re-initialization attempt completed. Check terminal for status.")
 
     def set_bias_pull_in(self, pull_in_v_bias_value):
         """
