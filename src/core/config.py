@@ -57,7 +57,11 @@ ZVA_File_Dir_ZVA50: str = r'C:\Rohde&Schwarz\Nwa\Traces'  # ZVA50 Trace file dir
 # Default trace directory
 zva_traces: str = ZVA_File_Dir_ZVA67
 
-rm = pyvisa.ResourceManager()
+# Use @py backend explicitly for Docker/Linux environments
+try:
+    rm = pyvisa.ResourceManager('@py')
+except Exception:
+    rm = pyvisa.ResourceManager()
 
 # Dynamic Address Resolution
 import os
@@ -70,20 +74,43 @@ import re
 def resolve_visa_address(address: str) -> str:
     """
     Translates hostname-based VISA addresses to IP-based ones if possible.
-    e.g. 'TCPIP0::ZNA67-101810::inst0::INSTR' -> 'TCPIP0::192.168.1.50::inst0::INSTR'
     """
-    # Pattern to extract hostname between TCPIP0:: and ::inst0 or similar
-    match = re.search(r'TCPIP0?::([^:]+)::', address)
-    if match:
-        hostname = match.group(1)
-        # Skip if it's already an IP
-        if re.match(r'^\d{1,3}(\.\d{1,3}){3}$', hostname):
-            return address
-        
-        resolved_ip = resolve_mdns_hostname(hostname)
-        if resolved_ip != hostname:
-            return address.replace(hostname, resolved_ip)
+    # Just a simple proxy/wrapper now, the logic remains but we use it via Env vars
+    host_match = re.search(r'TCPIP0?::([^:]+)::', address)
+    if host_match:
+        hostname = host_match.group(1)
+        if not re.match(r'^\d{1,3}(\.\d{1,3}){3}$', hostname):
+            resolved_ip = resolve_mdns_hostname(hostname)
+            if resolved_ip != hostname:
+                address = address.replace(hostname, resolved_ip)
     return address
+
+def open_resource_robust(rm, address):
+    """
+    Attempts to open a VISA resource. If standard VXI-11 (inst0) fails,
+    tries direct socket connection on port 5025.
+    """
+    try:
+        return rm.open_resource(address)
+    except Exception as e:
+        print(f"DEBUG: Standard connection failed for {address}: {e}")
+        # Try fallbacks for TCPIP
+        if "TCPIP" in address:
+            # Try to extract IP
+            ip_match = re.search(r'(\d{1,3}(\.\d{1,3}){3})', address)
+            if ip_match:
+                ip = ip_match.group(1)
+                # Try raw socket port 5025 (standard SCPI)
+                socket_address = f"TCPIP0::{ip}::5025::SOCKET"
+                print(f"DEBUG: Attempting fallback to {socket_address}...")
+                try:
+                    res = rm.open_resource(socket_address)
+                    res.read_termination = '\n'
+                    res.write_termination = '\n'
+                    return res
+                except Exception as e2:
+                    print(f"DEBUG: Fallback failed: {e2}")
+        raise e
 
 # IP Addresses for different apparatus
 # Prioritize Environment Variables (set by host-side discovery)
@@ -149,7 +176,8 @@ def zva_init(tcpip_address: str = zva_ip_ZNA67, zva="ZNA67") -> RsInstrument | N
     elif zva == "ZNA67":
         tcpip_address = zva_ip_ZNA67
     try:
-        zva_inst = RsInstrument(tcpip_address, id_query=False, reset=False)
+        # options="SelectVisaBackend=rs" forces use of the installed visa backend (pyvisa-py in Docker)
+        zva_inst = RsInstrument(tcpip_address, id_query=False, reset=False, options="SelectVisaBackend=rs")
         zva_inst.write_str_with_opc("SYSTem:DISPlay:UPDate ON")
         print("VNA Connected")
         return zva_inst
@@ -160,7 +188,7 @@ def zva_init(tcpip_address: str = zva_ip_ZNA67, zva="ZNA67") -> RsInstrument | N
 def sig_gen_init(tcpip_address: str = signal_generator_ip) -> pyvisa.resources.tcpip.TCPIPInstrument | None:
     _id = "Signal Generator"
     try:
-        sig_gen = rm.open_resource(tcpip_address)
+        sig_gen = open_resource_robust(rm, tcpip_address)
         print("Signal generator Connected")
         return sig_gen
     except Exception as e:
@@ -170,7 +198,7 @@ def sig_gen_init(tcpip_address: str = signal_generator_ip) -> pyvisa.resources.t
 def osc_init(tcpip_address: str = oscilloscope_ip) -> pyvisa.resources.tcpip.TCPIPInstrument | None:
     _id = "Oscilloscope"
     try:
-        osc = rm.open_resource(tcpip_address)
+        osc = open_resource_robust(rm, tcpip_address)
         print("Oscilloscope Connected")
         return osc
     except Exception as e:
@@ -182,7 +210,8 @@ def rf_gen_init(tcpip_address: str = rf_generator_ip, rf_gen_type: str = 'smf') 
     try:
         if rf_gen_type == 'smf':
             tcpip_address = r'TCPIP0::rssmf100a105220::inst0::INSTR'
-        rf_gen = RsInstrument(tcpip_address, id_query=False, reset=False)
+        # RsInstrument has its own robust logic, but we can pass options
+        rf_gen = RsInstrument(tcpip_address, id_query=False, reset=False, options="SelectVisaBackend=rs")
         print("RF generator Connected")
         return rf_gen
     except Exception as e:
@@ -192,7 +221,7 @@ def rf_gen_init(tcpip_address: str = rf_generator_ip, rf_gen_type: str = 'smf') 
 def powermeter_init(tcpip_address: str = r'TCPIP0::A-N1912A-00589::inst0::INSTR') -> pyvisa.resources.tcpip.TCPIPInstrument | None:
     _id = "Powermeter"
     try:
-        powermeter = rm.open_resource(tcpip_address)
+        powermeter = open_resource_robust(rm, tcpip_address)
         print("Powermeter Connected")
         return powermeter
     except Exception as e:
