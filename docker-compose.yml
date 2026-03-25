@@ -14,5 +14,7 @@ services:
       - POWERMETER_IP=${POWERMETER_IP:-169.254.64.175}
     volumes:
       - .:/app
+      - C:/Users/TEMIS/Desktop:/app/desktop
+      - C:/Users/TEMIS/Documents:/app/documents
     extra_hosts:
       - "host.docker.internal:host-gateway"
