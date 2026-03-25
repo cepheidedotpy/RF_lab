@@ -154,11 +154,11 @@ class Window(ttk.Frame):
         self.text_gen_controls_pull_in_debug = None
         self.ax_pull_in_diff = None
 
-        self.zva_inst: tk.StringVar = tk.StringVar(value='TCPIP0::ZNA67-101810::inst0::INSTR')
-        self.signal_generator_instance: tk.StringVar = tk.StringVar(value='TCPIP0::A-33521B-00526::inst0::INSTR')
-        self.osc_inst: tk.StringVar = tk.StringVar(value='TCPIP0::DPO5054-C011738::inst0::INSTR')
-        self.powermeter_inst: tk.StringVar = tk.StringVar(value='TCPIP0::A-N1912A-00589::inst0::INSTR')
-        self.rf_gen_inst: tk.StringVar = tk.StringVar(value='TCPIP0::rssmb100a179766::inst0::INSTR')
+        self.zva_inst: tk.StringVar = tk.StringVar(value=dir_and_var_declaration.zva_ip_ZNA67)
+        self.signal_generator_instance: tk.StringVar = tk.StringVar(value=dir_and_var_declaration.signal_generator_ip)
+        self.osc_inst: tk.StringVar = tk.StringVar(value=dir_and_var_declaration.oscilloscope_ip)
+        self.powermeter_inst: tk.StringVar = tk.StringVar(value=dir_and_var_declaration.powermeter_ip)
+        self.rf_gen_inst: tk.StringVar = tk.StringVar(value=dir_and_var_declaration.rf_generator_ip)
 
         # Directories for display windows
         self.s3p_dir_name = tk.StringVar(
