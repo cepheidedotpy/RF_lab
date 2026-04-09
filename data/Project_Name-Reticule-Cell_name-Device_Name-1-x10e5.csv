@@ -1,0 +1,3 @@
+Comment:,frequency:10GHz
+vpullin_plus,vpullin_minus,vpullout_plus,vpullout_minus,t_on_time,insertion_loss,t_off_time,isolation,cycles,sticking events,iso_ascent,iso_descent_minus,switching_time,amplitude_variation,release_time
+0,0,0,0,,,,,100000.0,0,0.0,0.0,-3.701424050634e-05,0.0,-3.263561076605e-05

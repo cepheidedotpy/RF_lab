@@ -858,7 +858,7 @@ def cycling_sequence_with_escape_interrupt(app, new_data_event,
                 ch_4_detector = get_curve_cycling(channel=4)
                 ch_2_bias = get_curve_cycling(channel=2)
 
-                data = extract_data_v3(
+                data = extract_data_v2(
                     rf_detector_channel=ch_4_detector,
                     v_bias_channel=ch_2_bias
                 )

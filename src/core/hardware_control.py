@@ -692,7 +692,8 @@ def rf_gen_power_setup(frequency=9.3, power=-25,
     rf_Generator.write_str_with_opc("*RST")
     rf_Generator.write_str_with_opc(
         r"MMEMory:LOAD:STATe 4, '{}'".format(dir_and_var_declaration.power_test_setup_rf_gen))
-    rf_Generator.write_str_with_opc('SOUR:FREQ {} G11Hz; LEV {}'.format(frequency, power))
+    rf_Generator.write_str_with_opc("*RCL 4")
+    rf_Generator.write_str_with_opc('SOUR:FREQ {} GHz; LEV {}'.format(frequency, power))
     rf_Generator.write_str_with_opc('SOUR:POW:LIM:AMPL {}'.format(power_lim))
 
 def set_osc_event_count(nth_trigger=10):
