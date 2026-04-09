@@ -163,8 +163,7 @@ class PulsedPullInTestWindow(ttk.Frame):
                    command=lambda: [scripts_and_functions.create_pulsed_pull_in_test_waveform(
                        amplitude=int(self.app.entered_pulsed_pull_in_v_bias.get()),
                        pulse_width=int(self.app.pulsed_pulse_width.get()))], col=0, row=1)
-        add_button(tab=frame_test_pulsed_pull_in_gen_controls, button_name='Exit', command=lambda: [self.app._quit(),
-                                                                                                    self.app.close_resources()],
+        add_button(tab=frame_test_pulsed_pull_in_gen_controls, button_name='Exit', command=self.app._quit,
                    col=1,
                    row=1)
         add_button(tab=frame_test_pulsed_pull_in_gen_controls, button_name='Iso vs V',

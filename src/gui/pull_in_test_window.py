@@ -147,8 +147,7 @@ class PullInTestWindow(ttk.Frame):
                    command=lambda: [
                        self.app.reset_signal_generator_ramp(text_widget=self.text_gen_controls_pull_in_debug)], col=0,
                    row=1)
-        add_button(tab=frame_test_pull_in_gen_controls, button_name='Exit', command=lambda: [self.app._quit(),
-                                                                                             close_resources()],
+        add_button(tab=frame_test_pull_in_gen_controls, button_name='Exit', command=self.app._quit,
                    col=1,
                    row=1)
         add_button(tab=frame_test_pull_in_gen_controls, button_name='Iso vs V',

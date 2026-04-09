@@ -1,6 +1,7 @@
 ### Wednesday, 25 March 2026
 
-**Dockerization & Hardware Connectivity Improvements**
+- **Power Test Plot Fix:** Resolved an issue where the power test plot did not clear old data when launching a new test.
+- **Dockerization & Hardware Connectivity Improvements**
 - **mDNS Instrument Discovery:** Implemented `resolve_ips.py` to discover instruments (ZNA, Signal Generator, etc.) on the host network via mDNS and generate a `.env` file for the container.
 - **Robust Connection Logic:** Updated `src/core/config.py` to force the `@py` backend for PyVISA and implemented `open_resource_robust` with a raw socket fallback (port 5025) for better reliability in Docker/WSL2 environments.
 - **Docker Volume Mapping:** Enhanced `docker-compose.yml` to map host `Desktop` and `Documents` folders to the container, ensuring data persistence and easy file access.

@@ -156,7 +156,7 @@ class PowerTestWindow(ttk.Frame):
         add_label(frame_power_measurement_signal_generator, label_name='(Hz)', col=2, row=3)
         add_entry(tab=frame_power_measurement_signal_generator, text_var=self.prf, width=20, col=1, row=3)
 
-        add_button(tab=frame_power_meas, button_name='Exit', command=lambda: [self.app._quit(), close_resources()],
+        add_button(tab=frame_power_meas, button_name='Exit', command=self.app._quit,
                    col=1,
                    row=1)
         add_button(tab=frame_power_meas, button_name='Reset Signal Generator',
@@ -165,7 +165,7 @@ class PowerTestWindow(ttk.Frame):
                    row=2)
 
         add_button(tab=frame_power_meas, button_name='Launch Test',
-                   command=lambda: [self.start_power_test_sequence(
+                   command=lambda: [self.app.start_power_test_sequence(
                        self, filename=file_name_creation(data_list=[self.test_pow_project.get(),
                                                                     self.test_pow_cell.get(),
                                                                     self.test_pow_reticule.get(),

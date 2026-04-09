@@ -324,7 +324,7 @@ class TimeDomainPowerTestWindow(ttk.Frame):
         add_label(frame_power_measurement_signal_generator, label_name='(Hz)', col=2, row=3)
         add_entry(tab=frame_power_measurement_signal_generator, text_var=self.prf, width=20, col=1, row=3)
 
-        add_button(tab=frame_power_meas, button_name='Exit', command=lambda: [self.app._quit(), close_resources()],
+        add_button(tab=frame_power_meas, button_name='Exit', command=self.app._quit,
                    col=1,
                    row=1)
 

@@ -565,17 +565,21 @@ class Window(ttk.Frame):
 
     def _quit(self):
         """
-        Exits the application, ensuring that the window is closed and destroyed.
+        Exits the application cleanly.
         """
         try:
+            # Closing resources via core scripts
             from src.core import scripts_and_functions
             scripts_and_functions.close_all_resources()
-        except Exception:
+        except:
             pass
+            
+        # Stopping the Tkinter mainloop
         self.master.quit()
+        # Destroy the GUI (this is necessary on Windows)
         self.master.destroy()
-        import sys
-        sys.exit(0)
+        # Ensure the process is dead
+        os._exit(0)
 
     def _about_msg(self):
         """
@@ -1298,6 +1302,13 @@ class Window(ttk.Frame):
         self.is_power_sweeping = True
         self.stop_requested = False
         print("Power sweep started.")
+
+        # Reset data and clear plot
+        self.file_power_sweep = pd.DataFrame(columns=['Power Input DUT Avg (dBm)', 'Power Output DUT Avg (dBm)'])
+        self.ax_power_meas.clear()
+        self.ax_power_meas.set(xlabel="Pin (dBm)", ylabel="Pout (dBm)", title="Pout vs Pin")
+        self.ax_power_meas.grid("both")
+        self.fig_power_meas.canvas.draw()
 
         try:
             # This is where the actual power sweep logic from scripts_and_functions would be called.

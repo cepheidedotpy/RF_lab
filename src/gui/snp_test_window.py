@@ -247,7 +247,7 @@ class SnpTestWindow(ttk.Frame):
                    row=2)
 
         add_button(tab=frame_snp_gene_controls, button_name='Exit',
-                   command=lambda: [self.app._quit(), close_resources()],
+                   command=self.app._quit,
                    col=1,
                    row=1)
         add_button(tab=frame_snp_gene_controls, button_name='Reset Signal Gen',
