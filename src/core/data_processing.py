@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter, get_window, convolve, find_peaks
+from src.core import hardware_control
 
 def timing_wrapper(func):
     """
@@ -804,7 +805,7 @@ def extract_data_v3(rf_detector_channel, v_bias_channel, ramp_start=0.2039, ramp
     t_on_time = float(osc.query('MEASUrement:MEAS1:VALue?'))
     t_off_time = float(osc.query('MEASUrement:MEAS2:VALue?'))
     amplitude_t0 = float(osc.query('MEASUrement:MEAS4:VALue?'))
-    a1, b1, b2 = get_powermeter_channels()
+    a1, b1, b2 = hardware_control.get_powermeter_channels()
 
     relative_amplitude = b2 - a1
     isolation = b1 - a1
