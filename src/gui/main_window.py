@@ -1311,24 +1311,26 @@ class Window(ttk.Frame):
         self.fig_power_meas.canvas.draw()
 
         try:
-            # This is where the actual power sweep logic from scripts_and_functions would be called.
-            # For now, we simulate it.
+            # Call the actual power test sequence from scripts_and_functions
+            filename = kwargs.get('filename', 'test')
             start = kwargs.get('start', -20)
             stop = kwargs.get('stop', 10)
             step = kwargs.get('step', 1)
+            sleep_duration = kwargs.get('sleep_duration', 1.0)
+            offset_a1 = kwargs.get('offset_a1', 0.0)
+            offset_b1 = kwargs.get('offset_b1', 0.0)
 
-            for power_in in np.arange(start, stop + step, step):
-                if self.stop_requested:
-                    break
-                # Simulate measurement
-                power_out = power_in - np.random.uniform(0.5, 1.5)  # Simulate some loss
-                data_row = {'Power Input DUT Avg (dBm)': power_in, 'Power Output DUT Avg (dBm)': power_out}
-
-                # Update DataFrame and signal for plot update
-                new_df = pd.DataFrame([data_row])
-                self.file_power_sweep = pd.concat([self.file_power_sweep, new_df], ignore_index=True)
-                self.new_data_event_power_sweep.set()
-                time.sleep(0.5)
+            scripts_and_functions.power_test_sequence_v2(
+                app=self,
+                new_data_event=self.new_data_event_power_sweep,
+                filename=filename,
+                start=start,
+                stop=stop,
+                step=step,
+                sleep_duration=sleep_duration,
+                offset_a1=offset_a1,
+                offset_b1=offset_b1
+            )
 
         except Exception as e:
             print(f"An error occurred during power sweep: {e}")
